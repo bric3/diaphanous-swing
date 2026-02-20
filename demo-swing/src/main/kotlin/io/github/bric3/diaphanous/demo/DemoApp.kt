@@ -57,8 +57,20 @@ object DemoApp {
      */
     @JvmStatic
     fun main(args: Array<String>) {
+        configureApplicationAppearancePolicy()
         val options = parseOptions(args)
         SwingUtilities.invokeLater { showWindow(options) }
+    }
+
+    private fun configureApplicationAppearancePolicy() {
+        val isMac = System.getProperty("os.name", "").contains("Mac", ignoreCase = true)
+        if (!isMac) {
+            return
+        }
+        val key = "apple.awt.application.appearance"
+        if (System.getProperty(key).isNullOrBlank()) {
+            System.setProperty(key, "system")
+        }
     }
 
     private fun parseOptions(args: Array<String>): LaunchOptions {
