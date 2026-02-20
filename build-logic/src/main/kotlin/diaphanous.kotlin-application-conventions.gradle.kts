@@ -9,11 +9,11 @@
  */
 
 plugins {
-    id("diaphanous.java-library-conventions")
+    id("org.jetbrains.kotlin.jvm")
+    application
+    id("diaphanous.jvm-base-conventions")
 }
 
-dependencies {
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+kotlin {
+    jvmToolchain(25)
 }

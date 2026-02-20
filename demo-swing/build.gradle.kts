@@ -9,16 +9,11 @@
  */
 
 plugins {
-    kotlin("jvm") version "2.3.10"
-    application
+    id("diaphanous.kotlin-application-conventions")
 }
 
 dependencies {
     implementation(project(":translucency-core"))
-}
-
-kotlin {
-    jvmToolchain(25)
 }
 
 application {

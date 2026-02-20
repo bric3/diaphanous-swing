@@ -9,11 +9,14 @@
  */
 
 plugins {
-    id("diaphanous.java-library-conventions")
+    `kotlin-dsl`
+}
+
+repositories {
+    gradlePluginPortal()
+    mavenCentral()
 }
 
 dependencies {
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+    implementation(libs.kotlin.gradle.plugin)
 }

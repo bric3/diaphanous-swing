@@ -9,11 +9,6 @@
  */
 
 plugins {
-    id("diaphanous.java-library-conventions")
-}
-
-dependencies {
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+    `java-library`
+    id("diaphanous.jvm-base-conventions")
 }

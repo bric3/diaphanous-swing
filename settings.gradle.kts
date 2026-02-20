@@ -8,6 +8,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+pluginManagement {
+    includeBuild("build-logic")
+}
+
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }

@@ -9,11 +9,22 @@
  */
 
 plugins {
-    id("diaphanous.java-library-conventions")
+    java
 }
 
-dependencies {
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+group = "io.github.bric3"
+version = "0.1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
