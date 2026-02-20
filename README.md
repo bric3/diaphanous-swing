@@ -4,8 +4,8 @@
 
 ## Project layout
 
-- `translucency-core`: library module.
-- `translucency-core-macos-native`: macOS native bridge (`NSView` wrapper + effect view management).
+- `diaphanous-core`: library module.
+- `diaphanous-core-macos-native`: macOS native bridge (`NSView` wrapper + effect view management).
 - `demo-swing`: sample Swing app using the library.
 
 ## What works (macOS)

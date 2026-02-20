@@ -17,7 +17,7 @@ robotTest.compileClasspath += sourceSets.main.get().output
 robotTest.runtimeClasspath += sourceSets.main.get().output
 
 dependencies {
-    implementation(project(":translucency-core"))
+    implementation(project(":diaphanous-core"))
     add("robotTestImplementation", platform(libs.junit.bom))
     add("robotTestImplementation", libs.junit.jupiter)
     add("robotTestRuntimeOnly", libs.junit.platform.launcher)
@@ -28,10 +28,10 @@ application {
 }
 
 tasks.named<JavaExec>("run") {
-    dependsOn(":translucency-core-macos-native:assemble")
+    dependsOn(":diaphanous-core-macos-native:assemble")
     val nativeLib = rootProject.layout.projectDirectory
-        .dir("translucency-core-macos-native/build/lib/main/debug")
-        .file("libtranslucency-core-macos-native.dylib")
+        .dir("diaphanous-core-macos-native/build/lib/main/debug")
+        .file("libdiaphanous-core-macos-native.dylib")
         .asFile
     jvmArgs(
         "--enable-native-access=ALL-UNNAMED",
@@ -63,10 +63,10 @@ fun passRobotPropToJvm(task: Test, key: String) {
 }
 
 val robotTestTask = tasks.register<Test>("robotTest") {
-    dependsOn(":translucency-core-macos-native:assemble")
+    dependsOn(":diaphanous-core-macos-native:assemble")
     val nativeLib = rootProject.layout.projectDirectory
-        .dir("translucency-core-macos-native/build/lib/main/debug")
-        .file("libtranslucency-core-macos-native.dylib")
+        .dir("diaphanous-core-macos-native/build/lib/main/debug")
+        .file("libdiaphanous-core-macos-native.dylib")
         .asFile
     description = "Runs macOS desktop Robot smoke tests and writes screenshots/reports."
     group = "verification"
@@ -90,10 +90,10 @@ val robotTestTask = tasks.register<Test>("robotTest") {
 }
 
 tasks.register<Test>("robotShot") {
-    dependsOn(":translucency-core-macos-native:assemble")
+    dependsOn(":diaphanous-core-macos-native:assemble")
     val nativeLib = rootProject.layout.projectDirectory
-        .dir("translucency-core-macos-native/build/lib/main/debug")
-        .file("libtranslucency-core-macos-native.dylib")
+        .dir("diaphanous-core-macos-native/build/lib/main/debug")
+        .file("libdiaphanous-core-macos-native.dylib")
         .asFile
     description = "Captures a screenshot of the demo app via Robot."
     group = "verification"

@@ -47,7 +47,7 @@ So this is not impossible with FFM; it is possible but significantly higher risk
 
 ## what is now implemented
 
-1. A native macOS helper project (`translucency-core-macos-native`) built with Gradle native support.
+1. A native macOS helper project (`diaphanous-core-macos-native`) built with Gradle native support.
 2. A native wrapper content view (`DiaphanousWrappedAWTView`) that:
    - wraps the original `AWTView`,
    - inserts `NSVisualEffectView` behind it,

@@ -2,7 +2,7 @@
 
 ## Context
 
-The `translucency-core` library applies macOS `NSWindow` style changes from Java via FFM + Objective-C runtime calls.
+The `diaphanous-core` library applies macOS `NSWindow` style changes from Java via FFM + Objective-C runtime calls.
 
 ## Bug
 

@@ -20,12 +20,11 @@ After vibrancy became visible, a short white flash could still appear during win
 ## Implementation details
 
 1. `MacWindowStyler.setWindowAlpha(Window, double)` was added and implemented on the AppKit thread via `setAlphaValue:`.
-2. Startup sequencing was extracted to `MacStartupReveal.show(Window)` in `translucency-core`.
+2. Startup sequencing was extracted to `MacStartupReveal.show(Window)` in `diaphanous-core`.
 3. `MacStartupReveal.show(Window)` now ensures peer creation (`addNotify()`) before applying native alpha.
 
 Primary code locations:
 
-- `translucency-core/src/main/java/io/github/bric3/diaphanous/MacStartupReveal.java`
-- `translucency-core/src/main/java/io/github/bric3/diaphanous/MacWindowStyler.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacStartupReveal.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacWindowStyler.java`
 - `demo-swing/src/main/kotlin/io/github/bric3/diaphanous/demo/DemoApp.kt`
-

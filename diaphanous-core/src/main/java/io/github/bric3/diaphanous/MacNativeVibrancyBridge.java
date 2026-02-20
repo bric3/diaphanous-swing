@@ -27,7 +27,7 @@ import java.util.Optional;
 final class MacNativeVibrancyBridge {
     private static final String LIB_PATH_PROPERTY = "diaphanous.macos.nativeLib";
     private static final String DEFAULT_RELATIVE_LIB =
-        "translucency-core-macos-native/build/lib/main/debug/libtranslucency-core-macos-native.dylib";
+        "diaphanous-core-macos-native/build/lib/main/debug/libdiaphanous-core-macos-native.dylib";
     private static final NativeFns FNS = loadNativeFns().orElse(null);
 
     private MacNativeVibrancyBridge() {
