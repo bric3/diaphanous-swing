@@ -96,6 +96,23 @@ public final class MacWindowStyler {
         MacThreading.runOnAppKitThread(() -> clearVibrancyOnAppKit(window));
     }
 
+    /**
+     * Applies a macOS appearance to the native window frame/titlebar.
+     *
+     * @param window the AWT/Swing window to mutate
+     * @param appearance appearance preset; {@link MacWindowAppearance#SYSTEM} restores system default
+     */
+    public static void applyAppearance(Window window, MacWindowAppearance appearance) {
+        Objects.requireNonNull(window, "window");
+        Objects.requireNonNull(appearance, "appearance");
+
+        if (!isSupported()) {
+            throw new UnsupportedOperationException("macOS window styling is only supported on macOS");
+        }
+
+        MacThreading.runOnAppKitThread(() -> applyAppearanceOnAppKit(window, appearance));
+    }
+
     private static void applyOnAppKit(Window window, MacWindowStyle style) {
         long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
         if (nsWindowPtr == 0) {
@@ -172,6 +189,28 @@ public final class MacWindowStyler {
             MemorySegment.NULL,
             OBJC_ASSOCIATION_ASSIGN
         );
+    }
+
+    private static void applyAppearanceOnAppKit(Window window, MacWindowAppearance appearance) {
+        long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+        if (nsWindowPtr == 0) {
+            throw new IllegalStateException("Cannot resolve NSWindow pointer");
+        }
+        MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
+
+        if (appearance.nativeName() == null) {
+            ObjCRuntime.sendVoidAddress(nsWindow, "setAppearance:", MemorySegment.NULL);
+            return;
+        }
+
+        MemorySegment nsAppearanceClass = requireAddress(ObjCRuntime.objcClass("NSAppearance"), "NSAppearance class");
+        MemorySegment appearanceName = nsString(appearance.nativeName());
+        MemorySegment nativeAppearance = ObjCRuntime.sendAddressAddress(
+            nsAppearanceClass,
+            "appearanceNamed:",
+            appearanceName
+        );
+        ObjCRuntime.sendVoidAddress(nsWindow, "setAppearance:", nativeAppearance);
     }
 
     private static MemorySegment createEffectSiblingView(MemorySegment nsWindow, MemorySegment contentView) {

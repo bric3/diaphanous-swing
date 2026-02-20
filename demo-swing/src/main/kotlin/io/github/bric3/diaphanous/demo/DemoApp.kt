@@ -12,21 +12,34 @@ package io.github.bric3.diaphanous.demo
 
 import io.github.bric3.diaphanous.MacVibrancyMaterial
 import io.github.bric3.diaphanous.MacVibrancyStyle
+import io.github.bric3.diaphanous.MacToolbarStyle
+import io.github.bric3.diaphanous.MacWindowStyle
+import io.github.bric3.diaphanous.MacWindowAppearance
 import io.github.bric3.diaphanous.MacWindowStyler
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Font
+import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.GridBagLayout
 import java.awt.GridBagConstraints
 import java.awt.Insets
+import java.awt.RenderingHints
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.geom.GeneralPath
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JSlider
 import javax.swing.SwingUtilities
+import javax.swing.JCheckBox
+import javax.swing.JComboBox
+import javax.swing.JButton
+import javax.swing.JColorChooser
+import javax.swing.BorderFactory
+import kotlin.random.Random
 
 /**
  * Manual demo for toggling native macOS style attributes on a Swing frame.
@@ -40,41 +53,35 @@ object DemoApp {
      */
     @JvmStatic
     fun main(args: Array<String>) {
-        SwingUtilities.invokeLater(::showWindow)
+        val mode = parseMode(args)
+        SwingUtilities.invokeLater { showWindow(mode) }
     }
 
-    private fun showWindow() {
+    private fun parseMode(args: Array<String>): WindowMode {
+        return when (args.firstOrNull()?.lowercase()) {
+            "undecorated", "--undecorated" -> WindowMode.UNDECORATED
+            "decorated", "--decorated", null -> WindowMode.DECORATED
+            else -> WindowMode.DECORATED
+        }
+    }
+
+    private fun showWindow(mode: WindowMode) {
         val frame = JFrame("Diaphanous Swing Demo")
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        frame.isUndecorated = true
+        val undecorated = mode == WindowMode.UNDECORATED
+        frame.isUndecorated = undecorated
         frame.setSize(980, 640)
         frame.setLocationRelativeTo(null)
-        frame.background = Color(0, 0, 0, 0)
+        if (undecorated) {
+            frame.background = Color(0, 0, 0, 0)
+        }
         frame.rootPane.isOpaque = false
         frame.layeredPane.isOpaque = false
 
         val title = JLabel("Native macOS experimental backdrop for this Swing window", JLabel.CENTER)
         title.font = Font("SF Pro Text", Font.BOLD, 22)
 
-        val details = JLabel(
-            """
-            <html>
-            <div style='font-size: 15px; text-align: left;'>
-              This demo starts with an experimental native backdrop layer enabled:
-              <ul>
-                <li>install an NSVisualEffectView backdrop behind content</li>
-                <li>attempt native backdrop rendering (currently experimental)</li>
-                <li>allow live alpha and blur-strength tuning via sliders</li>
-                <li>keep window in undecorated transparent mode</li>
-              </ul>
-            </div>
-            </html>
-            """.trimIndent()
-        )
-
-        val dragHandle = JLabel("Drag here to move window", JLabel.CENTER)
-        dragHandle.foreground = Color(230, 230, 230, 190)
-        dragHandle.font = Font("SF Pro Text", Font.PLAIN, 12)
+        val topSeriesPanel = RandomTimeseriesPanel()
 
         val dragListener = object : MouseAdapter() {
             private var clickPoint: Point? = null
@@ -92,8 +99,10 @@ object DemoApp {
                 )
             }
         }
-        dragHandle.addMouseListener(dragListener)
-        dragHandle.addMouseMotionListener(dragListener)
+        if (undecorated) {
+            topSeriesPanel.addMouseListener(dragListener)
+            topSeriesPanel.addMouseMotionListener(dragListener)
+        }
 
         val alphaValue = JLabel("0.55")
         alphaValue.foreground = Color(230, 230, 230, 190)
@@ -105,6 +114,11 @@ object DemoApp {
         val blurLabel = JLabel("Blur strength")
         val blurSlider = JSlider(0, 100, DEFAULT_BLUR_STRENGTH)
         blurSlider.isOpaque = false
+        val undecoratedInfo = JLabel(
+            "Undecorated mode: alpha/blur controls apply experimental NSVisualEffectView backdrop",
+            JLabel.LEFT
+        )
+        undecoratedInfo.foreground = Color(220, 220, 220, 210)
 
         fun materialForBlurStrength(value: Int): MacVibrancyMaterial = when {
             value < 20 -> MacVibrancyMaterial.CONTENT_BACKGROUND
@@ -119,22 +133,11 @@ object DemoApp {
             .backdropAlpha(alphaSlider.value / 100.0)
             .build()
 
-        alphaSlider.addChangeListener {
-            val alpha = alphaSlider.value / 100.0
-            alphaValue.text = "%.2f".format(alpha)
-            MacWindowStyler.applyVibrancy(frame, currentStyle())
-        }
-        blurSlider.addChangeListener {
-            blurValue.text = blurSlider.value.toString()
-            MacWindowStyler.applyVibrancy(frame, currentStyle())
-        }
-
-        val centerPanel = JPanel(BorderLayout(0, 12))
+        val centerPanel = JPanel(BorderLayout(0, 0))
         centerPanel.isOpaque = false
         centerPanel.add(title, BorderLayout.NORTH)
         val mainContentPanel = JPanel(BorderLayout(0, 16))
         mainContentPanel.isOpaque = false
-        mainContentPanel.add(details, BorderLayout.CENTER)
 
         val controlsPanel = JPanel(GridBagLayout())
         controlsPanel.isOpaque = false
@@ -168,7 +171,133 @@ object DemoApp {
         gbc.gridwidth = 2
         controlsPanel.add(blurSlider, gbc)
 
-        mainContentPanel.add(controlsPanel, BorderLayout.SOUTH)
+        val stylePanel = JPanel(GridBagLayout())
+        stylePanel.isOpaque = false
+        val styleGbc = GridBagConstraints()
+        styleGbc.insets = Insets(4, 8, 4, 8)
+        styleGbc.fill = GridBagConstraints.HORIZONTAL
+
+        val transparentTitleBarCheck = JCheckBox("Transparent title bar", true)
+        transparentTitleBarCheck.isOpaque = false
+        val fullSizeContentCheck = JCheckBox("Full-size content view", true)
+        fullSizeContentCheck.isOpaque = false
+        val titleVisibleCheck = JCheckBox("Title visible", false)
+        titleVisibleCheck.isOpaque = false
+        val toolbarStyleCombo = JComboBox(MacToolbarStyle.entries.toTypedArray())
+        toolbarStyleCombo.selectedItem = MacToolbarStyle.UNIFIED_COMPACT
+        val appearanceCombo = JComboBox(MacWindowAppearance.entries.toTypedArray())
+        appearanceCombo.selectedItem = MacWindowAppearance.SYSTEM
+
+        fun applyWindowStyleFromControls() {
+            val style = MacWindowStyle.builder()
+                .transparentTitleBar(transparentTitleBarCheck.isSelected)
+                .fullSizeContentView(fullSizeContentCheck.isSelected)
+                .titleVisible(titleVisibleCheck.isSelected)
+                .toolbarStyle(toolbarStyleCombo.selectedItem as MacToolbarStyle)
+                .build()
+            MacWindowStyler.apply(frame, style)
+        }
+        transparentTitleBarCheck.addActionListener { applyWindowStyleFromControls() }
+        fullSizeContentCheck.addActionListener { applyWindowStyleFromControls() }
+        titleVisibleCheck.addActionListener { applyWindowStyleFromControls() }
+        toolbarStyleCombo.addActionListener { applyWindowStyleFromControls() }
+        appearanceCombo.addActionListener {
+            MacWindowStyler.applyAppearance(frame, appearanceCombo.selectedItem as MacWindowAppearance)
+        }
+
+        alphaSlider.addChangeListener {
+            val alpha = alphaSlider.value / 100.0
+            alphaValue.text = "%.2f".format(alpha)
+            if (undecorated) {
+                MacWindowStyler.applyVibrancy(frame, currentStyle())
+            }
+        }
+        blurSlider.addChangeListener {
+            blurValue.text = blurSlider.value.toString()
+            if (undecorated) {
+                MacWindowStyler.applyVibrancy(frame, currentStyle())
+            }
+        }
+
+        styleGbc.gridy = 0
+        styleGbc.gridx = 0
+        styleGbc.gridwidth = 2
+        stylePanel.add(JLabel("Window style settings"), styleGbc)
+
+        styleGbc.gridy = 1
+        styleGbc.gridx = 0
+        styleGbc.gridwidth = 2
+        stylePanel.add(transparentTitleBarCheck, styleGbc)
+
+        styleGbc.gridy = 2
+        stylePanel.add(fullSizeContentCheck, styleGbc)
+
+        styleGbc.gridy = 3
+        stylePanel.add(titleVisibleCheck, styleGbc)
+
+        styleGbc.gridy = 4
+        styleGbc.gridx = 0
+        styleGbc.gridwidth = 1
+        stylePanel.add(JLabel("Toolbar style"), styleGbc)
+        styleGbc.gridx = 1
+        stylePanel.add(toolbarStyleCombo, styleGbc)
+
+        styleGbc.gridy = 5
+        styleGbc.gridx = 0
+        stylePanel.add(JLabel("Appearance"), styleGbc)
+        styleGbc.gridx = 1
+        stylePanel.add(appearanceCombo, styleGbc)
+
+        val colorPanel = JPanel(GridBagLayout())
+        colorPanel.isOpaque = false
+        val colorGbc = GridBagConstraints()
+        colorGbc.insets = Insets(4, 8, 4, 8)
+        colorGbc.fill = GridBagConstraints.HORIZONTAL
+        colorGbc.gridx = 0
+        colorGbc.gridy = 0
+        colorGbc.gridwidth = 2
+        colorPanel.add(JLabel("Color settings"), colorGbc)
+
+        fun addColorControl(
+            row: Int,
+            label: String,
+            current: () -> Color,
+            apply: (Color) -> Unit
+        ) {
+            val pickButton = JButton("Pick")
+            pickButton.addActionListener {
+                val selected = JColorChooser.showDialog(frame, "Choose $label", current()) ?: return@addActionListener
+                apply(selected)
+            }
+            colorGbc.gridy = row
+            colorGbc.gridx = 0
+            colorGbc.gridwidth = 1
+            colorPanel.add(JLabel(label), colorGbc)
+            colorGbc.gridx = 1
+            colorPanel.add(pickButton, colorGbc)
+        }
+
+        addColorControl(
+            row = 1,
+            label = "Timeseries line",
+            current = { topSeriesPanel.lineColor() }
+        ) { color -> topSeriesPanel.setLineColor(color) }
+        addColorControl(
+            row = 2,
+            label = "Timeseries fill",
+            current = { topSeriesPanel.areaColor() }
+        ) { color -> topSeriesPanel.setAreaColor(color) }
+
+        if (undecorated) {
+            val blurPanel = JPanel(BorderLayout(0, 8))
+            blurPanel.isOpaque = false
+            blurPanel.add(undecoratedInfo, BorderLayout.NORTH)
+            blurPanel.add(controlsPanel, BorderLayout.CENTER)
+            mainContentPanel.add(blurPanel, BorderLayout.EAST)
+        } else {
+            mainContentPanel.add(stylePanel, BorderLayout.EAST)
+        }
+        mainContentPanel.add(colorPanel, BorderLayout.WEST)
         centerPanel.add(mainContentPanel, BorderLayout.CENTER)
 
         val panel = JPanel(BorderLayout(16, 16))
@@ -177,11 +306,100 @@ object DemoApp {
         val centered = JPanel(GridBagLayout())
         centered.isOpaque = false
         centered.add(centerPanel)
-        panel.add(dragHandle, BorderLayout.NORTH)
+        panel.add(topSeriesPanel, BorderLayout.NORTH)
         panel.add(centered, BorderLayout.CENTER)
 
         frame.contentPane = panel
         frame.isVisible = true
-        MacWindowStyler.applyVibrancy(frame, currentStyle())
+        MacWindowStyler.applyAppearance(frame, appearanceCombo.selectedItem as MacWindowAppearance)
+        if (undecorated) {
+            MacWindowStyler.applyVibrancy(frame, currentStyle())
+        } else {
+            applyWindowStyleFromControls()
+        }
+    }
+
+    private enum class WindowMode {
+        DECORATED,
+        UNDECORATED
+    }
+
+    private class RandomTimeseriesPanel : JPanel() {
+        private val values: DoubleArray = DoubleArray(180) { Random.nextDouble(0.0, 1.0) }
+        private var areaColor = Color(170, 110, 255, 100)
+        private var lineColor = Color(139, 61, 255)
+        private var barBackgroundColor = Color(35, 20, 50, 190)
+        private var barBorderColor = Color(150, 110, 220, 170)
+
+        init {
+            isOpaque = true
+            preferredSize = java.awt.Dimension(1, 72)
+            minimumSize = java.awt.Dimension(1, 56)
+            background = barBackgroundColor
+            border = BorderFactory.createMatteBorder(0, 0, 1, 0, barBorderColor)
+        }
+
+        fun setLineColor(color: Color) {
+            lineColor = color
+            repaint()
+        }
+
+        fun setAreaColor(color: Color) {
+            areaColor = color
+            repaint()
+        }
+
+        fun setBarBackgroundColor(color: Color) {
+            barBackgroundColor = color
+            background = color
+            repaint()
+        }
+
+        fun setBarBorderColor(color: Color) {
+            barBorderColor = color
+            border = BorderFactory.createMatteBorder(0, 0, 1, 0, color)
+            repaint()
+        }
+
+        fun lineColor(): Color = lineColor
+        fun areaColor(): Color = areaColor
+        fun barBackgroundColor(): Color = barBackgroundColor
+        fun barBorderColor(): Color = barBorderColor
+        override fun paintComponent(g: Graphics) {
+            super.paintComponent(g)
+            val g2 = g.create() as Graphics2D
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+            val w = width.toDouble().coerceAtLeast(1.0)
+            val h = height.toDouble().coerceAtLeast(1.0)
+            val stepX = if (values.size > 1) w / (values.size - 1) else w
+
+            val area = GeneralPath()
+            area.moveTo(0.0, 0.0)
+            for (i in values.indices) {
+                val x = i * stepX
+                val y = values[i] * h
+                area.lineTo(x, y)
+            }
+            area.lineTo(w, 0.0)
+            area.closePath()
+
+            val line = GeneralPath()
+            for (i in values.indices) {
+                val x = i * stepX
+                val y = values[i] * h
+                if (i == 0) {
+                    line.moveTo(x, y)
+                } else {
+                    line.lineTo(x, y)
+                }
+            }
+
+            g2.color = areaColor
+            g2.fill(area)
+            g2.color = lineColor
+            g2.draw(line)
+            g2.dispose()
+        }
     }
 }
