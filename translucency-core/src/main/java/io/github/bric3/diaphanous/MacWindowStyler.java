@@ -32,6 +32,7 @@ public final class MacWindowStyler {
     private static final long OBJC_ASSOCIATION_ASSIGN = 0L;
     private static final long OBJC_ASSOCIATION_RETAIN_NONATOMIC = 1L;
     private static final MemorySegment VIBRANCY_ASSOCIATED_KEY = Arena.global().allocate(ValueLayout.JAVA_LONG);
+    private static final boolean DUMP_NATIVE = Boolean.getBoolean("diaphanous.dump.native");
 
     private MacWindowStyler() {
     }
@@ -118,6 +119,9 @@ public final class MacWindowStyler {
         if (nsWindowPtr == 0) {
             throw new IllegalStateException("Cannot resolve NSWindow pointer");
         }
+        if (DUMP_NATIVE) {
+            MacNativeVibrancyBridge.dump(nsWindowPtr);
+        }
 
         MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
 
@@ -142,6 +146,12 @@ public final class MacWindowStyler {
     }
 
     private static void applyVibrancyOnAppKit(Window window, MacVibrancyStyle style) {
+        try {
+            MacWindowPeerAccess.setPeerOpaque(window, false);
+        } catch (RuntimeException ignored) {
+            // Some peers may reject opacity changes depending on lifecycle/state.
+        }
+
         long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
         if (nsWindowPtr == 0) {
             throw new IllegalStateException("Cannot resolve NSWindow pointer");
@@ -152,14 +162,34 @@ public final class MacWindowStyler {
         MemorySegment contentView = requireAddress(ObjCRuntime.sendAddress(nsWindow, "contentView"), "NSWindow contentView");
 
         if (!style.enabled()) {
+            MacNativeVibrancyBridge.remove(nsWindowPtr);
             clearVibrancyOnAppKit(window);
             return;
+        }
+
+        int material = (int) style.material().nativeValue();
+        if (MacNativeVibrancyBridge.isAvailable()) {
+            boolean updated = MacNativeVibrancyBridge.update(nsWindowPtr, material, style.backdropAlpha());
+            if (updated) {
+                if (DUMP_NATIVE) {
+                    MacNativeVibrancyBridge.dump(nsWindowPtr);
+                }
+                return;
+            }
+            boolean installed = MacNativeVibrancyBridge.install(nsWindowPtr, material, style.backdropAlpha());
+            if (installed) {
+                if (DUMP_NATIVE) {
+                    MacNativeVibrancyBridge.dump(nsWindowPtr);
+                }
+                return;
+            }
         }
 
         if (isNil(effectView)) {
             effectView = createEffectSiblingView(nsWindow, contentView);
         }
 
+        configureWindowForBackdrop(nsWindow, contentView);
         ObjCRuntime.sendVoidLong(effectView, "setMaterial:", style.material().nativeValue());
         ObjCRuntime.sendVoidLong(effectView, "setBlendingMode:", style.blendingMode().nativeValue());
         ObjCRuntime.sendVoidLong(effectView, "setState:", style.state().nativeValue());
@@ -167,6 +197,9 @@ public final class MacWindowStyler {
         applyVibrantAppearance(nsWindow, effectView);
         if (ObjCRuntime.respondsToSelector(effectView, "setEmphasized:")) {
             ObjCRuntime.sendVoidBool(effectView, "setEmphasized:", style.emphasized());
+        }
+        if (DUMP_NATIVE) {
+            MacNativeVibrancyBridge.dump(nsWindowPtr);
         }
     }
 
@@ -304,7 +337,10 @@ public final class MacWindowStyler {
     }
 
     private static MemorySegment findAwtHostView(MemorySegment rootView) {
-        if (ObjCRuntime.respondsToSelector(rootView, "mouseIsOver")) {
+        boolean awtBridge =
+            ObjCRuntime.respondsToSelector(rootView, "mouseIsOver")
+                && ObjCRuntime.respondsToSelector(rootView, "deliverJavaMouseEvent:");
+        if (awtBridge) {
             return rootView;
         }
         MemorySegment subviews = ObjCRuntime.sendAddress(rootView, "subviews");
@@ -320,6 +356,34 @@ public final class MacWindowStyler {
             }
         }
         return MemorySegment.NULL;
+    }
+
+    private static void configureWindowForBackdrop(MemorySegment nsWindow, MemorySegment contentView) {
+        if (ObjCRuntime.respondsToSelector(nsWindow, "setOpaque:")) {
+            ObjCRuntime.sendVoidBool(nsWindow, "setOpaque:", false);
+        }
+
+        if (ObjCRuntime.respondsToSelector(nsWindow, "setBackgroundColor:")) {
+            MemorySegment nsColorClass = ObjCRuntime.objcClass("NSColor");
+            if (!isNil(nsColorClass)) {
+                MemorySegment clear = ObjCRuntime.sendAddress(nsColorClass, "clearColor");
+                if (!isNil(clear)) {
+                    ObjCRuntime.sendVoidAddress(nsWindow, "setBackgroundColor:", clear);
+                }
+            }
+        }
+
+        MemorySegment awtView = findAwtHostView(contentView);
+        if (isNil(awtView)) {
+            return;
+        }
+
+        if (ObjCRuntime.respondsToSelector(awtView, "setOpaque:")) {
+            ObjCRuntime.sendVoidBool(awtView, "setOpaque:", false);
+        }
+        if (ObjCRuntime.respondsToSelector(awtView, "setWantsLayer:")) {
+            ObjCRuntime.sendVoidBool(awtView, "setWantsLayer:", true);
+        }
     }
 
     private static void pinToParent(MemorySegment effectView, MemorySegment parentView) {

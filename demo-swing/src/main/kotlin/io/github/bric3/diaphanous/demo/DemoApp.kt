@@ -39,6 +39,7 @@ import javax.swing.JComboBox
 import javax.swing.JButton
 import javax.swing.JColorChooser
 import javax.swing.BorderFactory
+import javax.swing.JComponent
 import kotlin.random.Random
 
 /**
@@ -133,6 +134,11 @@ object DemoApp {
             .backdropAlpha(alphaSlider.value / 100.0)
             .build()
 
+        fun decoratedStyle(): MacVibrancyStyle = MacVibrancyStyle.builder()
+            .material(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+            .backdropAlpha(1.0)
+            .build()
+
         val centerPanel = JPanel(BorderLayout(0, 0))
         centerPanel.isOpaque = false
         centerPanel.add(title, BorderLayout.NORTH)
@@ -178,14 +184,19 @@ object DemoApp {
         styleGbc.fill = GridBagConstraints.HORIZONTAL
 
         val transparentTitleBarCheck = JCheckBox("Transparent title bar", true)
+        transparentTitleBarCheck.name = "transparentTitleBarCheck"
         transparentTitleBarCheck.isOpaque = false
         val fullSizeContentCheck = JCheckBox("Full-size content view", true)
+        fullSizeContentCheck.name = "fullSizeContentCheck"
         fullSizeContentCheck.isOpaque = false
         val titleVisibleCheck = JCheckBox("Title visible", false)
+        titleVisibleCheck.name = "titleVisibleCheck"
         titleVisibleCheck.isOpaque = false
         val toolbarStyleCombo = JComboBox(MacToolbarStyle.entries.toTypedArray())
+        toolbarStyleCombo.name = "toolbarStyleCombo"
         toolbarStyleCombo.selectedItem = MacToolbarStyle.UNIFIED_COMPACT
         val appearanceCombo = JComboBox(MacWindowAppearance.entries.toTypedArray())
+        appearanceCombo.name = "appearanceCombo"
         appearanceCombo.selectedItem = MacWindowAppearance.SYSTEM
 
         fun applyWindowStyleFromControls() {
@@ -196,6 +207,9 @@ object DemoApp {
                 .toolbarStyle(toolbarStyleCombo.selectedItem as MacToolbarStyle)
                 .build()
             MacWindowStyler.apply(frame, style)
+            if (!undecorated) {
+                MacWindowStyler.applyVibrancy(frame, decoratedStyle())
+            }
         }
         transparentTitleBarCheck.addActionListener { applyWindowStyleFromControls() }
         fullSizeContentCheck.addActionListener { applyWindowStyleFromControls() }
@@ -311,6 +325,9 @@ object DemoApp {
 
         frame.contentPane = panel
         frame.isVisible = true
+        if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
+            dumpComponentTree(frame.rootPane, 0)
+        }
         MacWindowStyler.applyAppearance(frame, appearanceCombo.selectedItem as MacWindowAppearance)
         if (undecorated) {
             MacWindowStyler.applyVibrancy(frame, currentStyle())
@@ -324,6 +341,20 @@ object DemoApp {
         UNDECORATED
     }
 
+    private fun dumpComponentTree(component: java.awt.Component, depth: Int) {
+        val indent = "  ".repeat(depth)
+        val opaque = if (component is JComponent) component.isOpaque else false
+        val background = component.background
+        val namePart = if (component.name != null) " name=${component.name}" else ""
+        println(
+            "$indent- ${component.javaClass.simpleName}$namePart visible=${component.isVisible} " +
+                "opaque=$opaque bg=rgba(${background.red},${background.green},${background.blue},${background.alpha})"
+        )
+        if (component is java.awt.Container) {
+            component.components.forEach { child -> dumpComponentTree(child, depth + 1) }
+        }
+    }
+
     private class RandomTimeseriesPanel : JPanel() {
         private val values: DoubleArray = DoubleArray(180) { Random.nextDouble(0.0, 1.0) }
         private var areaColor = Color(170, 110, 255, 100)
@@ -332,10 +363,9 @@ object DemoApp {
         private var barBorderColor = Color(150, 110, 220, 170)
 
         init {
-            isOpaque = true
+            isOpaque = false
             preferredSize = java.awt.Dimension(1, 72)
             minimumSize = java.awt.Dimension(1, 56)
-            background = barBackgroundColor
             border = BorderFactory.createMatteBorder(0, 0, 1, 0, barBorderColor)
         }
 
@@ -351,7 +381,6 @@ object DemoApp {
 
         fun setBarBackgroundColor(color: Color) {
             barBackgroundColor = color
-            background = color
             repaint()
         }
 
@@ -366,9 +395,10 @@ object DemoApp {
         fun barBackgroundColor(): Color = barBackgroundColor
         fun barBorderColor(): Color = barBorderColor
         override fun paintComponent(g: Graphics) {
-            super.paintComponent(g)
             val g2 = g.create() as Graphics2D
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+            g2.color = barBackgroundColor
+            g2.fillRect(0, 0, width, height)
 
             val w = width.toDouble().coerceAtLeast(1.0)
             val h = height.toDouble().coerceAtLeast(1.0)

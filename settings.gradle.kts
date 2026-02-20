@@ -17,4 +17,8 @@ plugins {
 }
 
 rootProject.name = "diaphanous-swing"
-include("translucency-core", "demo-swing")
+include(
+    "translucency-core",
+    "demo-swing",
+    "translucency-core-macos-native"
+)
