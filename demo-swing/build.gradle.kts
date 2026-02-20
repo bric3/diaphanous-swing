@@ -53,6 +53,15 @@ tasks.named<JavaExec>("run") {
 configurations[robotTest.implementationConfigurationName].extendsFrom(configurations.testImplementation.get())
 configurations[robotTest.runtimeOnlyConfigurationName].extendsFrom(configurations.testRuntimeOnly.get())
 
+fun passRobotPropToJvm(task: Test, key: String) {
+    val value = providers.gradleProperty(key)
+        .orElse(providers.systemProperty(key))
+        .orNull
+    if (!value.isNullOrBlank()) {
+        task.systemProperty(key, value)
+    }
+}
+
 val robotTestTask = tasks.register<Test>("robotTest") {
     dependsOn(":translucency-core-macos-native:assemble")
     val nativeLib = rootProject.layout.projectDirectory
@@ -74,6 +83,41 @@ val robotTestTask = tasks.register<Test>("robotTest") {
     )
     systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotTest").get().asFile.absolutePath)
     systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)
+    passRobotPropToJvm(this, "diaphanous.robot.wallpaperName")
+    passRobotPropToJvm(this, "diaphanous.robot.wallpaper")
+    passRobotPropToJvm(this, "diaphanous.robot.alpha")
+    passRobotPropToJvm(this, "diaphanous.robot.diagonal")
+}
+
+tasks.register<Test>("robotShot") {
+    dependsOn(":translucency-core-macos-native:assemble")
+    val nativeLib = rootProject.layout.projectDirectory
+        .dir("translucency-core-macos-native/build/lib/main/debug")
+        .file("libtranslucency-core-macos-native.dylib")
+        .asFile
+    description = "Captures a screenshot of the demo app via Robot."
+    group = "verification"
+    testClassesDirs = robotTest.output.classesDirs
+    classpath = robotTest.runtimeClasspath
+    outputs.dir(layout.buildDirectory.dir("reports/robotShot"))
+
+    useJUnitPlatform()
+    filter {
+        includeTestsMatching("io.github.bric3.diaphanous.demo.ScreenshotRobotTest")
+    }
+    jvmArgs(
+        "--enable-native-access=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
+        "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED"
+    )
+    systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotShot").get().asFile.absolutePath)
+    systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)
+    systemProperty("diaphanous.projectDir", rootProject.layout.projectDirectory.asFile.absolutePath)
+    passRobotPropToJvm(this, "diaphanous.robot.wallpaperName")
+    passRobotPropToJvm(this, "diaphanous.robot.wallpaper")
+    passRobotPropToJvm(this, "diaphanous.robot.alpha")
+    passRobotPropToJvm(this, "diaphanous.robot.diagonal")
 }
 
 tasks.named("check") {

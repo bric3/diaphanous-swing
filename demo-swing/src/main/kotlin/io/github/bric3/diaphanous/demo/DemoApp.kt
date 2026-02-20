@@ -56,22 +56,38 @@ object DemoApp {
      */
     @JvmStatic
     fun main(args: Array<String>) {
-        val mode = parseMode(args)
-        SwingUtilities.invokeLater { showWindow(mode) }
+        val options = parseOptions(args)
+        SwingUtilities.invokeLater { showWindow(options) }
     }
 
-    private fun parseMode(args: Array<String>): WindowMode {
-        return when (args.firstOrNull()?.lowercase()) {
-            "undecorated", "--undecorated" -> WindowMode.UNDECORATED
-            "decorated", "--decorated", null -> WindowMode.DECORATED
-            else -> WindowMode.DECORATED
+    private fun parseOptions(args: Array<String>): LaunchOptions {
+        var mode = WindowMode.DECORATED
+        var appearance = MacWindowAppearance.SYSTEM
+
+        for (arg in args) {
+            when {
+                arg.equals("undecorated", ignoreCase = true) || arg.equals("--undecorated", ignoreCase = true) ->
+                    mode = WindowMode.UNDECORATED
+                arg.equals("decorated", ignoreCase = true) || arg.equals("--decorated", ignoreCase = true) ->
+                    mode = WindowMode.DECORATED
+                arg.startsWith("--appearance=", ignoreCase = true) -> {
+                    val raw = arg.substringAfter('=')
+                    appearance = parseAppearance(raw) ?: appearance
+                }
+            }
         }
+        return LaunchOptions(mode, appearance)
     }
 
-    private fun showWindow(mode: WindowMode) {
+    private fun parseAppearance(raw: String): MacWindowAppearance? {
+        val normalized = raw.trim().replace('-', '_').uppercase()
+        return MacWindowAppearance.entries.firstOrNull { it.name == normalized }
+    }
+
+    private fun showWindow(options: LaunchOptions) {
         val frame = JFrame("Diaphanous Swing Demo")
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        val undecorated = mode == WindowMode.UNDECORATED
+        val undecorated = options.mode == WindowMode.UNDECORATED
         frame.isUndecorated = undecorated
         frame.setSize(980, 640)
         frame.setLocationRelativeTo(null)
@@ -124,11 +140,13 @@ object DemoApp {
         alphaValue.foreground = Color(230, 230, 230, 190)
         val alphaLabel = JLabel("Backdrop alpha")
         val alphaSlider = JSlider(0, 100, (initialAlpha * 100.0).toInt())
+        alphaSlider.name = "alphaSlider"
         alphaSlider.isOpaque = false
         val blurValue = JLabel("$initialBlurStrength")
         blurValue.foreground = Color(230, 230, 230, 190)
         val blurLabel = JLabel("Blur strength")
         val blurSlider = JSlider(0, 100, initialBlurStrength)
+        blurSlider.name = "blurSlider"
         blurSlider.isOpaque = false
         val undecoratedInfo = JLabel(
             "Undecorated mode: alpha/blur controls apply experimental NSVisualEffectView backdrop",
@@ -211,7 +229,7 @@ object DemoApp {
         toolbarStyleCombo.selectedItem = MacToolbarStyle.UNIFIED_COMPACT
         val appearanceCombo = JComboBox(MacWindowAppearance.entries.toTypedArray())
         appearanceCombo.name = "appearanceCombo"
-        appearanceCombo.selectedItem = MacWindowAppearance.SYSTEM
+        appearanceCombo.selectedItem = options.appearance
 
         fun applyWindowStyleFromControls() {
             val style = MacWindowStyle.builder()
@@ -362,6 +380,11 @@ object DemoApp {
         DECORATED,
         UNDECORATED
     }
+
+    private data class LaunchOptions(
+        val mode: WindowMode,
+        val appearance: MacWindowAppearance
+    )
 
     private fun dumpComponentTree(component: java.awt.Component, depth: Int) {
         val indent = "  ".repeat(depth)

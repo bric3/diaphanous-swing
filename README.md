@@ -5,6 +5,7 @@
 ## Project layout
 
 - `translucency-core`: library module.
+- `translucency-core-macos-native`: macOS native bridge (`NSView` wrapper + effect view management).
 - `demo-swing`: sample Swing app using the library.
 
 ## What works (macOS)
@@ -14,11 +15,20 @@
 - Title visibility (`setTitleVisibility:`)
 - Toolbar style when available (`setToolbarStyle:`)
 - Vibrancy backdrop with `NSVisualEffectView` (`applyVibrancy(...)` / `clearVibrancy(...)`)
+- Swing-side backdrop support (`MacBackdropSupport`) to prevent Java overpaint in decorated mode.
 
 ## Run the demo
 
+Decorated mode:
+
 ```bash
-./gradlew :demo-swing:run
+./gradlew :demo-swing:run --args='--decorated'
+```
+
+Undecorated mode:
+
+```bash
+./gradlew :demo-swing:run --args='--undecorated'
 ```
 
 The demo is preconfigured with these JVM arguments:
@@ -28,6 +38,12 @@ The demo is preconfigured with these JVM arguments:
 - `--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED`
 
 These are required to access the AWT macOS peer and obtain `NSWindow*`.
+
+Robot smoke test:
+
+```bash
+./gradlew :demo-swing:robotTest
+```
 
 ## Library usage
 
@@ -45,6 +61,9 @@ MacVibrancyStyle vibrancy = MacVibrancyStyle.builder()
     .material(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
     .build();
 MacWindowStyler.applyVibrancy(frame, vibrancy);
+
+MacWindowStyler.applyAppearance(frame, MacWindowAppearance.SYSTEM);
+MacBackdropSupport.configure(frame, MacWindowAppearance.SYSTEM);
 ```
 
 ## License
