@@ -19,6 +19,7 @@ import io.github.bric3.diaphanous.MacWindowStyler
 import io.github.bric3.diaphanous.MacBackdropSupport
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -149,7 +150,7 @@ object DemoApp {
         blurSlider.name = "blurSlider"
         blurSlider.isOpaque = false
         val undecoratedInfo = JLabel(
-            "Undecorated mode: alpha/blur controls apply experimental NSVisualEffectView backdrop",
+            "<html><div style='width:260px'>Undecorated mode: alpha/blur controls apply experimental NSVisualEffectView backdrop.</div></html>",
             JLabel.LEFT
         )
         undecoratedInfo.foreground = Color(220, 220, 220, 210)
@@ -167,17 +168,18 @@ object DemoApp {
             .backdropAlpha(alphaSlider.value / 100.0)
             .build()
 
-        val centerPanel = JPanel(BorderLayout(0, 0))
-        centerPanel.isOpaque = false
-        centerPanel.background = Color(0, 0, 0, 0)
-        centerPanel.add(title, BorderLayout.NORTH)
-        val mainContentPanel = JPanel(BorderLayout(0, 16))
-        mainContentPanel.isOpaque = false
-        mainContentPanel.background = Color(0, 0, 0, 0)
+        fun transparentPanel(layout: LayoutManager): JPanel = (
+            if (undecorated) ErasingPanel(layout) else JPanel(layout)
+        ).apply {
+            isOpaque = false
+            background = Color(0, 0, 0, 0)
+        }
 
-        val controlsPanel = JPanel(GridBagLayout())
-        controlsPanel.isOpaque = false
-        controlsPanel.background = Color(0, 0, 0, 0)
+        val centerPanel = transparentPanel(BorderLayout(0, 0))
+        centerPanel.add(title, BorderLayout.NORTH)
+        val mainContentPanel = transparentPanel(BorderLayout(0, 16))
+
+        val controlsPanel = transparentPanel(GridBagLayout())
         val gbc = GridBagConstraints()
         gbc.insets = Insets(4, 8, 4, 8)
         gbc.fill = GridBagConstraints.HORIZONTAL
@@ -208,9 +210,7 @@ object DemoApp {
         gbc.gridwidth = 2
         controlsPanel.add(blurSlider, gbc)
 
-        val stylePanel = JPanel(GridBagLayout())
-        stylePanel.isOpaque = false
-        stylePanel.background = Color(0, 0, 0, 0)
+        val stylePanel = transparentPanel(GridBagLayout())
         val styleGbc = GridBagConstraints()
         styleGbc.insets = Insets(4, 8, 4, 8)
         styleGbc.fill = GridBagConstraints.HORIZONTAL
@@ -263,38 +263,45 @@ object DemoApp {
             MacWindowStyler.applyVibrancy(frame, currentStyle())
         }
 
-        styleGbc.gridy = 0
+        var styleRow = 0
+        styleGbc.gridy = styleRow++
         styleGbc.gridx = 0
         styleGbc.gridwidth = 2
         stylePanel.add(JLabel("Window style settings"), styleGbc)
 
-        styleGbc.gridy = 1
-        styleGbc.gridx = 0
-        styleGbc.gridwidth = 2
-        stylePanel.add(transparentTitleBarCheck, styleGbc)
+        if (undecorated) {
+            styleGbc.gridy = styleRow++
+            styleGbc.gridx = 0
+            styleGbc.gridwidth = 2
+            stylePanel.add(undecoratedInfo, styleGbc)
+        } else {
+            styleGbc.gridy = styleRow++
+            styleGbc.gridx = 0
+            styleGbc.gridwidth = 2
+            stylePanel.add(transparentTitleBarCheck, styleGbc)
 
-        styleGbc.gridy = 2
-        stylePanel.add(fullSizeContentCheck, styleGbc)
+            styleGbc.gridy = styleRow++
+            stylePanel.add(fullSizeContentCheck, styleGbc)
 
-        styleGbc.gridy = 3
-        stylePanel.add(titleVisibleCheck, styleGbc)
+            styleGbc.gridy = styleRow++
+            stylePanel.add(titleVisibleCheck, styleGbc)
 
-        styleGbc.gridy = 4
+            styleGbc.gridy = styleRow++
+            styleGbc.gridx = 0
+            styleGbc.gridwidth = 1
+            stylePanel.add(JLabel("Toolbar style"), styleGbc)
+            styleGbc.gridx = 1
+            stylePanel.add(toolbarStyleCombo, styleGbc)
+        }
+
+        styleGbc.gridy = styleRow
         styleGbc.gridx = 0
         styleGbc.gridwidth = 1
-        stylePanel.add(JLabel("Toolbar style"), styleGbc)
-        styleGbc.gridx = 1
-        stylePanel.add(toolbarStyleCombo, styleGbc)
-
-        styleGbc.gridy = 5
-        styleGbc.gridx = 0
         stylePanel.add(JLabel("Appearance"), styleGbc)
         styleGbc.gridx = 1
         stylePanel.add(appearanceCombo, styleGbc)
 
-        val colorPanel = JPanel(GridBagLayout())
-        colorPanel.isOpaque = false
-        colorPanel.background = Color(0, 0, 0, 0)
+        val colorPanel = transparentPanel(GridBagLayout())
         val colorGbc = GridBagConstraints()
         colorGbc.insets = Insets(4, 8, 4, 8)
         colorGbc.fill = GridBagConstraints.HORIZONTAL
@@ -335,28 +342,16 @@ object DemoApp {
             current = { topSeriesPanel.areaColor() }
         ) { color -> topSeriesPanel.setAreaColor(color) }
 
-        if (undecorated) {
-            val blurPanel = JPanel(BorderLayout(0, 8))
-            blurPanel.isOpaque = false
-            blurPanel.background = Color(0, 0, 0, 0)
-            blurPanel.add(undecoratedInfo, BorderLayout.NORTH)
-            blurPanel.add(controlsPanel, BorderLayout.CENTER)
-            mainContentPanel.add(blurPanel, BorderLayout.EAST)
-        } else {
-            val decoratedSettingsPanel = JPanel(BorderLayout(0, 8))
-            decoratedSettingsPanel.isOpaque = false
-            decoratedSettingsPanel.background = Color(0, 0, 0, 0)
-            decoratedSettingsPanel.add(stylePanel, BorderLayout.NORTH)
-            decoratedSettingsPanel.add(controlsPanel, BorderLayout.CENTER)
-            mainContentPanel.add(decoratedSettingsPanel, BorderLayout.EAST)
-        }
+        val settingsPanel = transparentPanel(BorderLayout(0, 8))
+        settingsPanel.add(stylePanel, BorderLayout.NORTH)
+        settingsPanel.add(controlsPanel, BorderLayout.CENTER)
+        settingsPanel.preferredSize = Dimension(320, settingsPanel.preferredSize.height)
+        mainContentPanel.add(settingsPanel, BorderLayout.EAST)
         mainContentPanel.add(colorPanel, BorderLayout.WEST)
         centerPanel.add(mainContentPanel, BorderLayout.CENTER)
 
         val panel = ErasingPanel(BorderLayout(16, 16))
-        val centered = JPanel(GridBagLayout())
-        centered.isOpaque = false
-        centered.background = Color(0, 0, 0, 0)
+        val centered = transparentPanel(GridBagLayout())
         centered.add(centerPanel)
         panel.add(topSeriesPanel, BorderLayout.NORTH)
         panel.add(centered, BorderLayout.CENTER)
