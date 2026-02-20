@@ -1,0 +1,31 @@
+/*
+ * Diaphanous Swing
+ *
+ * Copyright (c) ${year} - ${name}
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+package io.github.bric3.diaphanous;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class MacVibrancyStyleTest {
+    @Test
+    void builderCreatesExpectedDefaults() {
+        MacVibrancyStyle style = MacVibrancyStyle.builder().build();
+
+        assertTrue(style.enabled());
+        assertEquals(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND, style.material());
+        assertEquals(MacVibrancyBlendingMode.BEHIND_WINDOW, style.blendingMode());
+        assertEquals(MacVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE, style.state());
+        assertFalse(style.emphasized());
+        assertEquals(1.0d, style.backdropAlpha());
+    }
+}

@@ -13,6 +13,7 @@
 - Full-size content view style bit (`setStyleMask:` with `NSWindowStyleMaskFullSizeContentView`)
 - Title visibility (`setTitleVisibility:`)
 - Toolbar style when available (`setToolbarStyle:`)
+- Vibrancy backdrop with `NSVisualEffectView` (`applyVibrancy(...)` / `clearVibrancy(...)`)
 
 ## Run the demo
 
@@ -39,6 +40,11 @@ MacWindowStyle style = MacWindowStyle.builder()
     .build();
 
 MacWindowStyler.apply(frame, style);
+
+MacVibrancyStyle vibrancy = MacVibrancyStyle.builder()
+    .material(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+    .build();
+MacWindowStyler.applyVibrancy(frame, vibrancy);
 ```
 
 ## License

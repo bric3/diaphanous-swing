@@ -26,6 +26,7 @@ final class MacWindowPeerAccess {
     private static final Field COMPONENT_PEER_FIELD;
     private static final Field CF_PTR_FIELD;
     private static final Method GET_PLATFORM_WINDOW;
+    private static final Method SET_PEER_OPAQUE;
 
     static {
         try {
@@ -35,6 +36,8 @@ final class MacWindowPeerAccess {
             Class<?> lwWindowPeerClass = Class.forName(LW_WINDOW_PEER);
             GET_PLATFORM_WINDOW = lwWindowPeerClass.getMethod("getPlatformWindow");
             GET_PLATFORM_WINDOW.setAccessible(true);
+            SET_PEER_OPAQUE = lwWindowPeerClass.getMethod("setOpaque", boolean.class);
+            SET_PEER_OPAQUE.setAccessible(true);
 
             Class<?> cfRetainedResourceClass = Class.forName(CF_RETAINED_RESOURCE);
             CF_PTR_FIELD = cfRetainedResourceClass.getDeclaredField("ptr");
@@ -65,6 +68,18 @@ final class MacWindowPeerAccess {
 
         Object platformWindow = invokeGetPlatformWindow(peer);
         return getPointer(platformWindow);
+    }
+
+    static void setPeerOpaque(Window window, boolean opaque) {
+        Object peer = getPeer(window);
+        if (peer == null) {
+            throw new IllegalStateException("AWT peer is not initialized yet; make sure the window is displayable");
+        }
+        try {
+            SET_PEER_OPAQUE.invoke(peer, opaque);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot change AWT peer opacity", e);
+        }
     }
 
     private static Object getPeer(Window window) {
