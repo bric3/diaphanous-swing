@@ -16,6 +16,7 @@ import io.github.bric3.diaphanous.MacToolbarStyle
 import io.github.bric3.diaphanous.MacWindowStyle
 import io.github.bric3.diaphanous.MacWindowAppearance
 import io.github.bric3.diaphanous.MacWindowStyler
+import io.github.bric3.diaphanous.MacStartupReveal
 import io.github.bric3.diaphanous.MacBackdropSupport
 import java.awt.BorderLayout
 import java.awt.Color
@@ -369,10 +370,6 @@ object DemoApp {
         panel.add(centered, BorderLayout.CENTER)
 
         frame.contentPane = panel
-        frame.isVisible = true
-        if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
-            dumpComponentTree(frame.rootPane, 0)
-        }
         val initialAppearance = appearanceCombo.selectedItem as MacWindowAppearance
         MacWindowStyler.applyAppearance(frame, initialAppearance)
         MacBackdropSupport.configure(frame, initialAppearance)
@@ -380,6 +377,10 @@ object DemoApp {
             MacWindowStyler.applyVibrancy(frame, currentStyle())
         } else {
             applyWindowStyleFromControls()
+        }
+        MacStartupReveal.show(frame)
+        if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
+            dumpComponentTree(frame.rootPane, 0)
         }
     }
 

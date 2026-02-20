@@ -116,6 +116,29 @@ public final class MacWindowStyler {
     }
 
     /**
+     * Sets native window alpha ({@code NSWindow.alphaValue}) on AppKit thread.
+     *
+     * @param window target window
+     * @param alpha alpha in range {@code [0,1]}
+     *
+     * <p>References:
+     * <ul>
+     *   <li><a href="https://developer.apple.com/documentation/appkit/nswindow/1419167-alphavalue">Apple NSWindow.alphaValue</a></li>
+     *   <li><a href="https://developer.apple.com/documentation/appkit/nswindow/1419515-setalphavalue">Apple NSWindow.setAlphaValue(_:)</a></li>
+     * </ul>
+     */
+    public static void setWindowAlpha(Window window, double alpha) {
+        Objects.requireNonNull(window, "window");
+
+        if (!isSupported()) {
+            throw new UnsupportedOperationException("macOS window styling is only supported on macOS");
+        }
+
+        double clamped = Math.max(0.0, Math.min(1.0, alpha));
+        MacThreading.runOnAppKitThread(() -> setWindowAlphaOnAppKit(window, clamped));
+    }
+
+    /**
      * Returns the platform default alpha for {@code NSVisualEffectView}, when available.
      *
      * @return default alpha value in range {@code [0,1]}, or {@code -1} when unavailable
@@ -321,6 +344,15 @@ public final class MacWindowStyler {
             appearanceName
         );
         ObjCRuntime.sendVoidAddress(nsWindow, "setAppearance:", nativeAppearance);
+    }
+
+    private static void setWindowAlphaOnAppKit(Window window, double alpha) {
+        long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+        if (nsWindowPtr == 0) {
+            throw new IllegalStateException("Cannot resolve NSWindow pointer");
+        }
+        MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
+        ObjCRuntime.sendVoidDouble(nsWindow, "setAlphaValue:", alpha);
     }
 
     private static MemorySegment createEffectSiblingView(MemorySegment nsWindow, MemorySegment contentView) {
