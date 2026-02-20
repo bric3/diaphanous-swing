@@ -18,6 +18,7 @@
 - (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material alpha: (CGFloat) alpha;
 - (void) removeEffect;
 - (NSView *) awtView;
+- (NSVisualEffectView *) effectView;
 
 @end
 
@@ -71,6 +72,10 @@
 
 - (NSView *) awtView {
     return awtView;
+}
+
+- (NSVisualEffectView *) effectView {
+    return effectView;
 }
 
 - (BOOL) mouseIsOver {
@@ -261,4 +266,70 @@ extern "C" int diaphanous_dump_window_state(void* ns_window_ptr) {
         NSLog(@"[diaphanous] ---- window dump end ----");
         return 0;
     });
+}
+
+extern "C" double diaphanous_default_effect_alpha(void) {
+    __block double value = -1.0;
+    run_on_main_sync(^int {
+        NSVisualEffectView *view = [[NSVisualEffectView alloc] initWithFrame: NSZeroRect];
+        value = view != nil ? (double) view.alphaValue : -1.0;
+        return 0;
+    });
+    return value;
+}
+
+extern "C" int diaphanous_default_effect_material(void) {
+    __block int value = -1;
+    run_on_main_sync(^int {
+        NSVisualEffectView *view = [[NSVisualEffectView alloc] initWithFrame: NSZeroRect];
+        value = view != nil ? (int) view.material : -1;
+        return 0;
+    });
+    return value;
+}
+
+extern "C" double diaphanous_read_effect_alpha(void* ns_window_ptr) {
+    __block double value = -1.0;
+    run_on_main_sync(^int {
+        if (ns_window_ptr == nullptr) {
+            return -1;
+        }
+        NSWindow *window = (__bridge NSWindow *) ns_window_ptr;
+        if (window == nil) {
+            return -1;
+        }
+        NSView *content = window.contentView;
+        if ([content isKindOfClass: [DiaphanousWrappedAWTView class]]) {
+            NSVisualEffectView *view = [(DiaphanousWrappedAWTView *) content effectView];
+            if (view != nil) {
+                value = (double) view.alphaValue;
+                return 0;
+            }
+        }
+        return -1;
+    });
+    return value;
+}
+
+extern "C" int diaphanous_read_effect_material(void* ns_window_ptr) {
+    __block int value = -1;
+    run_on_main_sync(^int {
+        if (ns_window_ptr == nullptr) {
+            return -1;
+        }
+        NSWindow *window = (__bridge NSWindow *) ns_window_ptr;
+        if (window == nil) {
+            return -1;
+        }
+        NSView *content = window.contentView;
+        if ([content isKindOfClass: [DiaphanousWrappedAWTView class]]) {
+            NSVisualEffectView *view = [(DiaphanousWrappedAWTView *) content effectView];
+            if (view != nil) {
+                value = (int) view.material;
+                return 0;
+            }
+        }
+        return -1;
+    });
+    return value;
 }

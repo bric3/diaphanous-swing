@@ -209,3 +209,28 @@ The following tuning properties are no longer considered effective for fixing de
 6. `NSVisualEffectView.material` and alpha tuning alone.
 
 These are still useful building blocks, but not sufficient to make decorated AWT content reveal backdrop blur.
+
+## Preventing Java overpaint on decorated windows
+
+Earlier sections identified the main blocker: even with correct native wrapper insertion, AWT content (via `MTLLayer` blitting) was still painting a full surface over `NSVisualEffectView`.
+
+This iteration addresses that specific blocker by reducing Java-side overpaint in selected containers.
+
+The decorated-window path now produces visible backdrop vibrancy/blur in practice (validated with `SYSTEM`, `VIBRANT_LIGHT`, and `VIBRANT_DARK` appearances).
+
+Implemented outcomes:
+
+1. Java-side clear/erase support was added via `MacBackdropSupport` to avoid full-surface overpaint on the Metal-backed AWT host.
+2. Erase activation is gated:
+   - enabled for decorated macOS windows with `SYSTEM` / `VIBRANT_*` appearance,
+   - disabled for undecorated mode and non-vibrant appearances (`AQUA`, `DARK_AQUA`).
+3. Robot test coverage was extended to validate this activation path.
+4. Demo controls now initialize from native defaults when available:
+   - alpha slider from native `NSVisualEffectView.alphaValue`,
+   - blur proxy slider from native `NSVisualEffectMaterial` (mapped to demo ranges).
+
+Relation to previous findings:
+
+1. Confirms the earlier conclusion that native hierarchy insertion is necessary but not sufficient.
+2. Confirms that Java-side erase behavior is required to expose backdrop in decorated mode.
+3. Keeps the same material limitation: material changes select blur profiles, not a direct blur-radius value.

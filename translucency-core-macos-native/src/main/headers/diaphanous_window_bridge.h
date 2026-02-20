@@ -19,6 +19,10 @@ int diaphanous_install_vibrant_wrapper(void* ns_window_ptr, int material, double
 int diaphanous_update_vibrant_material(void* ns_window_ptr, int material, double alpha);
 int diaphanous_remove_vibrant_wrapper(void* ns_window_ptr);
 int diaphanous_dump_window_state(void* ns_window_ptr);
+double diaphanous_default_effect_alpha(void);
+int diaphanous_default_effect_material(void);
+double diaphanous_read_effect_alpha(void* ns_window_ptr);
+int diaphanous_read_effect_material(void* ns_window_ptr);
 
 #ifdef __cplusplus
 }

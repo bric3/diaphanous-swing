@@ -16,6 +16,7 @@ import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Applies macOS-specific native window style attributes to Swing/AWT windows.
@@ -112,6 +113,82 @@ public final class MacWindowStyler {
         }
 
         MacThreading.runOnAppKitThread(() -> applyAppearanceOnAppKit(window, appearance));
+    }
+
+    /**
+     * Returns the platform default alpha for {@code NSVisualEffectView}, when available.
+     *
+     * @return default alpha value in range {@code [0,1]}, or {@code -1} when unavailable
+     *
+     * <p>The value is read from a freshly created native effect view and reflects the current OS/JDK default.
+     */
+    public static double defaultBackdropAlpha() {
+        if (!isSupported() || !MacNativeVibrancyBridge.isAvailable()) {
+            return -1.0;
+        }
+        final double[] value = {-1.0};
+        MacThreading.runOnAppKitThread(() -> value[0] = MacNativeVibrancyBridge.defaultAlpha());
+        return value[0];
+    }
+
+    /**
+     * Returns the current native backdrop alpha from the installed effect view.
+     *
+     * @param window target window
+     * @return optional alpha value when effect view is installed
+     *
+     * <p>Returns empty when no native wrapper/effect view is installed or native bridge is unavailable.
+     */
+    public static Optional<Double> readBackdropAlpha(Window window) {
+        Objects.requireNonNull(window, "window");
+        if (!isSupported() || !MacNativeVibrancyBridge.isAvailable()) {
+            return Optional.empty();
+        }
+
+        final double[] value = {-1.0};
+        MacThreading.runOnAppKitThread(() -> {
+            long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+            value[0] = nsWindowPtr == 0L ? -1.0 : MacNativeVibrancyBridge.readAlpha(nsWindowPtr);
+        });
+        return value[0] >= 0.0 ? Optional.of(value[0]) : Optional.empty();
+    }
+
+    /**
+     * Returns the platform default material for {@code NSVisualEffectView}, when available.
+     *
+     * @return optional default material
+     *
+     * <p>The value is read from a freshly created native effect view and reflects current OS defaults.
+     */
+    public static Optional<MacVibrancyMaterial> defaultBackdropMaterial() {
+        if (!isSupported() || !MacNativeVibrancyBridge.isAvailable()) {
+            return Optional.empty();
+        }
+        final int[] value = {-1};
+        MacThreading.runOnAppKitThread(() -> value[0] = MacNativeVibrancyBridge.defaultMaterial());
+        return value[0] >= 0 ? MacVibrancyMaterial.fromNativeValue(value[0]) : Optional.empty();
+    }
+
+    /**
+     * Returns the current native backdrop material from the installed effect view.
+     *
+     * @param window target window
+     * @return optional material when effect view is installed
+     *
+     * <p>Returns empty when no native wrapper/effect view is installed or native bridge is unavailable.
+     */
+    public static Optional<MacVibrancyMaterial> readBackdropMaterial(Window window) {
+        Objects.requireNonNull(window, "window");
+        if (!isSupported() || !MacNativeVibrancyBridge.isAvailable()) {
+            return Optional.empty();
+        }
+
+        final int[] value = {-1};
+        MacThreading.runOnAppKitThread(() -> {
+            long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+            value[0] = nsWindowPtr == 0L ? -1 : MacNativeVibrancyBridge.readMaterial(nsWindowPtr);
+        });
+        return value[0] >= 0 ? MacVibrancyMaterial.fromNativeValue(value[0]) : Optional.empty();
     }
 
     private static void applyOnAppKit(Window window, MacWindowStyle style) {

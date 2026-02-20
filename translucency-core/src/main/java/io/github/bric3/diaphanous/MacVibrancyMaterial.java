@@ -10,6 +10,8 @@
 
 package io.github.bric3.diaphanous;
 
+import java.util.Optional;
+
 /**
  * Values mapped to macOS {@code NSVisualEffectMaterial}.
  */
@@ -36,6 +38,23 @@ public enum MacVibrancyMaterial {
 
     MacVibrancyMaterial(long nativeValue) {
         this.nativeValue = nativeValue;
+    }
+
+    /**
+     * Returns the mapped enum for a native {@code NSVisualEffectMaterial} value.
+     *
+     * @param nativeValue native material value
+     * @return matching material when known
+     *
+     * <p>Returns empty when the runtime exposes a material value not represented in this enum.
+     */
+    public static Optional<MacVibrancyMaterial> fromNativeValue(long nativeValue) {
+        for (MacVibrancyMaterial material : values()) {
+            if (material.nativeValue == nativeValue) {
+                return Optional.of(material);
+            }
+        }
+        return Optional.empty();
     }
 
     long nativeValue() {

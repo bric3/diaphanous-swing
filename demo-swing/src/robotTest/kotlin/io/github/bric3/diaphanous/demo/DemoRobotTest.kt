@@ -12,6 +12,7 @@ package io.github.bric3.diaphanous.demo
 
 import io.github.bric3.diaphanous.MacToolbarStyle
 import io.github.bric3.diaphanous.MacWindowAppearance
+import io.github.bric3.diaphanous.MacBackdropSupport
 import java.awt.Component
 import java.awt.Container
 import java.awt.EventQueue
@@ -19,6 +20,7 @@ import java.awt.Frame
 import java.awt.GraphicsEnvironment
 import java.awt.Rectangle
 import java.awt.Robot
+import java.awt.event.InputEvent
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.Files
@@ -30,6 +32,8 @@ import javax.swing.JComboBox
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -55,14 +59,41 @@ class DemoRobotTest {
         capture(demoFrame, outputDir.resolve("01-initial.png"), robot)
         report.appendLine("Captured: 01-initial.png")
 
-        EventQueue.invokeAndWait {
-            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)?.selectedItem = MacWindowAppearance.VIBRANT_DARK
-            findByName(demoFrame.rootPane, "toolbarStyleCombo", JComboBox::class.java)?.selectedItem = MacToolbarStyle.EXPANDED
-            findByName(demoFrame.rootPane, "transparentTitleBarCheck", JCheckBox::class.java)?.doClick()
-            findByName(demoFrame.rootPane, "transparentTitleBarCheck", JCheckBox::class.java)?.doClick()
+        val appearanceCombo = invokeAndWaitResult {
+            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)
         }
+        val toolbarCombo = invokeAndWaitResult {
+            findByName(demoFrame.rootPane, "toolbarStyleCombo", JComboBox::class.java)
+        }
+        val transparentTitleBarCheck = invokeAndWaitResult {
+            findByName(demoFrame.rootPane, "transparentTitleBarCheck", JCheckBox::class.java)
+        }
+        assertNotNull(appearanceCombo, "appearanceCombo not found")
+        assertNotNull(toolbarCombo, "toolbarStyleCombo not found")
+        assertNotNull(transparentTitleBarCheck, "transparentTitleBarCheck not found")
+
+        clickComponent(robot, requireNotNull(appearanceCombo))
+        EventQueue.invokeAndWait {
+            appearanceCombo.selectedItem = MacWindowAppearance.AQUA
+        }
+        Thread.sleep(300)
+        val disabledOnAqua = invokeAndWaitResult { MacBackdropSupport.isEnabledFor(demoFrame.rootPane) }
+        assertFalse(disabledOnAqua, "Backdrop erase should be disabled for AQUA")
+
+        clickComponent(robot, requireNotNull(appearanceCombo))
+        EventQueue.invokeAndWait {
+            appearanceCombo.selectedItem = MacWindowAppearance.VIBRANT_DARK
+        }
+        clickComponent(robot, requireNotNull(toolbarCombo))
+        EventQueue.invokeAndWait {
+            toolbarCombo.selectedItem = MacToolbarStyle.EXPANDED
+        }
+        clickComponent(robot, requireNotNull(transparentTitleBarCheck))
+        clickComponent(robot, requireNotNull(transparentTitleBarCheck))
 
         Thread.sleep(600)
+        val enabledOnVibrant = invokeAndWaitResult { MacBackdropSupport.isEnabledFor(demoFrame.rootPane) }
+        assertTrue(enabledOnVibrant, "Backdrop erase should be enabled for VIBRANT_DARK")
         capture(demoFrame, outputDir.resolve("02-after-controls.png"), robot)
         report.appendLine("Captured: 02-after-controls.png")
 
@@ -101,6 +132,19 @@ class DemoRobotTest {
         }
         val image: BufferedImage = robot.createScreenCapture(target)
         ImageIO.write(image, "png", file)
+    }
+
+    private fun clickComponent(robot: Robot, component: Component) {
+        val target = invokeAndWaitResult {
+            val location = component.locationOnScreen
+            Rectangle(location.x, location.y, component.width, component.height)
+        }
+        val x = target.x + (target.width / 2)
+        val y = target.y + (target.height / 2)
+        robot.mouseMove(x, y)
+        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
+        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
+        robot.waitForIdle()
     }
 
     private fun <T : Component> findByName(root: Container, name: String, type: Class<T>): T? {

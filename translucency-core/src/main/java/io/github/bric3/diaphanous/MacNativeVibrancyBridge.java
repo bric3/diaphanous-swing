@@ -65,6 +65,34 @@ final class MacNativeVibrancyBridge {
         return FNS.dump(nsWindowPtr) == 0;
     }
 
+    static double defaultAlpha() {
+        if (FNS == null) {
+            return -1.0;
+        }
+        return FNS.defaultAlpha();
+    }
+
+    static int defaultMaterial() {
+        if (FNS == null) {
+            return -1;
+        }
+        return FNS.defaultMaterial();
+    }
+
+    static double readAlpha(long nsWindowPtr) {
+        if (FNS == null || nsWindowPtr == 0L) {
+            return -1.0;
+        }
+        return FNS.readAlpha(nsWindowPtr);
+    }
+
+    static int readMaterial(long nsWindowPtr) {
+        if (FNS == null || nsWindowPtr == 0L) {
+            return -1;
+        }
+        return FNS.readMaterial(nsWindowPtr);
+    }
+
     private static Optional<NativeFns> loadNativeFns() {
         Path libPath = resolveLibraryPath();
         if (libPath == null || !Files.isRegularFile(libPath)) {
@@ -105,8 +133,39 @@ final class MacNativeVibrancyBridge {
                     .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_dump_window_state")),
                 FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
             );
+            MethodHandle defaultAlphaHandle = linker.downcallHandle(
+                lookup.find("diaphanous_default_effect_alpha")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_default_effect_alpha")),
+                FunctionDescriptor.of(ValueLayout.JAVA_DOUBLE)
+            );
+            MethodHandle defaultMaterialHandle = linker.downcallHandle(
+                lookup.find("diaphanous_default_effect_material")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_default_effect_material")),
+                FunctionDescriptor.of(ValueLayout.JAVA_INT)
+            );
+            MethodHandle readAlphaHandle = linker.downcallHandle(
+                lookup.find("diaphanous_read_effect_alpha")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_read_effect_alpha")),
+                FunctionDescriptor.of(ValueLayout.JAVA_DOUBLE, ValueLayout.ADDRESS)
+            );
+            MethodHandle readMaterialHandle = linker.downcallHandle(
+                lookup.find("diaphanous_read_effect_material")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_read_effect_material")),
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
+            );
 
-            return Optional.of(new NativeFns(installHandle, updateHandle, removeHandle, dumpHandle));
+            return Optional.of(
+                new NativeFns(
+                    installHandle,
+                    updateHandle,
+                    removeHandle,
+                    dumpHandle,
+                    defaultAlphaHandle,
+                    defaultMaterialHandle,
+                    readAlphaHandle,
+                    readMaterialHandle
+                )
+            );
         } catch (Throwable ignored) {
             return Optional.empty();
         }
@@ -130,12 +189,29 @@ final class MacNativeVibrancyBridge {
         private final MethodHandle updateHandle;
         private final MethodHandle removeHandle;
         private final MethodHandle dumpHandle;
+        private final MethodHandle defaultAlphaHandle;
+        private final MethodHandle defaultMaterialHandle;
+        private final MethodHandle readAlphaHandle;
+        private final MethodHandle readMaterialHandle;
 
-        private NativeFns(MethodHandle installHandle, MethodHandle updateHandle, MethodHandle removeHandle, MethodHandle dumpHandle) {
+        private NativeFns(
+            MethodHandle installHandle,
+            MethodHandle updateHandle,
+            MethodHandle removeHandle,
+            MethodHandle dumpHandle,
+            MethodHandle defaultAlphaHandle,
+            MethodHandle defaultMaterialHandle,
+            MethodHandle readAlphaHandle,
+            MethodHandle readMaterialHandle
+        ) {
             this.installHandle = installHandle;
             this.updateHandle = updateHandle;
             this.removeHandle = removeHandle;
             this.dumpHandle = dumpHandle;
+            this.defaultAlphaHandle = defaultAlphaHandle;
+            this.defaultMaterialHandle = defaultMaterialHandle;
+            this.readAlphaHandle = readAlphaHandle;
+            this.readMaterialHandle = readMaterialHandle;
         }
 
         private int install(long nsWindowPtr, int material, double alpha) {
@@ -167,6 +243,38 @@ final class MacNativeVibrancyBridge {
                 return (int) dumpHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr));
             } catch (Throwable t) {
                 throw new IllegalStateException("Native dump call failed", t);
+            }
+        }
+
+        private double defaultAlpha() {
+            try {
+                return (double) defaultAlphaHandle.invokeExact();
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native default alpha call failed", t);
+            }
+        }
+
+        private int defaultMaterial() {
+            try {
+                return (int) defaultMaterialHandle.invokeExact();
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native default material call failed", t);
+            }
+        }
+
+        private double readAlpha(long nsWindowPtr) {
+            try {
+                return (double) readAlphaHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr));
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native read alpha call failed", t);
+            }
+        }
+
+        private int readMaterial(long nsWindowPtr) {
+            try {
+                return (int) readMaterialHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr));
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native read material call failed", t);
             }
         }
     }

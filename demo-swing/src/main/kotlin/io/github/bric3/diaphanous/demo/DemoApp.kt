@@ -16,6 +16,7 @@ import io.github.bric3.diaphanous.MacToolbarStyle
 import io.github.bric3.diaphanous.MacWindowStyle
 import io.github.bric3.diaphanous.MacWindowAppearance
 import io.github.bric3.diaphanous.MacWindowStyler
+import io.github.bric3.diaphanous.MacBackdropSupport
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Font
@@ -24,6 +25,7 @@ import java.awt.Graphics2D
 import java.awt.GridBagLayout
 import java.awt.GridBagConstraints
 import java.awt.Insets
+import java.awt.LayoutManager
 import java.awt.RenderingHints
 import java.awt.Point
 import java.awt.event.MouseAdapter
@@ -105,15 +107,28 @@ object DemoApp {
             topSeriesPanel.addMouseMotionListener(dragListener)
         }
 
-        val alphaValue = JLabel("0.55")
+        val nativeDefaultAlpha = MacWindowStyler.defaultBackdropAlpha()
+        val initialAlpha = if (nativeDefaultAlpha in 0.0..1.0) nativeDefaultAlpha else DEFAULT_BACKDROP_ALPHA
+        fun blurStrengthForMaterial(material: MacVibrancyMaterial): Int = when (material) {
+            MacVibrancyMaterial.CONTENT_BACKGROUND -> 10
+            MacVibrancyMaterial.WINDOW_BACKGROUND -> 30
+            MacVibrancyMaterial.SIDEBAR -> 50
+            MacVibrancyMaterial.MENU -> 70
+            MacVibrancyMaterial.HUD_WINDOW -> 90
+            else -> DEFAULT_BLUR_STRENGTH
+        }
+        val initialBlurStrength = MacWindowStyler.defaultBackdropMaterial()
+            .map { blurStrengthForMaterial(it) }
+            .orElse(DEFAULT_BLUR_STRENGTH)
+        val alphaValue = JLabel("%.2f".format(initialAlpha))
         alphaValue.foreground = Color(230, 230, 230, 190)
         val alphaLabel = JLabel("Backdrop alpha")
-        val alphaSlider = JSlider(0, 100, (DEFAULT_BACKDROP_ALPHA * 100.0).toInt())
+        val alphaSlider = JSlider(0, 100, (initialAlpha * 100.0).toInt())
         alphaSlider.isOpaque = false
-        val blurValue = JLabel("$DEFAULT_BLUR_STRENGTH")
+        val blurValue = JLabel("$initialBlurStrength")
         blurValue.foreground = Color(230, 230, 230, 190)
         val blurLabel = JLabel("Blur strength")
-        val blurSlider = JSlider(0, 100, DEFAULT_BLUR_STRENGTH)
+        val blurSlider = JSlider(0, 100, initialBlurStrength)
         blurSlider.isOpaque = false
         val undecoratedInfo = JLabel(
             "Undecorated mode: alpha/blur controls apply experimental NSVisualEffectView backdrop",
@@ -134,19 +149,17 @@ object DemoApp {
             .backdropAlpha(alphaSlider.value / 100.0)
             .build()
 
-        fun decoratedStyle(): MacVibrancyStyle = MacVibrancyStyle.builder()
-            .material(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
-            .backdropAlpha(1.0)
-            .build()
-
         val centerPanel = JPanel(BorderLayout(0, 0))
         centerPanel.isOpaque = false
+        centerPanel.background = Color(0, 0, 0, 0)
         centerPanel.add(title, BorderLayout.NORTH)
         val mainContentPanel = JPanel(BorderLayout(0, 16))
         mainContentPanel.isOpaque = false
+        mainContentPanel.background = Color(0, 0, 0, 0)
 
         val controlsPanel = JPanel(GridBagLayout())
         controlsPanel.isOpaque = false
+        controlsPanel.background = Color(0, 0, 0, 0)
         val gbc = GridBagConstraints()
         gbc.insets = Insets(4, 8, 4, 8)
         gbc.fill = GridBagConstraints.HORIZONTAL
@@ -179,6 +192,7 @@ object DemoApp {
 
         val stylePanel = JPanel(GridBagLayout())
         stylePanel.isOpaque = false
+        stylePanel.background = Color(0, 0, 0, 0)
         val styleGbc = GridBagConstraints()
         styleGbc.insets = Insets(4, 8, 4, 8)
         styleGbc.fill = GridBagConstraints.HORIZONTAL
@@ -208,7 +222,7 @@ object DemoApp {
                 .build()
             MacWindowStyler.apply(frame, style)
             if (!undecorated) {
-                MacWindowStyler.applyVibrancy(frame, decoratedStyle())
+                MacWindowStyler.applyVibrancy(frame, currentStyle())
             }
         }
         transparentTitleBarCheck.addActionListener { applyWindowStyleFromControls() }
@@ -216,21 +230,19 @@ object DemoApp {
         titleVisibleCheck.addActionListener { applyWindowStyleFromControls() }
         toolbarStyleCombo.addActionListener { applyWindowStyleFromControls() }
         appearanceCombo.addActionListener {
-            MacWindowStyler.applyAppearance(frame, appearanceCombo.selectedItem as MacWindowAppearance)
+            val appearance = appearanceCombo.selectedItem as MacWindowAppearance
+            MacWindowStyler.applyAppearance(frame, appearance)
+            MacBackdropSupport.configure(frame, appearance)
         }
 
         alphaSlider.addChangeListener {
             val alpha = alphaSlider.value / 100.0
             alphaValue.text = "%.2f".format(alpha)
-            if (undecorated) {
-                MacWindowStyler.applyVibrancy(frame, currentStyle())
-            }
+            MacWindowStyler.applyVibrancy(frame, currentStyle())
         }
         blurSlider.addChangeListener {
             blurValue.text = blurSlider.value.toString()
-            if (undecorated) {
-                MacWindowStyler.applyVibrancy(frame, currentStyle())
-            }
+            MacWindowStyler.applyVibrancy(frame, currentStyle())
         }
 
         styleGbc.gridy = 0
@@ -264,6 +276,7 @@ object DemoApp {
 
         val colorPanel = JPanel(GridBagLayout())
         colorPanel.isOpaque = false
+        colorPanel.background = Color(0, 0, 0, 0)
         val colorGbc = GridBagConstraints()
         colorGbc.insets = Insets(4, 8, 4, 8)
         colorGbc.fill = GridBagConstraints.HORIZONTAL
@@ -279,6 +292,8 @@ object DemoApp {
             apply: (Color) -> Unit
         ) {
             val pickButton = JButton("Pick")
+            pickButton.isOpaque = false
+            pickButton.background = Color(0, 0, 0, 0)
             pickButton.addActionListener {
                 val selected = JColorChooser.showDialog(frame, "Choose $label", current()) ?: return@addActionListener
                 apply(selected)
@@ -305,20 +320,25 @@ object DemoApp {
         if (undecorated) {
             val blurPanel = JPanel(BorderLayout(0, 8))
             blurPanel.isOpaque = false
+            blurPanel.background = Color(0, 0, 0, 0)
             blurPanel.add(undecoratedInfo, BorderLayout.NORTH)
             blurPanel.add(controlsPanel, BorderLayout.CENTER)
             mainContentPanel.add(blurPanel, BorderLayout.EAST)
         } else {
-            mainContentPanel.add(stylePanel, BorderLayout.EAST)
+            val decoratedSettingsPanel = JPanel(BorderLayout(0, 8))
+            decoratedSettingsPanel.isOpaque = false
+            decoratedSettingsPanel.background = Color(0, 0, 0, 0)
+            decoratedSettingsPanel.add(stylePanel, BorderLayout.NORTH)
+            decoratedSettingsPanel.add(controlsPanel, BorderLayout.CENTER)
+            mainContentPanel.add(decoratedSettingsPanel, BorderLayout.EAST)
         }
         mainContentPanel.add(colorPanel, BorderLayout.WEST)
         centerPanel.add(mainContentPanel, BorderLayout.CENTER)
 
-        val panel = JPanel(BorderLayout(16, 16))
-        panel.isOpaque = false
-        panel.background = Color(0, 0, 0, 0)
+        val panel = ErasingPanel(BorderLayout(16, 16))
         val centered = JPanel(GridBagLayout())
         centered.isOpaque = false
+        centered.background = Color(0, 0, 0, 0)
         centered.add(centerPanel)
         panel.add(topSeriesPanel, BorderLayout.NORTH)
         panel.add(centered, BorderLayout.CENTER)
@@ -328,7 +348,9 @@ object DemoApp {
         if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
             dumpComponentTree(frame.rootPane, 0)
         }
-        MacWindowStyler.applyAppearance(frame, appearanceCombo.selectedItem as MacWindowAppearance)
+        val initialAppearance = appearanceCombo.selectedItem as MacWindowAppearance
+        MacWindowStyler.applyAppearance(frame, initialAppearance)
+        MacBackdropSupport.configure(frame, initialAppearance)
         if (undecorated) {
             MacWindowStyler.applyVibrancy(frame, currentStyle())
         } else {
@@ -430,6 +452,21 @@ object DemoApp {
             g2.color = lineColor
             g2.draw(line)
             g2.dispose()
+        }
+    }
+
+    private class ErasingPanel(
+        layout: LayoutManager
+    ) : JPanel(layout) {
+        init {
+            isOpaque = false
+            background = Color(0, 0, 0, 0)
+        }
+
+        override fun paintComponent(g: Graphics) {
+            if (!MacBackdropSupport.clearBackgroundIfEnabled(g, this)) {
+                super.paintComponent(g)
+            }
         }
     }
 }
