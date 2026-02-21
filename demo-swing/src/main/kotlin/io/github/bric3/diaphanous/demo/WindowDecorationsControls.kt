@@ -10,7 +10,6 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.decorations.MacosToolbarStyle
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
 import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec
 import java.awt.Color
@@ -46,11 +45,6 @@ class WindowDecorationsControls(
         isOpaque = false
         addActionListener { onStyleChange(currentDecorationsSpec()) }
     }
-    private val toolbarStyleCombo = JComboBox(MacosToolbarStyle.entries.toTypedArray()).apply {
-        name = "toolbarStyleCombo"
-        selectedItem = MacosToolbarStyle.UNIFIED_COMPACT
-        addActionListener { onStyleChange(currentDecorationsSpec()) }
-    }
     private val appearanceCombo = JComboBox(MacosWindowAppearanceSpec.entries.toTypedArray()).apply {
         name = "appearanceCombo"
         selectedItem = initialAppearance
@@ -61,7 +55,6 @@ class WindowDecorationsControls(
         .transparentTitleBar(transparentTitleBarCheck.isSelected)
         .fullSizeContentView(fullSizeContentCheck.isSelected)
         .titleVisible(titleVisibleCheck.isSelected)
-        .toolbarStyle(toolbarStyleCombo.selectedItem as MacosToolbarStyle)
         .build()
 
     fun currentAppearanceSpec(): MacosWindowAppearanceSpec = appearanceCombo.selectedItem as MacosWindowAppearanceSpec
@@ -99,15 +92,6 @@ class WindowDecorationsControls(
 
         styleGbc.gridy = styleRow++
         stylePanel.add(titleVisibleCheck, styleGbc)
-
-        styleGbc.apply {
-            gridy = styleRow++
-            gridx = 0
-            gridwidth = 1
-        }
-        stylePanel.add(JLabel("Toolbar style"), styleGbc)
-        styleGbc.gridx = 1
-        stylePanel.add(toolbarStyleCombo, styleGbc)
 
         styleGbc.apply {
             gridy = styleRow

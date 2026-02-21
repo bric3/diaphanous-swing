@@ -110,15 +110,11 @@ final class MacosNativeVibrancyBridge {
         if (FNS == null || nsWindowPtr == 0L || style == null) {
             return false;
         }
-        long toolbarValue = style.toolbarStyle() == null ? 0L : style.toolbarStyle().nativeValue();
-        int hasToolbar = style.toolbarStyle() == null ? 0 : 1;
         return FNS.applyWindowStyle(
             nsWindowPtr,
             style.transparentTitleBar() ? 1 : 0,
             style.fullSizeContentView() ? 1 : 0,
-            style.titleVisible() ? 1 : 0,
-            toolbarValue,
-            hasToolbar
+            style.titleVisible() ? 1 : 0
         ) == 0;
     }
 
@@ -211,8 +207,6 @@ final class MacosNativeVibrancyBridge {
                     ValueLayout.ADDRESS,
                     ValueLayout.JAVA_INT,
                     ValueLayout.JAVA_INT,
-                    ValueLayout.JAVA_INT,
-                    ValueLayout.JAVA_LONG,
                     ValueLayout.JAVA_INT
                 )
             );
@@ -382,18 +376,14 @@ final class MacosNativeVibrancyBridge {
             long nsWindowPtr,
             int transparentTitleBar,
             int fullSizeContentView,
-            int titleVisible,
-            long toolbarStyle,
-            int hasToolbarStyle
+            int titleVisible
         ) {
             try {
                 return (int) applyWindowStyleHandle.invokeExact(
                     MemorySegment.ofAddress(nsWindowPtr),
                     transparentTitleBar,
                     fullSizeContentView,
-                    titleVisible,
-                    toolbarStyle,
-                    hasToolbarStyle
+                    titleVisible
                 );
             } catch (Throwable t) {
                 throw new IllegalStateException("Native apply window style call failed", t);

@@ -11,7 +11,6 @@
 package io.github.bric3.diaphanous.demo
 
 import io.github.bric3.diaphanous.backdrop.ComponentBackdropSupport
-import io.github.bric3.diaphanous.decorations.MacosToolbarStyle
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
 import java.awt.Component
 import java.awt.Container
@@ -62,14 +61,10 @@ class DemoRobotTest {
         val appearanceCombo = invokeAndWaitResult {
             findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)
         }
-        val toolbarCombo = invokeAndWaitResult {
-            findByName(demoFrame.rootPane, "toolbarStyleCombo", JComboBox::class.java)
-        }
         val transparentTitleBarCheck = invokeAndWaitResult {
             findByName(demoFrame.rootPane, "transparentTitleBarCheck", JCheckBox::class.java)
         }
         assertNotNull(appearanceCombo, "appearanceCombo not found")
-        assertNotNull(toolbarCombo, "toolbarStyleCombo not found")
         assertNotNull(transparentTitleBarCheck, "transparentTitleBarCheck not found")
 
         clickComponent(robot, requireNotNull(appearanceCombo))
@@ -83,10 +78,6 @@ class DemoRobotTest {
         clickComponent(robot, requireNotNull(appearanceCombo))
         EventQueue.invokeAndWait {
             appearanceCombo.selectedItem = MacosWindowAppearanceSpec.VIBRANT_DARK
-        }
-        clickComponent(robot, requireNotNull(toolbarCombo))
-        EventQueue.invokeAndWait {
-            toolbarCombo.selectedItem = MacosToolbarStyle.EXPANDED
         }
         clickComponent(robot, requireNotNull(transparentTitleBarCheck))
         clickComponent(robot, requireNotNull(transparentTitleBarCheck))

@@ -10,11 +10,9 @@
 
 package io.github.bric3.diaphanous;
 
-import io.github.bric3.diaphanous.decorations.MacosToolbarStyle;
 import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,6 +24,5 @@ class MacosWindowDecorationsSpecTest {
         assertTrue(style.transparentTitleBar());
         assertTrue(style.fullSizeContentView());
         assertFalse(style.titleVisible());
-        assertEquals(MacosToolbarStyle.UNIFIED, style.toolbarStyle());
     }
 }

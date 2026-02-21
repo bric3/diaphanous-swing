@@ -21,7 +21,6 @@
   - Transparent title bar (`setTitlebarAppearsTransparent:`)
   - Full-size content view style bit (`setStyleMask:` with `NSWindowStyleMaskFullSizeContentView`)
   - Title visibility (`setTitleVisibility:`)
-  - Toolbar style when available (`setToolbarStyle:`)
   - Vibrancy backdrop with `NSVisualEffectView` (`WindowBackdrop.apply(...)` / `WindowBackdrop.remove(...)`)
 
 ## Run the demo
@@ -52,7 +51,6 @@ import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec;
 import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdropMaterial;
 import io.github.bric3.diaphanous.backdrop.WindowBackgroundEffectSpec;
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop;
-import io.github.bric3.diaphanous.decorations.MacosToolbarStyle;
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec;
 import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec;
 import io.github.bric3.diaphanous.decorations.WindowPresentations;
@@ -61,7 +59,6 @@ MacosWindowDecorationsSpec style = MacosWindowDecorationsSpec.builder()
     .transparentTitleBar(true)
     .fullSizeContentView(true)
     .titleVisible(false)
-    .toolbarStyle(MacosToolbarStyle.UNIFIED_COMPACT)
     .build();
 WindowPresentations.applyDecorations(frame, style);
 

@@ -16,9 +16,7 @@ extern "C" int diaphanous_apply_window_style(
     void* ns_window_ptr,
     int transparent_title_bar,
     int full_size_content_view,
-    int title_visible,
-    long toolbar_style,
-    int has_toolbar_style
+    int title_visible
 ) {
     return diaphanous_run_on_main_sync(^int {
         if (ns_window_ptr == nullptr) {
@@ -38,9 +36,6 @@ extern "C" int diaphanous_apply_window_style(
         window.styleMask = styleMask;
         window.titlebarAppearsTransparent = transparent_title_bar != 0 ? YES : NO;
         window.titleVisibility = title_visible != 0 ? NSWindowTitleVisible : NSWindowTitleHidden;
-        if (has_toolbar_style != 0 && [window respondsToSelector: @selector(setToolbarStyle:)]) {
-            window.toolbarStyle = (NSWindowToolbarStyle) toolbar_style;
-        }
         return 0;
     });
 }

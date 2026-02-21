@@ -336,10 +336,6 @@ public final class MacosWindowStyler {
             "setTitleVisibility:",
             style.titleVisible() ? NS_WINDOW_TITLE_VISIBLE : NS_WINDOW_TITLE_HIDDEN
         );
-
-        if (style.toolbarStyle() != null && ObjCRuntime.respondsToSelector(nsWindow, "setToolbarStyle:")) {
-            ObjCRuntime.sendVoidLong(nsWindow, "setToolbarStyle:", style.toolbarStyle().nativeValue());
-        }
     }
 
     private static void applyVibrancyOnAppKit(Window window, MacosBackdropEffectSpec style) {

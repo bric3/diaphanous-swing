@@ -16,13 +16,11 @@ package io.github.bric3.diaphanous.decorations;
  * @param transparentTitleBar whether the title bar background is transparent
  * @param fullSizeContentView whether content extends into the title bar area
  * @param titleVisible whether the window title text is visible
- * @param toolbarStyle optional toolbar style; {@code null} keeps current toolbar style unchanged
  */
 public record MacosWindowDecorationsSpec(
     boolean transparentTitleBar,
     boolean fullSizeContentView,
-    boolean titleVisible,
-    MacosToolbarStyle toolbarStyle
+    boolean titleVisible
 ) implements WindowDecorationSpec {
     /**
      * Creates a builder with defaults that match a modern translucent macOS window style.
@@ -40,7 +38,6 @@ public record MacosWindowDecorationsSpec(
         private boolean transparentTitleBar = true;
         private boolean fullSizeContentView = true;
         private boolean titleVisible;
-        private MacosToolbarStyle toolbarStyle = MacosToolbarStyle.UNIFIED;
 
         /**
          * @param enabled whether the title bar background should be transparent
@@ -70,19 +67,10 @@ public record MacosWindowDecorationsSpec(
         }
 
         /**
-         * @param style toolbar style to apply, or {@code null} to skip toolbar style updates
-         * @return this builder
-         */
-        public Builder toolbarStyle(MacosToolbarStyle style) {
-            this.toolbarStyle = style;
-            return this;
-        }
-
-        /**
          * @return immutable style configuration
          */
         public MacosWindowDecorationsSpec build() {
-            return new MacosWindowDecorationsSpec(transparentTitleBar, fullSizeContentView, titleVisible, toolbarStyle);
+            return new MacosWindowDecorationsSpec(transparentTitleBar, fullSizeContentView, titleVisible);
         }
     }
 }

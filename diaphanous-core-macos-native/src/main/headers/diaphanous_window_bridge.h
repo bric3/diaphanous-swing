@@ -125,22 +125,18 @@ int diaphanous_read_effect_material(void* ns_window_ptr);
  * Applies native window style knobs related to titlebar/content integration.
  *
  * Applies `NSWindowStyleMaskFullSizeContentView`, titlebar transparency,
- * title visibility, and optional toolbar style.
+ * and title visibility.
  *
  * @param ns_window_ptr borrowed `NSWindow*`.
  * @param transparent_title_bar boolean flag (`0` false, non-zero true).
  * @param full_size_content_view boolean flag (`0` false, non-zero true).
  * @param title_visible boolean flag (`0` hidden, non-zero visible).
- * @param toolbar_style raw `NSWindowToolbarStyle` value.
- * @param has_toolbar_style when non-zero, applies `toolbar_style`.
  */
 int diaphanous_apply_window_style(
     void* ns_window_ptr,
     int transparent_title_bar,
     int full_size_content_view,
-    int title_visible,
-    long toolbar_style,
-    int has_toolbar_style
+    int title_visible
 );
 /**
  * Applies a native appearance by AppKit appearance name.
