@@ -8,8 +8,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.backdrop;
 
+import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec;
+import io.github.bric3.diaphanous.decorations.WindowAppearanceSpec;
+import io.github.bric3.diaphanous.decorations.WindowDecorations;
 import java.awt.AlphaComposite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -20,30 +23,27 @@ import javax.swing.RootPaneContainer;
 import javax.swing.SwingUtilities;
 
 /**
- * Swing-side support for macOS backdrop rendering in decorated Swing/AWT windows.
+ * Swing-side support for native backdrop rendering in decorated Swing/AWT windows.
  * <p>
- * Raison d'etre: on modern macOS JDKs, AWT content is presented through a Metal-backed host
- * ({@code MTLLayer}) and Java2D output is blitted into that layer. Even when an
- * {@code NSVisualEffectView} exists behind AWT content, normal Java background painting can still
- * cover the full surface and hide vibrancy.
+ * This helper enables an explicit clear/erase paint pass on selected Swing containers so
+ * the native backdrop can remain visible where intended.
  * <p>
- * This helper enables an explicit clear/erase paint pass on selected Swing containers so the native
- * backdrop can remain visible where intended.
+ * Current behavior is implemented for the macOS backend.
  */
-public final class MacBackdropSupport {
+public final class BackdropSupport {
     private static final String BACKDROP_ERASE_ENABLED_KEY = "diaphanous.backdropEraseEnabled";
 
-    private MacBackdropSupport() {
+    private BackdropSupport() {
     }
 
     /**
      * Enables or disables backdrop erase on the window root pane based on platform, decoration and appearance.
      *
      * @param window the target window
-     * @param appearance the selected macOS appearance
+     * @param spec the selected platform appearance
      */
-    public static void configure(Window window, MacWindowAppearance appearance) {
-        boolean enabled = shouldEnable(window, appearance);
+    public static void configure(Window window, WindowAppearanceSpec spec) {
+        boolean enabled = shouldEnable(window, spec);
         configure(window, enabled);
     }
 
@@ -69,23 +69,22 @@ public final class MacBackdropSupport {
      * Returns {@code true} when backdrop erase should be enabled for the given window and appearance.
      *
      * @param window the target window
-     * @param appearance selected appearance
+     * @param spec selected appearance
      * @return {@code true} if backdrop erase should be active
-     *
-     * <p>Current policy:
-     * enabled for decorated macOS windows using {@code SYSTEM}/{@code VIBRANT_*} appearance,
-     * disabled otherwise.
      */
-    public static boolean shouldEnable(Window window, MacWindowAppearance appearance) {
-        if (!MacWindowStyler.isSupported() || window == null || appearance == null) {
+    public static boolean shouldEnable(Window window, WindowAppearanceSpec spec) {
+        if (!WindowDecorations.isSupported() || window == null || spec == null) {
             return false;
         }
         if (window instanceof java.awt.Frame frame && frame.isUndecorated()) {
             return false;
         }
-        return appearance == MacWindowAppearance.SYSTEM
-            || appearance == MacWindowAppearance.VIBRANT_LIGHT
-            || appearance == MacWindowAppearance.VIBRANT_DARK;
+        if (spec instanceof MacosWindowAppearanceSpec macAppearance) {
+            return macAppearance == MacosWindowAppearanceSpec.SYSTEM
+                || macAppearance == MacosWindowAppearanceSpec.VIBRANT_LIGHT
+                || macAppearance == MacosWindowAppearanceSpec.VIBRANT_DARK;
+        }
+        return false;
     }
 
     /**
@@ -111,8 +110,6 @@ public final class MacBackdropSupport {
      * @param g current graphics
      * @param component current component
      * @return {@code true} if a clear pass was applied
-     *
-     * <p>This uses {@link AlphaComposite#Clear} to remove already-rendered pixels in component bounds.
      */
     public static boolean clearBackgroundIfEnabled(Graphics g, JComponent component) {
         if (!isEnabledFor(component)) {

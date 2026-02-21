@@ -8,8 +8,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.decorations;
 
+import io.github.bric3.diaphanous.platform.macos.MacosWindowStyler;
 import java.awt.Window;
 import java.util.Objects;
 
@@ -19,15 +20,15 @@ import java.util.Objects;
  * This type intentionally mirrors the scope of native decoration providers such as Darklaf platform
  * decorations, while excluding vibrancy/backdrop operations.
  */
-public final class MacWindowDecorations {
-    private MacWindowDecorations() {
+public final class MacosWindowDecorations {
+    private MacosWindowDecorations() {
     }
 
     /**
      * @return {@code true} when running on macOS
      */
     public static boolean isSupported() {
-        return MacWindowStyler.isSupported();
+        return System.getProperty("os.name", "").contains("Mac");
     }
 
     /**
@@ -36,10 +37,10 @@ public final class MacWindowDecorations {
      * @param window target window
      * @param style decoration style configuration
      */
-    public static void applyStyle(Window window, MacWindowStyle style) {
+    public static void applyStyle(Window window, MacosWindowDecorationsSpec style) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(style, "style");
-        MacWindowStyler.apply(window, style);
+        MacosWindowStyler.apply(window, style);
     }
 
     /**
@@ -48,10 +49,9 @@ public final class MacWindowDecorations {
      * @param window target window
      * @param appearance appearance to apply
      */
-    public static void applyAppearance(Window window, MacWindowAppearance appearance) {
+    public static void applyAppearance(Window window, MacosWindowAppearanceSpec appearance) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(appearance, "appearance");
-        MacWindowStyler.applyAppearance(window, appearance);
+        MacosWindowStyler.applyAppearance(window, appearance);
     }
 }
-

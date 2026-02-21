@@ -10,7 +10,7 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacWindowAppearance
+import io.github.bric3.diaphanous.MacosWindowAppearance
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
@@ -77,7 +77,7 @@ class ScreenshotRobotTest {
         }
 
         EventQueue.invokeAndWait {
-            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)?.selectedItem = MacWindowAppearance.VIBRANT_DARK
+            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)?.selectedItem = MacosWindowAppearance.VIBRANT_DARK
         }
 
         val alphaDefault = invokeAndWaitResultShot {
@@ -97,7 +97,7 @@ class ScreenshotRobotTest {
         }
         Thread.sleep(450)
         EventQueue.invokeAndWait {
-            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)?.selectedItem = MacWindowAppearance.VIBRANT_DARK
+            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)?.selectedItem = MacosWindowAppearance.VIBRANT_DARK
         }
         Thread.sleep(700)
         moveMouseOutsideCapture(robot, captureTarget)
@@ -107,7 +107,7 @@ class ScreenshotRobotTest {
         ImageIO.write(darkImage, "png", outputDir.toPath().resolve("screenshot-dark.png").toFile())
 
         EventQueue.invokeAndWait {
-            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)?.selectedItem = MacWindowAppearance.VIBRANT_LIGHT
+            findByName(demoFrame.rootPane, "appearanceCombo", JComboBox::class.java)?.selectedItem = MacosWindowAppearance.VIBRANT_LIGHT
         }
         Thread.sleep(700)
         moveMouseOutsideCapture(robot, captureTarget)

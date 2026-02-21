@@ -8,14 +8,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.backdrop;
 
 import java.util.Optional;
 
 /**
  * Values mapped to macOS {@code NSVisualEffectMaterial}.
  */
-public enum MacVibrancyMaterial {
+public enum MacosVibrancyMaterial implements WindowBackdropMaterialSpec {
     APPEARANCE_BASED(0),
     LIGHT(1),
     DARK(2),
@@ -36,7 +36,7 @@ public enum MacVibrancyMaterial {
 
     private final long nativeValue;
 
-    MacVibrancyMaterial(long nativeValue) {
+    MacosVibrancyMaterial(long nativeValue) {
         this.nativeValue = nativeValue;
     }
 
@@ -48,8 +48,8 @@ public enum MacVibrancyMaterial {
      *
      * <p>Returns empty when the runtime exposes a material value not represented in this enum.
      */
-    public static Optional<MacVibrancyMaterial> fromNativeValue(long nativeValue) {
-        for (MacVibrancyMaterial material : values()) {
+    public static Optional<MacosVibrancyMaterial> fromNativeValue(long nativeValue) {
+        for (MacosVibrancyMaterial material : values()) {
             if (material.nativeValue == nativeValue) {
                 return Optional.of(material);
             }
@@ -57,7 +57,7 @@ public enum MacVibrancyMaterial {
         return Optional.empty();
     }
 
-    long nativeValue() {
+    public long nativeValue() {
         return nativeValue;
     }
 }

@@ -10,21 +10,22 @@
 
 package io.github.bric3.diaphanous;
 
+import io.github.bric3.diaphanous.backdrop.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class MacVibrancyStyleTest {
+class MacosVibrancySpecTest {
     @Test
     void builderCreatesExpectedDefaults() {
-        MacVibrancyStyle style = MacVibrancyStyle.builder().build();
+        MacosVibrancySpec style = MacosVibrancySpec.builder().build();
 
         assertTrue(style.enabled());
-        assertEquals(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND, style.material());
-        assertEquals(MacVibrancyBlendingMode.BEHIND_WINDOW, style.blendingMode());
-        assertEquals(MacVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE, style.state());
+        assertEquals(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND, style.material());
+        assertEquals(MacosVibrancyBlendingMode.BEHIND_WINDOW, style.blendingMode());
+        assertEquals(MacosVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE, style.state());
         assertFalse(style.emphasized());
         assertEquals(1.0d, style.backdropAlpha());
     }

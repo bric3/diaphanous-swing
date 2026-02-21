@@ -49,13 +49,13 @@ Why it was insufficient:
 
 ## Final fix
 
-Implemented a dedicated thread bridge in `MacThreading`:
+Implemented a dedicated thread bridge in `MacosThreading`:
 
 1. Dispatch to AppKit main thread using `LWCToolkit.performOnMainThreadAfterDelay(Runnable, long)`.
 2. Wrap execution with `CountDownLatch` to preserve synchronous `apply(...)` behavior.
 3. Capture and rethrow errors from the dispatched block.
 
-`MacWindowStyler.apply(...)` now delegates native style mutation through this bridge.
+`MacosWindowStyler.apply(...)` now delegates native style mutation through this bridge.
 
 ## Runtime Requirement
 
@@ -74,7 +74,7 @@ After the final fix:
 
 ## Guardrail for Future Changes
 
-Any call that mutates `NSWindow` state must run through `MacThreading.runOnAppKitThread(...)`.
+Any call that mutates `NSWindow` state must run through `MacosThreading.runOnAppKitThread(...)`.
 Do not call AppKit setters directly from the AWT event thread.
 
 > [!TIP]

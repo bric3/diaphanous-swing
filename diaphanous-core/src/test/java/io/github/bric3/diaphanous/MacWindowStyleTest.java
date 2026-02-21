@@ -10,20 +10,22 @@
 
 package io.github.bric3.diaphanous;
 
+import io.github.bric3.diaphanous.decorations.MacosToolbarStyle;
+import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class MacWindowStyleTest {
+class MacosWindowDecorationsSpecTest {
     @Test
     void builderCreatesExpectedDefaults() {
-        MacWindowStyle style = MacWindowStyle.builder().build();
+        MacosWindowDecorationsSpec style = MacosWindowDecorationsSpec.builder().build();
 
         assertTrue(style.transparentTitleBar());
         assertTrue(style.fullSizeContentView());
         assertFalse(style.titleVisible());
-        assertEquals(MacToolbarStyle.UNIFIED, style.toolbarStyle());
+        assertEquals(MacosToolbarStyle.UNIFIED, style.toolbarStyle());
     }
 }

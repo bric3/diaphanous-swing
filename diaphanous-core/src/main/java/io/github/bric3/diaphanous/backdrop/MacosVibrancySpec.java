@@ -8,7 +8,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.backdrop;
 
 import java.util.Objects;
 
@@ -24,19 +24,19 @@ import java.util.Objects;
  *
  * <p>Example presets:
  * <pre>{@code
- * MacVibrancyStyle defaultBackdrop = MacVibrancyStyle.builder()
+ * MacosVibrancySpec defaultBackdrop = MacosVibrancySpec.builder()
  *     .build();
  *
- * MacVibrancyStyle strongerDarkBackdrop = MacVibrancyStyle.builder()
- *     .material(MacVibrancyMaterial.HUD_WINDOW)
- *     .state(MacVibrancyState.ACTIVE)
+ * MacosVibrancySpec strongerDarkBackdrop = MacosVibrancySpec.builder()
+ *     .material(MacosVibrancyMaterial.HUD_WINDOW)
+ *     .state(MacosVibrancyState.ACTIVE)
  *     .backdropAlpha(0.85)
  *     .build();
  *
- * MacVibrancyStyle withinWindowSurface = MacVibrancyStyle.builder()
- *     .material(MacVibrancyMaterial.CONTENT_BACKGROUND)
- *     .blendingMode(MacVibrancyBlendingMode.WITHIN_WINDOW)
- *     .state(MacVibrancyState.ACTIVE)
+ * MacosVibrancySpec withinWindowSurface = MacosVibrancySpec.builder()
+ *     .material(MacosVibrancyMaterial.CONTENT_BACKGROUND)
+ *     .blendingMode(MacosVibrancyBlendingMode.WITHIN_WINDOW)
+ *     .state(MacosVibrancyState.ACTIVE)
  *     .build();
  * }</pre>
  *
@@ -47,14 +47,14 @@ import java.util.Objects;
  * @param emphasized emphasis flag used by some materials
  * @param backdropAlpha alpha of the native backdrop layer, from {@code 0.0} (fully transparent) to {@code 1.0}
  */
-public record MacVibrancyStyle(
+public record MacosVibrancySpec(
     boolean enabled,
-    MacVibrancyMaterial material,
-    MacVibrancyBlendingMode blendingMode,
-    MacVibrancyState state,
+    MacosVibrancyMaterial material,
+    MacosVibrancyBlendingMode blendingMode,
+    MacosVibrancyState state,
     boolean emphasized,
     double backdropAlpha
-) {
+) implements WindowBackdropSpec {
     /**
      * @return a builder with practical defaults for a backdrop effect behind window content
      *
@@ -72,13 +72,13 @@ public record MacVibrancyStyle(
     }
 
     /**
-     * Builder for {@link MacVibrancyStyle}.
+     * Builder for {@link MacosVibrancySpec}.
      */
     public static final class Builder {
         private boolean enabled = true;
-        private MacVibrancyMaterial material = MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND;
-        private MacVibrancyBlendingMode blendingMode = MacVibrancyBlendingMode.BEHIND_WINDOW;
-        private MacVibrancyState state = MacVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE;
+        private MacosVibrancyMaterial material = MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND;
+        private MacosVibrancyBlendingMode blendingMode = MacosVibrancyBlendingMode.BEHIND_WINDOW;
+        private MacosVibrancyState state = MacosVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE;
         private boolean emphasized;
         private double backdropAlpha = 1.0d;
 
@@ -95,7 +95,7 @@ public record MacVibrancyStyle(
          * @param material vibrancy material to apply
          * @return this builder
          */
-        public Builder material(MacVibrancyMaterial material) {
+        public Builder material(MacosVibrancyMaterial material) {
             this.material = Objects.requireNonNull(material, "material");
             return this;
         }
@@ -107,7 +107,7 @@ public record MacVibrancyStyle(
          * for effects intended to blend inside window content regions.
          * @return this builder
          */
-        public Builder blendingMode(MacVibrancyBlendingMode blendingMode) {
+        public Builder blendingMode(MacosVibrancyBlendingMode blendingMode) {
             this.blendingMode = Objects.requireNonNull(blendingMode, "blendingMode");
             return this;
         }
@@ -122,7 +122,7 @@ public record MacVibrancyStyle(
          * </ul>
          * @return this builder
          */
-        public Builder state(MacVibrancyState state) {
+        public Builder state(MacosVibrancyState state) {
             this.state = Objects.requireNonNull(state, "state");
             return this;
         }
@@ -151,11 +151,11 @@ public record MacVibrancyStyle(
         /**
          * @return immutable vibrancy configuration
          */
-        public MacVibrancyStyle build() {
+        public MacosVibrancySpec build() {
             if (backdropAlpha < 0.0d || backdropAlpha > 1.0d) {
                 throw new IllegalArgumentException("backdropAlpha must be within [0.0, 1.0]");
             }
-            return new MacVibrancyStyle(enabled, material, blendingMode, state, emphasized, backdropAlpha);
+            return new MacosVibrancySpec(enabled, material, blendingMode, state, emphasized, backdropAlpha);
         }
     }
 }

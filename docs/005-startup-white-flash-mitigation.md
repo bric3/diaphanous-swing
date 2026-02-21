@@ -21,8 +21,8 @@ After vibrancy became visible, a short white flash could still appear during win
 ## Implementation details
 
 1. `MacWindowBackdrop.setWindowAlpha(Window, double)` is used to apply native `setAlphaValue:`.
-2. Startup sequencing was extracted to `MacStartupReveal.show(Window)` in `diaphanous-core`.
-3. `MacStartupReveal.show(Window)` now ensures peer creation (`addNotify()`) before applying native alpha.
+2. Startup sequencing was extracted to `MacosStartupReveal.show(Window)` in `diaphanous-core`.
+3. `MacosStartupReveal.show(Window)` now ensures peer creation (`addNotify()`) before applying native alpha.
 4. Reveal now uses a paint-gated strategy:
    - waits for a paint event for the target window,
    - enforces a minimum hidden duration (`60ms` by default),
@@ -33,6 +33,6 @@ After vibrancy became visible, a short white flash could still appear during win
 
 Primary code locations:
 
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacStartupReveal.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacWindowStyler.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosStartupReveal.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosWindowStyler.java`
 - `demo-swing/src/main/kotlin/io/github/bric3/diaphanous/demo/DemoApp.kt`

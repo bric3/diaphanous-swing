@@ -23,7 +23,7 @@ Without these flags, reflective access fails before style/backdrop code can reso
 
 ## why the flags are needed today
 
-`MacWindowPeerAccess` currently resolves `NSWindow*` from Java-side peer internals.  
+`MacosWindowPeerAccess` currently resolves `NSWindow*` from Java-side peer internals.  
 This design is straightforward for prototyping and debugging, but it depends on non-public JDK implementation details and open modules.
 
 ## path to remove the requirement
@@ -62,8 +62,8 @@ After this change, application launch should no longer require `--add-opens` for
 
 The project now includes a native JNI resolver in the existing macOS bridge:
 
-- `Window -> peer -> platformWindow -> ptr` is resolved from native code (`MacNativeWindowHandleBridge`).
-- `MacWindowPeerAccess` prefers that native resolver and uses Java reflection only as fallback.
+- `Window -> peer -> platformWindow -> ptr` is resolved from native code (`MacosNativeWindowHandleBridge`).
+- `MacosWindowPeerAccess` prefers that native resolver and uses Java reflection only as fallback.
 - demo runtime tasks removed `--add-opens` flags and now keep only `--enable-native-access=ALL-UNNAMED`.
 - style/appearance/alpha application also has native bridge entry points, reducing dependence on Java-side AppKit threading reflection.
 
@@ -80,16 +80,16 @@ The implementation changed from a Java-reflection-first design to a native-first
 ### after
 
 1. The existing native library now exports JNI methods that accept a Java `Window` and resolve the native pointer directly.
-2. `MacWindowPeerAccess` now tries native resolver first, and uses reflection only as fallback.
+2. `MacosWindowPeerAccess` now tries native resolver first, and uses reflection only as fallback.
 3. Native bridge also exposes style/appearance/alpha operations, each marshaled onto AppKit main thread inside native code.
 4. Demo and robot tasks no longer pass `--add-opens`; only `--enable-native-access=ALL-UNNAMED` remains.
 
 ### key Java-side flow
 
-1. Public API call (`MacWindowDecorations` / `MacWindowBackdrop`) reaches `MacWindowStyler`.
-2. `MacWindowStyler` detects native bridge availability.
+1. Public API call (`MacosWindowDecorations` / `MacWindowBackdrop`) reaches `MacosWindowStyler`.
+2. `MacosWindowStyler` detects native bridge availability.
 3. If available:
-   - pointer comes from `MacNativeWindowHandleBridge`,
+   - pointer comes from `MacosNativeWindowHandleBridge`,
    - operations are sent to native exports (`diaphanous_apply_window_style`, `diaphanous_apply_window_appearance`, `diaphanous_set_window_alpha`, vibrancy install/update/remove).
 4. If unavailable:
    - old reflective path remains as compatibility fallback.
@@ -106,11 +106,11 @@ If the native bridge is not built/loaded, fallback may still require `--add-open
 
 ### changed files (implementation)
 
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacNativeLibrary.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacNativeWindowHandleBridge.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacWindowPeerAccess.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacNativeVibrancyBridge.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacWindowStyler.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosNativeLibrary.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosNativeWindowHandleBridge.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosWindowPeerAccess.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosNativeVibrancyBridge.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosWindowStyler.java`
 - `diaphanous-core-macos-native/src/main/cpp/diaphanous_window_bridge.mm`
 - `diaphanous-core-macos-native/src/main/headers/diaphanous_window_bridge.h`
 - `diaphanous-core-macos-native/build.gradle.kts`

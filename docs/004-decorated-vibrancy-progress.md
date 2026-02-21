@@ -60,7 +60,7 @@ While a small `.mm` bridge provides stable Objective-C behavior while Java/FFM r
    - wraps the original `AWTView`,
    - inserts `NSVisualEffectView` behind it,
    - forwards AWT mouse selectors.
-3. In `diaphanous-core` module a new FFM bridge (`MacNativeVibrancyBridge`) to call native functions.
+3. In `diaphanous-core` module a new FFM bridge (`MacosNativeVibrancyBridge`) to call native functions.
 
 
 Additionally, in the demo app, two system properties were added to dump the structure:
@@ -106,9 +106,9 @@ For AWT here's the new component tree:
 flowchart TB
   subgraph Java["java side"]
     Demo["DemoApp"]
-    Styler["MacWindowStyler"]
-    Bridge["MacNativeVibrancyBridge (FFM)"]
-    Peer["MacWindowPeerAccess (NSWindow*)"]
+    Styler["MacosWindowStyler"]
+    Bridge["MacosNativeVibrancyBridge (FFM)"]
+    Peer["MacosWindowPeerAccess (NSWindow*)"]
     SwingTree["Swing component tree"]
     Demo --> Styler
     Styler --> Bridge
@@ -150,7 +150,7 @@ flowchart TB
    - resolved `NSWindow*` from AWT peer,
    - inserted `NSVisualEffectView` as a sibling under `contentView`,
    - applied material/state/alpha.
-2. Java-side transparency tuning:
+2. Java-side transparency tuning:¡
    - made Swing panels non-opaque,
    - cleared Swing panel backgrounds,
    - attempted peer opacity changes from Java.

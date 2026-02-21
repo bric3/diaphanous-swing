@@ -8,25 +8,23 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.backdrop;
 
 /**
- * Toolbar styles mapped to macOS {@code NSWindowToolbarStyle} values.
+ * Values mapped to macOS {@code NSVisualEffectState}.
  */
-public enum MacToolbarStyle {
-    AUTOMATIC(0),
-    EXPANDED(1),
-    PREFERENCE(2),
-    UNIFIED(3),
-    UNIFIED_COMPACT(4);
+public enum MacosVibrancyState {
+    FOLLOWS_WINDOW_ACTIVE_STATE(0),
+    ACTIVE(1),
+    INACTIVE(2);
 
     private final long nativeValue;
 
-    MacToolbarStyle(long nativeValue) {
+    MacosVibrancyState(long nativeValue) {
         this.nativeValue = nativeValue;
     }
 
-    long nativeValue() {
+    public long nativeValue() {
         return nativeValue;
     }
 }

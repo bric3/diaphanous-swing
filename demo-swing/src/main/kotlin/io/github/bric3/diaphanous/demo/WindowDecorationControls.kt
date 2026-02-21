@@ -10,9 +10,9 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacToolbarStyle
-import io.github.bric3.diaphanous.MacWindowAppearance
-import io.github.bric3.diaphanous.MacWindowStyle
+import io.github.bric3.diaphanous.decorations.MacosToolbarStyle
+import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
+import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec
 import java.awt.Color
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -23,9 +23,9 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class WindowDecorationControls(
-    initialAppearance: MacWindowAppearance,
-    private val onStyleChange: (style: MacWindowStyle) -> Unit,
-    private val onAppearanceChange: (appearance: MacWindowAppearance) -> Unit
+    initialAppearance: MacosWindowAppearanceSpec,
+    private val onStyleChange: (style: MacosWindowDecorationsSpec) -> Unit,
+    private val onAppearanceChange: (appearance: MacosWindowAppearanceSpec) -> Unit
 ) : JPanel() {
     init {
         isOpaque = false
@@ -46,25 +46,25 @@ class WindowDecorationControls(
         isOpaque = false
         addActionListener { onStyleChange(currentStyle()) }
     }
-    private val toolbarStyleCombo = JComboBox(MacToolbarStyle.entries.toTypedArray()).apply {
+    private val toolbarStyleCombo = JComboBox(MacosToolbarStyle.entries.toTypedArray()).apply {
         name = "toolbarStyleCombo"
-        selectedItem = MacToolbarStyle.UNIFIED_COMPACT
+        selectedItem = MacosToolbarStyle.UNIFIED_COMPACT
         addActionListener { onStyleChange(currentStyle()) }
     }
-    private val appearanceCombo = JComboBox(MacWindowAppearance.entries.toTypedArray()).apply {
+    private val appearanceCombo = JComboBox(MacosWindowAppearanceSpec.entries.toTypedArray()).apply {
         name = "appearanceCombo"
         selectedItem = initialAppearance
         addActionListener { onAppearanceChange(currentAppearance()) }
     }
 
-    fun currentStyle(): MacWindowStyle = MacWindowStyle.builder()
+    fun currentStyle(): MacosWindowDecorationsSpec = MacosWindowDecorationsSpec.builder()
         .transparentTitleBar(transparentTitleBarCheck.isSelected)
         .fullSizeContentView(fullSizeContentCheck.isSelected)
         .titleVisible(titleVisibleCheck.isSelected)
-        .toolbarStyle(toolbarStyleCombo.selectedItem as MacToolbarStyle)
+        .toolbarStyle(toolbarStyleCombo.selectedItem as MacosToolbarStyle)
         .build()
 
-    fun currentAppearance(): MacWindowAppearance = appearanceCombo.selectedItem as MacWindowAppearance
+    fun currentAppearance(): MacosWindowAppearanceSpec = appearanceCombo.selectedItem as MacosWindowAppearanceSpec
 
     val component by lazy { windowDecorationControls() }
 
@@ -120,4 +120,3 @@ class WindowDecorationControls(
         return stylePanel
     }
 }
-

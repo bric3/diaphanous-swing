@@ -8,23 +8,22 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.backdrop;
 
 /**
- * Values mapped to macOS {@code NSVisualEffectState}.
+ * Values mapped to macOS {@code NSVisualEffectBlendingMode}.
  */
-public enum MacVibrancyState {
-    FOLLOWS_WINDOW_ACTIVE_STATE(0),
-    ACTIVE(1),
-    INACTIVE(2);
+public enum MacosVibrancyBlendingMode {
+    BEHIND_WINDOW(0),
+    WITHIN_WINDOW(1);
 
     private final long nativeValue;
 
-    MacVibrancyState(long nativeValue) {
+    MacosVibrancyBlendingMode(long nativeValue) {
         this.nativeValue = nativeValue;
     }
 
-    long nativeValue() {
+    public long nativeValue() {
         return nativeValue;
     }
 }

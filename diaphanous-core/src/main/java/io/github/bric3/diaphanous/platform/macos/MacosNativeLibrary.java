@@ -8,7 +8,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.platform.macos;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 
-final class MacNativeLibrary {
+final class MacosNativeLibrary {
     static final String LIB_PATH_PROPERTY = "diaphanous.macos.nativeLib";
     static final String DEFAULT_RELATIVE_LIB =
         "diaphanous-core-macos-native/build/lib/main/debug/libdiaphanous-core-macos-native.dylib";
@@ -27,7 +27,7 @@ final class MacNativeLibrary {
     private static volatile boolean loaded;
     private static volatile Path extractedLibraryPath;
 
-    private MacNativeLibrary() {
+    private MacosNativeLibrary() {
     }
 
     static Path resolveLibraryPath() {
@@ -50,7 +50,7 @@ final class MacNativeLibrary {
         if (loadAttempted) {
             return false;
         }
-        synchronized (MacNativeLibrary.class) {
+        synchronized (MacosNativeLibrary.class) {
             if (loaded) {
                 return true;
             }
@@ -81,7 +81,7 @@ final class MacNativeLibrary {
         if (existing != null && Files.isRegularFile(existing)) {
             return existing;
         }
-        synchronized (MacNativeLibrary.class) {
+        synchronized (MacosNativeLibrary.class) {
             existing = extractedLibraryPath;
             if (existing != null && Files.isRegularFile(existing)) {
                 return existing;
@@ -93,7 +93,7 @@ final class MacNativeLibrary {
     }
 
     private static Path extractBundledLibrary() {
-        try (InputStream input = MacNativeLibrary.class.getResourceAsStream(BUNDLED_RESOURCE_PATH)) {
+        try (InputStream input = MacosNativeLibrary.class.getResourceAsStream(BUNDLED_RESOURCE_PATH)) {
             if (input == null) {
                 return null;
             }

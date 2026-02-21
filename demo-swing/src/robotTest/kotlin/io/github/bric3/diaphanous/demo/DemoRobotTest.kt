@@ -10,8 +10,8 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacToolbarStyle
-import io.github.bric3.diaphanous.MacWindowAppearance
+import io.github.bric3.diaphanous.MacosToolbarStyle
+import io.github.bric3.diaphanous.MacosWindowAppearance
 import io.github.bric3.diaphanous.MacBackdropSupport
 import java.awt.Component
 import java.awt.Container
@@ -74,7 +74,7 @@ class DemoRobotTest {
 
         clickComponent(robot, requireNotNull(appearanceCombo))
         EventQueue.invokeAndWait {
-            appearanceCombo.selectedItem = MacWindowAppearance.AQUA
+            appearanceCombo.selectedItem = MacosWindowAppearance.AQUA
         }
         Thread.sleep(300)
         val disabledOnAqua = invokeAndWaitResult { MacBackdropSupport.isEnabledFor(demoFrame.rootPane) }
@@ -82,11 +82,11 @@ class DemoRobotTest {
 
         clickComponent(robot, requireNotNull(appearanceCombo))
         EventQueue.invokeAndWait {
-            appearanceCombo.selectedItem = MacWindowAppearance.VIBRANT_DARK
+            appearanceCombo.selectedItem = MacosWindowAppearance.VIBRANT_DARK
         }
         clickComponent(robot, requireNotNull(toolbarCombo))
         EventQueue.invokeAndWait {
-            toolbarCombo.selectedItem = MacToolbarStyle.EXPANDED
+            toolbarCombo.selectedItem = MacosToolbarStyle.EXPANDED
         }
         clickComponent(robot, requireNotNull(transparentTitleBarCheck))
         clickComponent(robot, requireNotNull(transparentTitleBarCheck))

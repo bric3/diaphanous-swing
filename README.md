@@ -1,6 +1,6 @@
 # Diaphanous Swing
 
-`diaphanous-swing` is a Java library that allows to make Swing/AWT windows us the translucent style. 
+`diaphanous-swing` is a Java library to apply native translucency/backdrop and window decoration styles to Swing/AWT windows.
 
 > [!NOTE]
 > At this time only macOs support has been implemented.
@@ -15,14 +15,14 @@
 
 ### macOS
     
-- Window backdrop support via `MacBackdropSupport`
+- Window backdrop support via `io.github.bric3.diaphanous.backdrop.BackdropSupport`
 
 - Simple Windows decorations (however, support is limited, and weisJ/darklaf platform-decorations is preferred)
   - Transparent title bar (`setTitlebarAppearsTransparent:`)
   - Full-size content view style bit (`setStyleMask:` with `NSWindowStyleMaskFullSizeContentView`)
   - Title visibility (`setTitleVisibility:`)
   - Toolbar style when available (`setToolbarStyle:`)
-  - Vibrancy backdrop with `NSVisualEffectView` (`MacWindowBackdrop.apply(...)` / `MacWindowBackdrop.clear(...)`)
+  - Vibrancy backdrop with `NSVisualEffectView` (`WindowBackdrop.apply(...)` / `WindowBackdrop.clear(...)`)
 
 ## Run the demo
 
@@ -48,23 +48,37 @@ Robot smoke test:
 ## Library usage
 
 ```java
-MacWindowStyle style = MacWindowStyle.builder()
+import io.github.bric3.diaphanous.backdrop.BackdropSupport;
+import io.github.bric3.diaphanous.backdrop.MacosVibrancyMaterial;
+import io.github.bric3.diaphanous.backdrop.MacosVibrancySpec;
+import io.github.bric3.diaphanous.backdrop.WindowBackdrop;
+import io.github.bric3.diaphanous.decorations.MacosToolbarStyle;
+import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec;
+import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec;
+import io.github.bric3.diaphanous.decorations.WindowDecorations;
+
+MacosWindowDecorationsSpec style = MacosWindowDecorationsSpec.builder()
     .transparentTitleBar(true)
     .fullSizeContentView(true)
     .titleVisible(false)
-    .toolbarStyle(MacToolbarStyle.UNIFIED_COMPACT)
+    .toolbarStyle(MacosToolbarStyle.UNIFIED_COMPACT)
     .build();
 
-MacWindowDecorations.applyStyle(frame, style);
+WindowDecorations.applyStyle(frame, style);
 
-MacVibrancyStyle vibrancy = MacVibrancyStyle.builder()
-    .material(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+MacosVibrancySpec vibrancy = MacosVibrancySpec.builder()
+    .material(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
     .build();
-MacWindowBackdrop.apply(frame, vibrancy);
+WindowBackdrop.apply(frame, vibrancy);
 
-MacWindowDecorations.applyAppearance(frame, MacWindowAppearance.SYSTEM);
-MacBackdropSupport.configure(frame, MacWindowAppearance.SYSTEM);
+WindowDecorations.applyAppearance(frame, MacosWindowAppearance.SYSTEM);
+BackdropSupport.configure(frame, MacosWindowAppearance.SYSTEM);
 ```
+
+The facades delegate to platform managers:
+
+- `io.github.bric3.diaphanous.decorations.NativeWindowDecorationsManager`
+- `io.github.bric3.diaphanous.backdrop.NativeWindowBackdropManager`
 
 ## License
 

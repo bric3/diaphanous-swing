@@ -10,12 +10,12 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacBackdropSupport
-import io.github.bric3.diaphanous.MacStartupReveal
-import io.github.bric3.diaphanous.MacWindowAppearance
-import io.github.bric3.diaphanous.MacWindowBackdrop
-import io.github.bric3.diaphanous.MacWindowDecorations
-import io.github.bric3.diaphanous.RootErasingContentPane
+import io.github.bric3.diaphanous.backdrop.BackdropSupport
+import io.github.bric3.diaphanous.backdrop.RootErasingContentPane
+import io.github.bric3.diaphanous.backdrop.WindowBackdrop
+import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
+import io.github.bric3.diaphanous.decorations.WindowDecorations
+import io.github.bric3.diaphanous.MacosStartupReveal
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -54,7 +54,7 @@ object DemoApp {
     }
 
     private fun parseOptions(args: Array<String>): LaunchOptions {
-        var appearance = MacWindowAppearance.SYSTEM
+        var appearance = MacosWindowAppearanceSpec.SYSTEM
 
         for (arg in args) {
             when {
@@ -67,9 +67,9 @@ object DemoApp {
         return LaunchOptions(appearance)
     }
 
-    private fun parseAppearance(raw: String): MacWindowAppearance? {
+    private fun parseAppearance(raw: String): MacosWindowAppearanceSpec? {
         val normalized = raw.trim().replace('-', '_').uppercase()
-        return MacWindowAppearance.entries.firstOrNull { it.name == normalized }
+        return MacosWindowAppearanceSpec.entries.firstOrNull { it.name == normalized }
     }
 
     private fun showWindow(options: LaunchOptions) {
@@ -87,14 +87,14 @@ object DemoApp {
 
 
         val windowBackdropControls = WindowBackdropControls() {
-            MacWindowBackdrop.apply(frame, it)
+            WindowBackdrop.apply(frame, it)
         }
         val windowDecorationControls = WindowDecorationControls(
             initialAppearance = options.appearance,
-            onStyleChange = { style -> MacWindowDecorations.applyStyle(frame, style) },
+            onStyleChange = { style -> WindowDecorations.applyStyle(frame, style) },
             onAppearanceChange = { appearance ->
-                MacWindowDecorations.applyAppearance(frame, appearance)
-                MacBackdropSupport.configure(frame, appearance)
+                WindowDecorations.applyAppearance(frame, appearance)
+                BackdropSupport.configure(frame, appearance)
             }
         )
         val topSeriesPanel = RandomTimeseriesPanel()
@@ -129,12 +129,12 @@ object DemoApp {
 
         frame.contentPane = rootContentPane
         val initialAppearance = windowDecorationControls.currentAppearance()
-        MacWindowDecorations.applyAppearance(frame, initialAppearance)
-        MacBackdropSupport.configure(frame, initialAppearance)
-        MacWindowDecorations.applyStyle(frame, windowDecorationControls.currentStyle())
+        WindowDecorations.applyAppearance(frame, initialAppearance)
+        BackdropSupport.configure(frame, initialAppearance)
+        WindowDecorations.applyStyle(frame, windowDecorationControls.currentStyle())
 
-        MacWindowBackdrop.apply(frame, windowBackdropControls.currentStyle())
-        MacStartupReveal.show(frame)
+        WindowBackdrop.apply(frame, windowBackdropControls.currentStyle())
+        MacosStartupReveal.show(frame)
         if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
             dumpComponentTree(frame.rootPane, 0)
         }
@@ -146,7 +146,7 @@ object DemoApp {
     }
 
     private data class LaunchOptions(
-        val appearance: MacWindowAppearance
+        val appearance: MacosWindowAppearanceSpec
     )
 
     private fun dumpComponentTree(component: java.awt.Component, depth: Int) {

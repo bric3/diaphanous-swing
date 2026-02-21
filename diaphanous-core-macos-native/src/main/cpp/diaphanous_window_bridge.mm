@@ -218,7 +218,7 @@ static jlong resolve_platform_window_ptr(JNIEnv *env, jobject window) {
 
 /// JNI entry point: resolve `NSWindow*` pointer from AWT peer graph.
 extern "C" JNIEXPORT jlong JNICALL
-Java_io_github_bric3_diaphanous_MacNativeWindowHandleBridge_resolveNSWindowPointer0(
+Java_io_github_bric3_diaphanous_platform_macos_MacosNativeWindowHandleBridge_resolveNSWindowPointer0(
     JNIEnv *env,
     jclass,
     jobject window
@@ -228,7 +228,7 @@ Java_io_github_bric3_diaphanous_MacNativeWindowHandleBridge_resolveNSWindowPoint
 
 /// JNI entry point: best-effort `ComponentPeer.setOpaque(boolean)` bridge.
 extern "C" JNIEXPORT jboolean JNICALL
-Java_io_github_bric3_diaphanous_MacNativeWindowHandleBridge_setPeerOpaque0(
+Java_io_github_bric3_diaphanous_platform_macos_MacosNativeWindowHandleBridge_setPeerOpaque0(
     JNIEnv *env,
     jclass,
     jobject window,

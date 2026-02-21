@@ -10,6 +10,7 @@
 
 package io.github.bric3.diaphanous;
 
+import io.github.bric3.diaphanous.backdrop.WindowBackdrop;
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Container;
@@ -47,7 +48,7 @@ import java.util.TimerTask;
  *   <li>AWT visibility and fallback opacity: {@link Window#setVisible(boolean)}, {@link Window#setOpacity(float)}</li>
  *   <li>AWT event queue scheduling: {@link EventQueue#invokeLater(Runnable)}</li>
  *   <li>AWT paint event observation: {@link Toolkit#addAWTEventListener(AWTEventListener, long)}</li>
- *   <li>macOS native alpha bridge: {@link MacWindowBackdrop#setWindowAlpha(Window, double)}</li>
+ *   <li>native alpha bridge facade: {@link WindowBackdrop#setWindowAlpha(Window, double)}</li>
  * </ul>
  * <p>
  * References:
@@ -57,11 +58,11 @@ import java.util.TimerTask;
  *   <li><a href="https://developer.apple.com/documentation/appkit/nswindow/1419167-alphavalue">Apple NSWindow.alphaValue</a></li>
  * </ul>
  */
-public final class MacStartupReveal {
+public final class MacosStartupReveal {
     private static final long MIN_HIDDEN_MILLIS = Long.getLong("diaphanous.startupReveal.minHiddenMillis", 120L);
     private static final long FORCE_REVEAL_MILLIS = Long.getLong("diaphanous.startupReveal.forceRevealMillis", 650L);
 
-    private MacStartupReveal() {
+    private MacosStartupReveal() {
     }
 
     /**
@@ -76,8 +77,8 @@ public final class MacStartupReveal {
 
         boolean revealWithOpacity = false;
         try {
-            if (MacWindowBackdrop.isSupported()) {
-                MacWindowBackdrop.setWindowAlpha(window, 0.0);
+            if (WindowBackdrop.isSupported()) {
+                WindowBackdrop.setWindowAlpha(window, 0.0);
                 revealWithOpacity = true;
             } else {
                 window.setOpacity(0.0f);
@@ -143,8 +144,8 @@ public final class MacStartupReveal {
 
     private static void reveal(Window window) {
         try {
-            if (MacWindowBackdrop.isSupported()) {
-                MacWindowBackdrop.setWindowAlpha(window, 1.0);
+            if (WindowBackdrop.isSupported()) {
+                WindowBackdrop.setWindowAlpha(window, 1.0);
             } else {
                 window.setOpacity(1.0f);
             }

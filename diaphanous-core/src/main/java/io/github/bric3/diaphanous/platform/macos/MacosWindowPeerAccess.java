@@ -8,7 +8,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.platform.macos;
 
 import java.awt.Component;
 import java.awt.Window;
@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
  * Resolves the native {@code NSWindow*} pointer from an AWT {@link Window} through
  * internal LWAWT peer objects.
  */
-final class MacWindowPeerAccess {
+final class MacosWindowPeerAccess {
     private static final String LW_WINDOW_PEER = "sun.lwawt.LWWindowPeer";
     private static final String CF_RETAINED_RESOURCE = "sun.lwawt.macosx.CFRetainedResource";
 
@@ -64,7 +64,7 @@ final class MacWindowPeerAccess {
             && cfPtrField != null);
     }
 
-    private MacWindowPeerAccess() {
+    private MacosWindowPeerAccess() {
     }
 
     /**
@@ -78,7 +78,7 @@ final class MacWindowPeerAccess {
             window.addNotify();
         }
 
-        long nativePtr = MacNativeWindowHandleBridge.resolveNSWindowPointer(window);
+        long nativePtr = MacosNativeWindowHandleBridge.resolveNSWindowPointer(window);
         if (nativePtr != 0L) {
             return nativePtr;
         }
@@ -99,7 +99,7 @@ final class MacWindowPeerAccess {
     }
 
     static void setPeerOpaque(Window window, boolean opaque) {
-        if (MacNativeWindowHandleBridge.setPeerOpaque(window, opaque)) {
+        if (MacosNativeWindowHandleBridge.setPeerOpaque(window, opaque)) {
             return;
         }
         if (!REFLECTIVE_AVAILABLE) {

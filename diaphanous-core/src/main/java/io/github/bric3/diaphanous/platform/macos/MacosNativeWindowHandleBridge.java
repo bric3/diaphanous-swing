@@ -8,14 +8,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.platform.macos;
 
 import java.awt.Window;
 
-final class MacNativeWindowHandleBridge {
-    private static final boolean AVAILABLE = MacNativeLibrary.ensureLoaded();
+final class MacosNativeWindowHandleBridge {
+    private static final boolean AVAILABLE = MacosNativeLibrary.ensureLoaded();
 
-    private MacNativeWindowHandleBridge() {
+    private MacosNativeWindowHandleBridge() {
     }
 
     static boolean isAvailable() {

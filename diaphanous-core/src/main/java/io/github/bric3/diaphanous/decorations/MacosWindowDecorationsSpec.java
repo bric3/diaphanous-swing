@@ -8,7 +8,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.decorations;
 
 /**
  * Immutable style configuration applied to a macOS {@code NSWindow}.
@@ -18,12 +18,12 @@ package io.github.bric3.diaphanous;
  * @param titleVisible whether the window title text is visible
  * @param toolbarStyle optional toolbar style; {@code null} keeps current toolbar style unchanged
  */
-public record MacWindowStyle(
+public record MacosWindowDecorationsSpec(
     boolean transparentTitleBar,
     boolean fullSizeContentView,
     boolean titleVisible,
-    MacToolbarStyle toolbarStyle
-) {
+    MacosToolbarStyle toolbarStyle
+) implements WindowDecorationSpec {
     /**
      * Creates a builder with defaults that match a modern translucent macOS window style.
      *
@@ -34,13 +34,13 @@ public record MacWindowStyle(
     }
 
     /**
-     * Builder for {@link MacWindowStyle}.
+     * Builder for {@link MacosWindowDecorationsSpec}.
      */
     public static final class Builder {
         private boolean transparentTitleBar = true;
         private boolean fullSizeContentView = true;
         private boolean titleVisible;
-        private MacToolbarStyle toolbarStyle = MacToolbarStyle.UNIFIED;
+        private MacosToolbarStyle toolbarStyle = MacosToolbarStyle.UNIFIED;
 
         /**
          * @param enabled whether the title bar background should be transparent
@@ -73,7 +73,7 @@ public record MacWindowStyle(
          * @param style toolbar style to apply, or {@code null} to skip toolbar style updates
          * @return this builder
          */
-        public Builder toolbarStyle(MacToolbarStyle style) {
+        public Builder toolbarStyle(MacosToolbarStyle style) {
             this.toolbarStyle = style;
             return this;
         }
@@ -81,8 +81,8 @@ public record MacWindowStyle(
         /**
          * @return immutable style configuration
          */
-        public MacWindowStyle build() {
-            return new MacWindowStyle(transparentTitleBar, fullSizeContentView, titleVisible, toolbarStyle);
+        public MacosWindowDecorationsSpec build() {
+            return new MacosWindowDecorationsSpec(transparentTitleBar, fullSizeContentView, titleVisible, toolbarStyle);
         }
     }
 }

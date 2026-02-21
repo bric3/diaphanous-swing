@@ -8,12 +8,12 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.decorations;
 
 /**
  * macOS appearance presets applicable to {@code NSWindow}.
  */
-public enum MacWindowAppearance {
+public enum MacosWindowAppearanceSpec implements WindowAppearanceSpec {
     SYSTEM(null),
     AQUA("NSAppearanceNameAqua"),
     DARK_AQUA("NSAppearanceNameDarkAqua"),
@@ -22,11 +22,11 @@ public enum MacWindowAppearance {
 
     private final String nativeName;
 
-    MacWindowAppearance(String nativeName) {
+    MacosWindowAppearanceSpec(String nativeName) {
         this.nativeName = nativeName;
     }
 
-    String nativeName() {
+    public String nativeName() {
         return nativeName;
     }
 }

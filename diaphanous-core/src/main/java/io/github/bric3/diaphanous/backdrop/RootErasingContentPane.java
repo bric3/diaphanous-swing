@@ -8,7 +8,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.backdrop;
 
 import javax.swing.JPanel;
 import java.awt.Color;
@@ -36,9 +36,8 @@ public final class RootErasingContentPane extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
-        if (!MacBackdropSupport.clearBackgroundIfEnabled(g, this)) {
+        if (!BackdropSupport.clearBackgroundIfEnabled(g, this)) {
             super.paintComponent(g);
         }
     }
 }
-

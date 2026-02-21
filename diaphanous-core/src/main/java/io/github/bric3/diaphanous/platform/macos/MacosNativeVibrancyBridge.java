@@ -8,7 +8,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.platform.macos;
+
+import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
@@ -24,10 +26,10 @@ import java.util.Optional;
 /**
  * Optional bridge to the macOS native helper library that can wrap the AWT host view.
  */
-final class MacNativeVibrancyBridge {
+final class MacosNativeVibrancyBridge {
     private static final NativeFns FNS = loadNativeFns().orElse(null);
 
-    private MacNativeVibrancyBridge() {
+    private MacosNativeVibrancyBridge() {
     }
 
     static boolean isAvailable() {
@@ -104,7 +106,7 @@ final class MacNativeVibrancyBridge {
         return FNS.readMaterial(nsWindowPtr);
     }
 
-    static boolean applyWindowStyle(long nsWindowPtr, MacWindowStyle style) {
+    static boolean applyWindowStyle(long nsWindowPtr, MacosWindowDecorationsSpec style) {
         if (FNS == null || nsWindowPtr == 0L || style == null) {
             return false;
         }
@@ -135,11 +137,11 @@ final class MacNativeVibrancyBridge {
     }
 
     private static Optional<NativeFns> loadNativeFns() {
-        Path libPath = MacNativeLibrary.resolveLibraryPath();
+        Path libPath = MacosNativeLibrary.resolveLibraryPath();
         if (libPath == null || !Files.isRegularFile(libPath)) {
             return Optional.empty();
         }
-        MacNativeLibrary.ensureLoaded();
+        MacosNativeLibrary.ensureLoaded();
 
         try {
             SymbolLookup lookup = SymbolLookup.libraryLookup(libPath, Arena.global());

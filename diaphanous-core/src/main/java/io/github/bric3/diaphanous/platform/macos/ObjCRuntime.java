@@ -8,7 +8,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.platform.macos;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;

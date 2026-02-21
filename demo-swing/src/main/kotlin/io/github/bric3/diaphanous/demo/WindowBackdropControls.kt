@@ -1,10 +1,10 @@
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacVibrancyBlendingMode
-import io.github.bric3.diaphanous.MacVibrancyMaterial
-import io.github.bric3.diaphanous.MacVibrancyState
-import io.github.bric3.diaphanous.MacVibrancyStyle
-import io.github.bric3.diaphanous.MacWindowBackdrop
+import io.github.bric3.diaphanous.backdrop.MacosVibrancyBlendingMode
+import io.github.bric3.diaphanous.backdrop.MacosVibrancyMaterial
+import io.github.bric3.diaphanous.backdrop.MacosVibrancySpec
+import io.github.bric3.diaphanous.backdrop.MacosVibrancyState
+import io.github.bric3.diaphanous.backdrop.WindowBackdrop
 import java.awt.Color
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
@@ -16,7 +16,7 @@ import javax.swing.JPanel
 import javax.swing.JSlider
 
 class WindowBackdropControls(
-    private val onChange: (style: MacVibrancyStyle) -> Unit
+    private val onChange: (style: MacosVibrancySpec) -> Unit
 ) : JPanel() {
     companion object {
         private const val DEFAULT_BACKDROP_ALPHA = 0.55
@@ -26,11 +26,15 @@ class WindowBackdropControls(
     init {
         isOpaque = false
     }
-    private val nativeDefaultAlpha = MacWindowBackdrop.defaultAlpha()
+    private val nativeDefaultAlpha = WindowBackdrop.defaultAlpha()
     private val initialAlpha = if (nativeDefaultAlpha in 0.0..1.0) nativeDefaultAlpha else DEFAULT_BACKDROP_ALPHA
-    private val initialMaterial = MacWindowBackdrop.defaultMaterial()
-        .orElse(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
-    private val initialBlurStrength = MacWindowBackdrop.defaultMaterial()
+    private val initialMaterial = WindowBackdrop.defaultMaterial()
+        .filter { it is MacosVibrancyMaterial }
+        .map { it as MacosVibrancyMaterial }
+        .orElse(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+    private val initialBlurStrength = WindowBackdrop.defaultMaterial()
+        .filter { it is MacosVibrancyMaterial }
+        .map { it as MacosVibrancyMaterial }
         .map(::blurStrengthForMaterial)
         .orElse(DEFAULT_BLUR_STRENGTH)
 
@@ -62,21 +66,21 @@ class WindowBackdropControls(
         }
     }
 
-    private val materialCombo = JComboBox(MacVibrancyMaterial.entries.toTypedArray()).apply {
+    private val materialCombo = JComboBox(MacosVibrancyMaterial.entries.toTypedArray()).apply {
         name = "materialCombo"
         selectedItem = initialMaterial
         addActionListener { onChange(currentStyle()) }
     }
 
-    private val blendingCombo = JComboBox(MacVibrancyBlendingMode.entries.toTypedArray()).apply {
+    private val blendingCombo = JComboBox(MacosVibrancyBlendingMode.entries.toTypedArray()).apply {
         name = "blendingModeCombo"
-        selectedItem = MacVibrancyBlendingMode.BEHIND_WINDOW
+        selectedItem = MacosVibrancyBlendingMode.BEHIND_WINDOW
         addActionListener { onChange(currentStyle()) }
     }
 
-    private val stateCombo = JComboBox(MacVibrancyState.entries.toTypedArray()).apply {
+    private val stateCombo = JComboBox(MacosVibrancyState.entries.toTypedArray()).apply {
         name = "vibrancyStateCombo"
-        selectedItem = MacVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE
+        selectedItem = MacosVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE
         addActionListener { onChange(currentStyle()) }
     }
 
@@ -86,27 +90,27 @@ class WindowBackdropControls(
         addActionListener { onChange(currentStyle()) }
     }
 
-    private fun blurStrengthForMaterial(material: MacVibrancyMaterial): Int = when (material) {
-        MacVibrancyMaterial.CONTENT_BACKGROUND -> 10
-        MacVibrancyMaterial.WINDOW_BACKGROUND -> 30
-        MacVibrancyMaterial.SIDEBAR -> 50
-        MacVibrancyMaterial.MENU -> 70
-        MacVibrancyMaterial.HUD_WINDOW -> 90
+    private fun blurStrengthForMaterial(material: MacosVibrancyMaterial): Int = when (material) {
+        MacosVibrancyMaterial.CONTENT_BACKGROUND -> 10
+        MacosVibrancyMaterial.WINDOW_BACKGROUND -> 30
+        MacosVibrancyMaterial.SIDEBAR -> 50
+        MacosVibrancyMaterial.MENU -> 70
+        MacosVibrancyMaterial.HUD_WINDOW -> 90
         else -> DEFAULT_BLUR_STRENGTH
     }
 
-    private fun materialForBlurStrength(value: Int): MacVibrancyMaterial = when {
-        value < 20 -> MacVibrancyMaterial.CONTENT_BACKGROUND
-        value < 40 -> MacVibrancyMaterial.WINDOW_BACKGROUND
-        value < 60 -> MacVibrancyMaterial.SIDEBAR
-        value < 80 -> MacVibrancyMaterial.MENU
-        else -> MacVibrancyMaterial.HUD_WINDOW
+    private fun materialForBlurStrength(value: Int): MacosVibrancyMaterial = when {
+        value < 20 -> MacosVibrancyMaterial.CONTENT_BACKGROUND
+        value < 40 -> MacosVibrancyMaterial.WINDOW_BACKGROUND
+        value < 60 -> MacosVibrancyMaterial.SIDEBAR
+        value < 80 -> MacosVibrancyMaterial.MENU
+        else -> MacosVibrancyMaterial.HUD_WINDOW
     }
 
-    fun currentStyle(): MacVibrancyStyle = MacVibrancyStyle.builder()
-        .material(materialCombo.selectedItem as MacVibrancyMaterial)
-        .blendingMode(blendingCombo.selectedItem as MacVibrancyBlendingMode)
-        .state(stateCombo.selectedItem as MacVibrancyState)
+    fun currentStyle(): MacosVibrancySpec = MacosVibrancySpec.builder()
+        .material(materialCombo.selectedItem as MacosVibrancyMaterial)
+        .blendingMode(blendingCombo.selectedItem as MacosVibrancyBlendingMode)
+        .state(stateCombo.selectedItem as MacosVibrancyState)
         .emphasized(emphasizedCheck.isSelected)
         .backdropAlpha(alphaSlider.value / 100.0)
         .build()
@@ -120,7 +124,7 @@ class WindowBackdropControls(
         val stateLabel = JLabel("State")
 
         materialCombo.addActionListener {
-            val material = materialCombo.selectedItem as MacVibrancyMaterial
+            val material = materialCombo.selectedItem as MacosVibrancyMaterial
             val strength = blurStrengthForMaterial(material)
             if (blurSlider.value != strength) {
                 blurSlider.value = strength

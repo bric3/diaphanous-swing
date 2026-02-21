@@ -8,7 +8,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-package io.github.bric3.diaphanous;
+package io.github.bric3.diaphanous.platform.macos;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * AppKit window mutation APIs must run on the macOS main thread. Violating this rule can
  * crash with {@code SIGTRAP} and messages like "Must only be used from the main thread".
  */
-final class MacThreading {
+final class MacosThreading {
     private static final Method PERFORM_ON_MAIN_THREAD_AFTER_DELAY;
 
     static {
@@ -34,7 +34,7 @@ final class MacThreading {
         }
     }
 
-    private MacThreading() {
+    private MacosThreading() {
     }
 
     static void runOnAppKitThread(Runnable runnable) {
