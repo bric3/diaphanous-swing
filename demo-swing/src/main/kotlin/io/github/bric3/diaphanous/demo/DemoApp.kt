@@ -15,11 +15,11 @@ import io.github.bric3.diaphanous.MacStartupReveal
 import io.github.bric3.diaphanous.MacWindowAppearance
 import io.github.bric3.diaphanous.MacWindowBackdrop
 import io.github.bric3.diaphanous.MacWindowDecorations
+import io.github.bric3.diaphanous.RootErasingContentPane
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.Graphics
 import java.awt.GridBagLayout
 import java.awt.LayoutManager
 import javax.swing.JComponent
@@ -160,23 +160,6 @@ object DemoApp {
         )
         if (component is java.awt.Container) {
             component.components.forEach { child -> dumpComponentTree(child, depth + 1) }
-        }
-    }
-
-    private class RootErasingContentPane(
-        layout: LayoutManager
-    ) : JPanel(layout) {
-        init {
-            apply {
-                isOpaque = false
-                background = Color(0, 0, 0, 0)
-            }
-        }
-
-        override fun paintComponent(g: Graphics) {
-            if (!MacBackdropSupport.clearBackgroundIfEnabled(g, this)) {
-                super.paintComponent(g)
-            }
         }
     }
 }
