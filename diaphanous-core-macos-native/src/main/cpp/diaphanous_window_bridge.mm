@@ -14,16 +14,31 @@
 
 #include "diaphanous_window_bridge.h"
 
+/**
+ * Wrapper content view used to host both:
+ * - the existing AWT host view (front), and
+ * - an NSVisualEffectView (back).
+ *
+ * Raison d'etre: in decorated Swing windows the AWT host is Metal-backed
+ * (`MTLLayer`). Installing effect view via one-shot native calls is not enough;
+ * the host must be reliably reparented in a stable native container so the
+ * backdrop can be managed without breaking event routing.
+ */
 @interface DiaphanousWrappedAWTView : NSView
 
+/// Designated initializer with a non-null AWT host view.
 - (instancetype) initWithAWTView: (NSView *) view;
+/// Creates or updates the effect view using caller-provided knobs.
 - (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
                                   blending: (NSVisualEffectBlendingMode) blendingMode
                                       state: (NSVisualEffectState) state
                                  emphasized: (BOOL) emphasized
                                       alpha: (CGFloat) alpha;
+/// Removes only the effect view; keeps wrapper + AWT host intact.
 - (void) removeEffect;
+/// Returns wrapped AWT host view.
 - (NSView *) awtView;
+/// Returns installed effect view or nil.
 - (NSVisualEffectView *) effectView;
 
 @end
@@ -106,6 +121,12 @@
 
 @end
 
+/**
+ * Executes an AppKit mutation block on the main thread and returns its status.
+ *
+ * AppKit requires these operations on main thread; callers may invoke bridge
+ * functions from arbitrary Java threads.
+ */
 static int run_on_main_sync(int (^block)(void)) {
     if ([NSThread isMainThread]) {
         return block();
@@ -272,6 +293,13 @@ static void dump_view(NSView *view, int depth) {
     }
 }
 
+/**
+ * Ensures the window content view is the wrapper type.
+ *
+ * When content view is not already wrapped, detaches current content view,
+ * creates wrapper, reparents previous content as child, and installs wrapper
+ * as `window.contentView`.
+ */
 static DiaphanousWrappedAWTView *ensure_wrapper(NSWindow *window) {
     NSView *content = window.contentView;
     if ([content isKindOfClass: [DiaphanousWrappedAWTView class]]) {
@@ -284,6 +312,13 @@ static DiaphanousWrappedAWTView *ensure_wrapper(NSWindow *window) {
     return wrapper;
 }
 
+/**
+ * Configures transparency for window, wrapper layer, and AWT host layer.
+ *
+ * This removes obvious opaque fills. It does not stop Java rendering from
+ * blitting a full frame in the host surface; that concern is handled on the
+ * Java side by the backdrop eraser strategy.
+ */
 static void configure_window_and_host(NSWindow *window, DiaphanousWrappedAWTView *wrapper) {
     window.opaque = NO;
     window.backgroundColor = NSColor.clearColor;
@@ -308,6 +343,14 @@ static void configure_window_and_host(NSWindow *window, DiaphanousWrappedAWTView
     }
 }
 
+/**
+ * Installs/reuses wrapper + backdrop for the target window.
+ *
+ * Threading: may be called from any Java thread; execution is synchronized to
+ * AppKit main thread internally.
+ *
+ * @return 0 on success, -1 on failure.
+ */
 extern "C" int diaphanous_install_vibrant_wrapper(
     void* ns_window_ptr,
     int material,
@@ -339,6 +382,17 @@ extern "C" int diaphanous_install_vibrant_wrapper(
     });
 }
 
+/**
+ * Updates effect parameters when wrapper/effect already exists.
+ *
+ * If wrapper/effect is not present yet, this function delegates to
+ * `diaphanous_install_vibrant_wrapper`.
+ *
+ * Threading: may be called from any Java thread; execution is synchronized to
+ * AppKit main thread internally.
+ *
+ * @return 0 on success, -1 on failure.
+ */
 extern "C" int diaphanous_update_vibrant_material(
     void* ns_window_ptr,
     int material,
@@ -377,6 +431,14 @@ extern "C" int diaphanous_update_vibrant_material(
     });
 }
 
+/**
+ * Removes only the `NSVisualEffectView` from wrapper content.
+ *
+ * Wrapper and AWT host reparenting are preserved to keep event and hierarchy
+ * stable for possible re-enable operations.
+ *
+ * @return 0 on success, -1 when wrapper/window is unavailable.
+ */
 extern "C" int diaphanous_remove_vibrant_wrapper(void* ns_window_ptr) {
     return run_on_main_sync(^int {
         if (ns_window_ptr == nullptr) {
@@ -531,6 +593,11 @@ extern "C" int diaphanous_dump_window_state(void* ns_window_ptr) {
     });
 }
 
+/**
+ * Reads default alpha from a newly created `NSVisualEffectView`.
+ *
+ * @return alpha default, or -1.0 when unavailable.
+ */
 extern "C" double diaphanous_default_effect_alpha(void) {
     __block double value = -1.0;
     run_on_main_sync(^int {
@@ -541,6 +608,11 @@ extern "C" double diaphanous_default_effect_alpha(void) {
     return value;
 }
 
+/**
+ * Reads default material from a newly created `NSVisualEffectView`.
+ *
+ * @return material raw value, or -1 when unavailable.
+ */
 extern "C" int diaphanous_default_effect_material(void) {
     __block int value = -1;
     run_on_main_sync(^int {
@@ -551,6 +623,11 @@ extern "C" int diaphanous_default_effect_material(void) {
     return value;
 }
 
+/**
+ * Reads current alpha from installed effect view in wrapped window content.
+ *
+ * @return effect alpha, or -1.0 when wrapper/effect is unavailable.
+ */
 extern "C" double diaphanous_read_effect_alpha(void* ns_window_ptr) {
     __block double value = -1.0;
     run_on_main_sync(^int {
@@ -574,6 +651,11 @@ extern "C" double diaphanous_read_effect_alpha(void* ns_window_ptr) {
     return value;
 }
 
+/**
+ * Reads current material from installed effect view in wrapped window content.
+ *
+ * @return material raw value, or -1 when wrapper/effect is unavailable.
+ */
 extern "C" int diaphanous_read_effect_material(void* ns_window_ptr) {
     __block int value = -1;
     run_on_main_sync(^int {
