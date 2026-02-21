@@ -36,7 +36,7 @@ import java.awt.Window;
  *   <li>AWT window lifecycle: {@link Window#addNotify()}</li>
  *   <li>AWT visibility and fallback opacity: {@link Window#setVisible(boolean)}, {@link Window#setOpacity(float)}</li>
  *   <li>AWT event queue scheduling: {@link EventQueue#invokeLater(Runnable)}</li>
- *   <li>macOS native alpha bridge: {@link MacWindowStyler#setWindowAlpha(Window, double)}</li>
+ *   <li>macOS native alpha bridge: {@link MacWindowBackdrop#setWindowAlpha(Window, double)}</li>
  * </ul>
  * <p>
  * References:
@@ -62,8 +62,8 @@ public final class MacStartupReveal {
 
         boolean revealWithOpacity = false;
         try {
-            if (MacWindowStyler.isSupported()) {
-                MacWindowStyler.setWindowAlpha(window, 0.0);
+            if (MacWindowBackdrop.isSupported()) {
+                MacWindowBackdrop.setWindowAlpha(window, 0.0);
                 revealWithOpacity = true;
             } else {
                 window.setOpacity(0.0f);
@@ -79,8 +79,8 @@ public final class MacStartupReveal {
         }
 
         EventQueue.invokeLater(() -> {
-            if (MacWindowStyler.isSupported()) {
-                MacWindowStyler.setWindowAlpha(window, 1.0);
+            if (MacWindowBackdrop.isSupported()) {
+                MacWindowBackdrop.setWindowAlpha(window, 1.0);
             } else {
                 window.setOpacity(1.0f);
             }

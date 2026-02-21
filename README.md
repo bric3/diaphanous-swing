@@ -14,7 +14,7 @@
 - Full-size content view style bit (`setStyleMask:` with `NSWindowStyleMaskFullSizeContentView`)
 - Title visibility (`setTitleVisibility:`)
 - Toolbar style when available (`setToolbarStyle:`)
-- Vibrancy backdrop with `NSVisualEffectView` (`applyVibrancy(...)` / `clearVibrancy(...)`)
+- Vibrancy backdrop with `NSVisualEffectView` (`MacWindowBackdrop.apply(...)` / `MacWindowBackdrop.clear(...)`)
 - Swing-side backdrop support (`MacBackdropSupport`) to prevent Java overpaint in decorated mode.
 
 ## Run the demo
@@ -55,14 +55,14 @@ MacWindowStyle style = MacWindowStyle.builder()
     .toolbarStyle(MacToolbarStyle.UNIFIED_COMPACT)
     .build();
 
-MacWindowStyler.apply(frame, style);
+MacWindowDecorations.applyStyle(frame, style);
 
 MacVibrancyStyle vibrancy = MacVibrancyStyle.builder()
     .material(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
     .build();
-MacWindowStyler.applyVibrancy(frame, vibrancy);
+MacWindowBackdrop.apply(frame, vibrancy);
 
-MacWindowStyler.applyAppearance(frame, MacWindowAppearance.SYSTEM);
+MacWindowDecorations.applyAppearance(frame, MacWindowAppearance.SYSTEM);
 MacBackdropSupport.configure(frame, MacWindowAppearance.SYSTEM);
 ```
 

@@ -17,7 +17,8 @@ import io.github.bric3.diaphanous.MacVibrancyStyle
 import io.github.bric3.diaphanous.MacToolbarStyle
 import io.github.bric3.diaphanous.MacWindowStyle
 import io.github.bric3.diaphanous.MacWindowAppearance
-import io.github.bric3.diaphanous.MacWindowStyler
+import io.github.bric3.diaphanous.MacWindowDecorations
+import io.github.bric3.diaphanous.MacWindowBackdrop
 import io.github.bric3.diaphanous.MacStartupReveal
 import io.github.bric3.diaphanous.MacBackdropSupport
 import java.awt.BorderLayout
@@ -139,7 +140,7 @@ object DemoApp {
             topSeriesPanel.addMouseMotionListener(dragListener)
         }
 
-        val nativeDefaultAlpha = MacWindowStyler.defaultBackdropAlpha()
+        val nativeDefaultAlpha = MacWindowBackdrop.defaultAlpha()
         val initialAlpha = if (nativeDefaultAlpha in 0.0..1.0) nativeDefaultAlpha else DEFAULT_BACKDROP_ALPHA
         fun blurStrengthForMaterial(material: MacVibrancyMaterial): Int = when (material) {
             MacVibrancyMaterial.CONTENT_BACKGROUND -> 10
@@ -149,9 +150,9 @@ object DemoApp {
             MacVibrancyMaterial.HUD_WINDOW -> 90
             else -> DEFAULT_BLUR_STRENGTH
         }
-        val initialMaterial = MacWindowStyler.defaultBackdropMaterial()
+        val initialMaterial = MacWindowBackdrop.defaultMaterial()
             .orElse(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
-        val initialBlurStrength = MacWindowStyler.defaultBackdropMaterial()
+        val initialBlurStrength = MacWindowBackdrop.defaultMaterial()
             .map(::blurStrengthForMaterial)
             .orElse(DEFAULT_BLUR_STRENGTH)
         val alphaValue = JLabel("%.2f".format(initialAlpha))
@@ -298,9 +299,9 @@ object DemoApp {
                 .titleVisible(titleVisibleCheck.isSelected)
                 .toolbarStyle(toolbarStyleCombo.selectedItem as MacToolbarStyle)
                 .build()
-            MacWindowStyler.apply(frame, style)
+            MacWindowDecorations.applyStyle(frame, style)
             if (!undecorated) {
-                MacWindowStyler.applyVibrancy(frame, currentStyle())
+                MacWindowBackdrop.apply(frame, currentStyle())
             }
         }
         transparentTitleBarCheck.addActionListener { applyWindowStyleFromControls() }
@@ -309,19 +310,19 @@ object DemoApp {
         toolbarStyleCombo.addActionListener { applyWindowStyleFromControls() }
         appearanceCombo.addActionListener {
             val appearance = appearanceCombo.selectedItem as MacWindowAppearance
-            MacWindowStyler.applyAppearance(frame, appearance)
+            MacWindowDecorations.applyAppearance(frame, appearance)
             MacBackdropSupport.configure(frame, appearance)
         }
 
         alphaSlider.addChangeListener {
             val alpha = alphaSlider.value / 100.0
             alphaValue.text = "%.2f".format(alpha)
-            MacWindowStyler.applyVibrancy(frame, currentStyle())
+            MacWindowBackdrop.apply(frame, currentStyle())
         }
         blurSlider.addChangeListener {
             blurValue.text = blurSlider.value.toString()
             materialCombo.selectedItem = materialForBlurStrength(blurSlider.value)
-            MacWindowStyler.applyVibrancy(frame, currentStyle())
+            MacWindowBackdrop.apply(frame, currentStyle())
         }
         materialCombo.addActionListener {
             val material = materialCombo.selectedItem as MacVibrancyMaterial
@@ -329,11 +330,11 @@ object DemoApp {
             if (blurSlider.value != strength) {
                 blurSlider.value = strength
             }
-            MacWindowStyler.applyVibrancy(frame, currentStyle())
+            MacWindowBackdrop.apply(frame, currentStyle())
         }
-        blendingCombo.addActionListener { MacWindowStyler.applyVibrancy(frame, currentStyle()) }
-        stateCombo.addActionListener { MacWindowStyler.applyVibrancy(frame, currentStyle()) }
-        emphasizedCheck.addActionListener { MacWindowStyler.applyVibrancy(frame, currentStyle()) }
+        blendingCombo.addActionListener { MacWindowBackdrop.apply(frame, currentStyle()) }
+        stateCombo.addActionListener { MacWindowBackdrop.apply(frame, currentStyle()) }
+        emphasizedCheck.addActionListener { MacWindowBackdrop.apply(frame, currentStyle()) }
 
         var styleRow = 0
         styleGbc.gridy = styleRow++
@@ -430,10 +431,10 @@ object DemoApp {
 
         frame.contentPane = panel
         val initialAppearance = appearanceCombo.selectedItem as MacWindowAppearance
-        MacWindowStyler.applyAppearance(frame, initialAppearance)
+        MacWindowDecorations.applyAppearance(frame, initialAppearance)
         MacBackdropSupport.configure(frame, initialAppearance)
         if (undecorated) {
-            MacWindowStyler.applyVibrancy(frame, currentStyle())
+            MacWindowBackdrop.apply(frame, currentStyle())
         } else {
             applyWindowStyleFromControls()
         }

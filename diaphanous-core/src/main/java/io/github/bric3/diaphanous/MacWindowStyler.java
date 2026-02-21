@@ -19,11 +19,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Applies macOS-specific native window style attributes to Swing/AWT windows.
+ * Internal macOS native styling implementation shared by public split APIs:
+ * {@link MacWindowDecorations} and {@link MacWindowBackdrop}.
  * <p>
  * This implementation relies on internal AWT peer classes and Objective-C runtime calls.
  */
-public final class MacWindowStyler {
+final class MacWindowStyler {
     private static final long NS_WINDOW_STYLE_MASK_FULL_SIZE_CONTENT_VIEW = 1L << 15;
     private static final long NS_WINDOW_TITLE_VISIBLE = 0;
     private static final long NS_WINDOW_TITLE_HIDDEN = 1;
