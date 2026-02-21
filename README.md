@@ -1,6 +1,9 @@
 # Diaphanous Swing
 
-`diaphanous-swing` is a Java library that applies macOS `NSWindow` style changes to Swing/AWT windows.
+`diaphanous-swing` is a Java library that allows to make Swing/AWT windows us the translucent style. 
+
+> [!NOTE]
+> At this time only macOs support has been implemented.
 
 ## Project layout
 
@@ -8,14 +11,18 @@
 - `diaphanous-core-macos-native`: macOS native bridge (`NSView` wrapper + effect view management).
 - `demo-swing`: sample Swing app using the library.
 
-## What works (macOS)
+## What works
 
-- Transparent title bar (`setTitlebarAppearsTransparent:`)
-- Full-size content view style bit (`setStyleMask:` with `NSWindowStyleMaskFullSizeContentView`)
-- Title visibility (`setTitleVisibility:`)
-- Toolbar style when available (`setToolbarStyle:`)
-- Vibrancy backdrop with `NSVisualEffectView` (`MacWindowBackdrop.apply(...)` / `MacWindowBackdrop.clear(...)`)
-- Swing-side backdrop support (`MacBackdropSupport`) to prevent Java overpaint in decorated mode.
+### macOS
+    
+- Window backdrop support via `MacBackdropSupport`
+
+- Simple Windows decorations (however, support is limited, and weisJ/darklaf platform-decorations is preferred)
+  - Transparent title bar (`setTitlebarAppearsTransparent:`)
+  - Full-size content view style bit (`setStyleMask:` with `NSWindowStyleMaskFullSizeContentView`)
+  - Title visibility (`setTitleVisibility:`)
+  - Toolbar style when available (`setToolbarStyle:`)
+  - Vibrancy backdrop with `NSVisualEffectView` (`MacWindowBackdrop.apply(...)` / `MacWindowBackdrop.clear(...)`)
 
 ## Run the demo
 
@@ -35,7 +42,7 @@ The demo is preconfigured with this JVM argument:
 
 - `--enable-native-access=ALL-UNNAMED`
 
-`diaphanous-core` bundles the macOS native library (`native/macos/libdiaphanous-core-macos-native-macos-aarch64.dylib`) and loads it from classpath by default.
+`diaphanous-core` bundles a simple macOS native library that is loaded it from classpath by default.
 For local override/debug, set `-Ddiaphanous.macos.nativeLib=/absolute/path/to/libdiaphanous-core-macos-native.dylib`.
 
 Robot smoke test:
