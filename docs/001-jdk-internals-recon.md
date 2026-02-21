@@ -42,13 +42,13 @@ So the inspection scope was deliberate: identify the narrowest internal touchpoi
 
 1. Pointer resolution path:
 ```mermaid
-flowchart LR
-    A[java.awt.Window] --> B[Component.peer]
-    B --> C[sun.lwawt.LWWindowPeer]
-    C --> D[getPlatformWindow()]
-    D --> E[sun.lwawt.macosx.CPlatformWindow]
-    E --> F[sun.lwawt.macosx.CFRetainedResource.ptr]
-    F --> G[NSWindow*]
+flowchart TB
+    A["java.awt.Window"] --> B["Component.peer"]
+    B --> C["LWWindowPeer"]
+    C --> D["getPlatformWindow()"]
+    D --> E["CPlatformWindow"]
+    E --> F["CFRetainedResource.ptr"]
+    F --> G["NSWindow pointer"]
 ```
 
 2. Threading strategy:
