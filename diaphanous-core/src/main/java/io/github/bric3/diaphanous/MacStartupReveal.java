@@ -10,9 +10,19 @@
 
 package io.github.bric3.diaphanous;
 
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.IllegalComponentStateException;
+import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.event.AWTEventListener;
+import java.awt.event.PaintEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Shows an AWT window while minimizing the initial white-frame flash on macOS.
@@ -28,7 +38,7 @@ import java.awt.Window;
  *   <li>Ensure peer creation via {@link Window#addNotify()} when needed.</li>
  *   <li>Hide the native window with alpha 0.</li>
  *   <li>Show the window.</li>
- *   <li>Restore alpha to 1 on the next AWT event-loop turn.</li>
+ *   <li>Restore alpha to 1 on first paint (with event-loop fallback).</li>
  * </ol>
  * <p>
  * Used platform artifacts:
@@ -36,6 +46,7 @@ import java.awt.Window;
  *   <li>AWT window lifecycle: {@link Window#addNotify()}</li>
  *   <li>AWT visibility and fallback opacity: {@link Window#setVisible(boolean)}, {@link Window#setOpacity(float)}</li>
  *   <li>AWT event queue scheduling: {@link EventQueue#invokeLater(Runnable)}</li>
+ *   <li>AWT paint event observation: {@link Toolkit#addAWTEventListener(AWTEventListener, long)}</li>
  *   <li>macOS native alpha bridge: {@link MacWindowBackdrop#setWindowAlpha(Window, double)}</li>
  * </ul>
  * <p>
@@ -47,6 +58,9 @@ import java.awt.Window;
  * </ul>
  */
 public final class MacStartupReveal {
+    private static final long MIN_HIDDEN_MILLIS = Long.getLong("diaphanous.startupReveal.minHiddenMillis", 120L);
+    private static final long FORCE_REVEAL_MILLIS = Long.getLong("diaphanous.startupReveal.forceRevealMillis", 650L);
+
     private MacStartupReveal() {
     }
 
@@ -78,12 +92,89 @@ public final class MacStartupReveal {
             return;
         }
 
-        EventQueue.invokeLater(() -> {
+        revealOnFirstPaint(window);
+    }
+
+    private static void revealOnFirstPaint(Window window) {
+        AtomicBoolean revealed = new AtomicBoolean(false);
+        AtomicBoolean painted = new AtomicBoolean(false);
+        AtomicLong shownAtMillis = new AtomicLong(System.currentTimeMillis());
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Timer timer = new Timer("diaphanous-startup-reveal", true);
+
+        AWTEventListener[] holder = new AWTEventListener[1];
+        holder[0] = event -> {
+            if (!(event instanceof PaintEvent)) {
+                return;
+            }
+            Object source = event.getSource();
+            if (!(source instanceof Component component)) {
+                return;
+            }
+            if (windowOf(component) != window) {
+                return;
+            }
+            painted.set(true);
+            tryReveal(window, toolkit, holder[0], timer, revealed, painted, shownAtMillis.get());
+        };
+
+        toolkit.addAWTEventListener(holder[0], AWTEvent.PAINT_EVENT_MASK);
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                EventQueue.invokeLater(
+                    () -> tryReveal(window, toolkit, holder[0], timer, revealed, painted, shownAtMillis.get())
+                );
+            }
+        }, 16L, 16L);
+    }
+
+    private static Window windowOf(Component component) {
+        Component cursor = component;
+        while (cursor != null) {
+            if (cursor instanceof Window window) {
+                return window;
+            }
+            Container parent = cursor.getParent();
+            cursor = parent;
+        }
+        return null;
+    }
+
+    private static void reveal(Window window) {
+        try {
             if (MacWindowBackdrop.isSupported()) {
                 MacWindowBackdrop.setWindowAlpha(window, 1.0);
             } else {
                 window.setOpacity(1.0f);
             }
-        });
+        } catch (RuntimeException ignored) {
+            // Ignore reveal errors; the window is already visible.
+        }
+    }
+
+    private static void tryReveal(
+        Window window,
+        Toolkit toolkit,
+        AWTEventListener listener,
+        Timer timer,
+        AtomicBoolean revealed,
+        AtomicBoolean painted,
+        long shownAtMillis
+    ) {
+        if (revealed.get()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        boolean afterMinHidden = now - shownAtMillis >= MIN_HIDDEN_MILLIS;
+        boolean forceReveal = now - shownAtMillis >= FORCE_REVEAL_MILLIS;
+        if ((!painted.get() || !afterMinHidden) && !forceReveal) {
+            return;
+        }
+        if (revealed.compareAndSet(false, true)) {
+            toolkit.removeAWTEventListener(listener);
+            timer.cancel();
+            reveal(window);
+        }
     }
 }
