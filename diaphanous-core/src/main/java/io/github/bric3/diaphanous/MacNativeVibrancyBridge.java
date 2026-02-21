@@ -37,18 +37,32 @@ final class MacNativeVibrancyBridge {
         return FNS != null;
     }
 
-    static boolean install(long nsWindowPtr, int material, double alpha) {
+    static boolean install(
+        long nsWindowPtr,
+        int material,
+        double alpha,
+        int blendingMode,
+        int state,
+        boolean emphasized
+    ) {
         if (FNS == null || nsWindowPtr == 0L) {
             return false;
         }
-        return FNS.install(nsWindowPtr, material, alpha) == 0;
+        return FNS.install(nsWindowPtr, material, alpha, blendingMode, state, emphasized) == 0;
     }
 
-    static boolean update(long nsWindowPtr, int material, double alpha) {
+    static boolean update(
+        long nsWindowPtr,
+        int material,
+        double alpha,
+        int blendingMode,
+        int state,
+        boolean emphasized
+    ) {
         if (FNS == null || nsWindowPtr == 0L) {
             return false;
         }
-        return FNS.update(nsWindowPtr, material, alpha) == 0;
+        return FNS.update(nsWindowPtr, material, alpha, blendingMode, state, emphasized) == 0;
     }
 
     static boolean remove(long nsWindowPtr) {
@@ -110,7 +124,10 @@ final class MacNativeVibrancyBridge {
                     ValueLayout.JAVA_INT,
                     ValueLayout.ADDRESS,
                     ValueLayout.JAVA_INT,
-                    ValueLayout.JAVA_DOUBLE
+                    ValueLayout.JAVA_DOUBLE,
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.JAVA_INT
                 )
             );
             MethodHandle updateHandle = linker.downcallHandle(
@@ -120,7 +137,10 @@ final class MacNativeVibrancyBridge {
                     ValueLayout.JAVA_INT,
                     ValueLayout.ADDRESS,
                     ValueLayout.JAVA_INT,
-                    ValueLayout.JAVA_DOUBLE
+                    ValueLayout.JAVA_DOUBLE,
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.JAVA_INT
                 )
             );
             MethodHandle removeHandle = linker.downcallHandle(
@@ -214,17 +234,45 @@ final class MacNativeVibrancyBridge {
             this.readMaterialHandle = readMaterialHandle;
         }
 
-        private int install(long nsWindowPtr, int material, double alpha) {
+        private int install(
+            long nsWindowPtr,
+            int material,
+            double alpha,
+            int blendingMode,
+            int state,
+            boolean emphasized
+        ) {
             try {
-                return (int) installHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr), material, alpha);
+                return (int) installHandle.invokeExact(
+                    MemorySegment.ofAddress(nsWindowPtr),
+                    material,
+                    alpha,
+                    blendingMode,
+                    state,
+                    emphasized ? 1 : 0
+                );
             } catch (Throwable t) {
                 throw new IllegalStateException("Native install call failed", t);
             }
         }
 
-        private int update(long nsWindowPtr, int material, double alpha) {
+        private int update(
+            long nsWindowPtr,
+            int material,
+            double alpha,
+            int blendingMode,
+            int state,
+            boolean emphasized
+        ) {
             try {
-                return (int) updateHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr), material, alpha);
+                return (int) updateHandle.invokeExact(
+                    MemorySegment.ofAddress(nsWindowPtr),
+                    material,
+                    alpha,
+                    blendingMode,
+                    state,
+                    emphasized ? 1 : 0
+                );
             } catch (Throwable t) {
                 throw new IllegalStateException("Native update call failed", t);
             }

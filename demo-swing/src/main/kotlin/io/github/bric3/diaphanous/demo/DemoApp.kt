@@ -11,6 +11,8 @@
 package io.github.bric3.diaphanous.demo
 
 import io.github.bric3.diaphanous.MacVibrancyMaterial
+import io.github.bric3.diaphanous.MacVibrancyBlendingMode
+import io.github.bric3.diaphanous.MacVibrancyState
 import io.github.bric3.diaphanous.MacVibrancyStyle
 import io.github.bric3.diaphanous.MacToolbarStyle
 import io.github.bric3.diaphanous.MacWindowStyle
@@ -147,8 +149,10 @@ object DemoApp {
             MacVibrancyMaterial.HUD_WINDOW -> 90
             else -> DEFAULT_BLUR_STRENGTH
         }
+        val initialMaterial = MacWindowStyler.defaultBackdropMaterial()
+            .orElse(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
         val initialBlurStrength = MacWindowStyler.defaultBackdropMaterial()
-            .map { blurStrengthForMaterial(it) }
+            .map(::blurStrengthForMaterial)
             .orElse(DEFAULT_BLUR_STRENGTH)
         val alphaValue = JLabel("%.2f".format(initialAlpha))
         alphaValue.foreground = Color(230, 230, 230, 190)
@@ -162,6 +166,21 @@ object DemoApp {
         val blurSlider = JSlider(0, 100, initialBlurStrength)
         blurSlider.name = "blurSlider"
         blurSlider.isOpaque = false
+        val materialLabel = JLabel("Material")
+        val materialCombo = JComboBox(MacVibrancyMaterial.entries.toTypedArray())
+        materialCombo.name = "materialCombo"
+        materialCombo.selectedItem = initialMaterial
+        val blendingLabel = JLabel("Blending mode")
+        val blendingCombo = JComboBox(MacVibrancyBlendingMode.entries.toTypedArray())
+        blendingCombo.name = "blendingModeCombo"
+        blendingCombo.selectedItem = MacVibrancyBlendingMode.BEHIND_WINDOW
+        val stateLabel = JLabel("State")
+        val stateCombo = JComboBox(MacVibrancyState.entries.toTypedArray())
+        stateCombo.name = "vibrancyStateCombo"
+        stateCombo.selectedItem = MacVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE
+        val emphasizedCheck = JCheckBox("Emphasized")
+        emphasizedCheck.name = "emphasizedCheck"
+        emphasizedCheck.isOpaque = false
         val undecoratedInfo = JLabel(
             "<html><div style='width:260px'>Undecorated mode: alpha/blur controls apply experimental NSVisualEffectView backdrop.</div></html>",
             JLabel.LEFT
@@ -177,7 +196,10 @@ object DemoApp {
         }
 
         fun currentStyle(): MacVibrancyStyle = MacVibrancyStyle.builder()
-            .material(materialForBlurStrength(blurSlider.value))
+            .material(materialCombo.selectedItem as MacVibrancyMaterial)
+            .blendingMode(blendingCombo.selectedItem as MacVibrancyBlendingMode)
+            .state(stateCombo.selectedItem as MacVibrancyState)
+            .emphasized(emphasizedCheck.isSelected)
             .backdropAlpha(alphaSlider.value / 100.0)
             .build()
 
@@ -222,6 +244,31 @@ object DemoApp {
         gbc.weightx = 1.0
         gbc.gridwidth = 2
         controlsPanel.add(blurSlider, gbc)
+
+        gbc.gridy = 4
+        gbc.gridx = 0
+        gbc.gridwidth = 1
+        gbc.weightx = 0.0
+        controlsPanel.add(materialLabel, gbc)
+        gbc.gridx = 1
+        controlsPanel.add(materialCombo, gbc)
+
+        gbc.gridy = 5
+        gbc.gridx = 0
+        controlsPanel.add(blendingLabel, gbc)
+        gbc.gridx = 1
+        controlsPanel.add(blendingCombo, gbc)
+
+        gbc.gridy = 6
+        gbc.gridx = 0
+        controlsPanel.add(stateLabel, gbc)
+        gbc.gridx = 1
+        controlsPanel.add(stateCombo, gbc)
+
+        gbc.gridy = 7
+        gbc.gridx = 0
+        gbc.gridwidth = 2
+        controlsPanel.add(emphasizedCheck, gbc)
 
         val stylePanel = transparentPanel(GridBagLayout())
         val styleGbc = GridBagConstraints()
@@ -273,8 +320,20 @@ object DemoApp {
         }
         blurSlider.addChangeListener {
             blurValue.text = blurSlider.value.toString()
+            materialCombo.selectedItem = materialForBlurStrength(blurSlider.value)
             MacWindowStyler.applyVibrancy(frame, currentStyle())
         }
+        materialCombo.addActionListener {
+            val material = materialCombo.selectedItem as MacVibrancyMaterial
+            val strength = blurStrengthForMaterial(material)
+            if (blurSlider.value != strength) {
+                blurSlider.value = strength
+            }
+            MacWindowStyler.applyVibrancy(frame, currentStyle())
+        }
+        blendingCombo.addActionListener { MacWindowStyler.applyVibrancy(frame, currentStyle()) }
+        stateCombo.addActionListener { MacWindowStyler.applyVibrancy(frame, currentStyle()) }
+        emphasizedCheck.addActionListener { MacWindowStyler.applyVibrancy(frame, currentStyle()) }
 
         var styleRow = 0
         styleGbc.gridy = styleRow++

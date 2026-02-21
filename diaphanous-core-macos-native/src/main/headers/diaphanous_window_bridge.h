@@ -15,8 +15,22 @@
 extern "C" {
 #endif
 
-int diaphanous_install_vibrant_wrapper(void* ns_window_ptr, int material, double alpha);
-int diaphanous_update_vibrant_material(void* ns_window_ptr, int material, double alpha);
+int diaphanous_install_vibrant_wrapper(
+    void* ns_window_ptr,
+    int material,
+    double alpha,
+    int blending_mode,
+    int state,
+    int emphasized
+);
+int diaphanous_update_vibrant_material(
+    void* ns_window_ptr,
+    int material,
+    double alpha,
+    int blending_mode,
+    int state,
+    int emphasized
+);
 int diaphanous_remove_vibrant_wrapper(void* ns_window_ptr);
 int diaphanous_dump_window_state(void* ns_window_ptr);
 double diaphanous_default_effect_alpha(void);

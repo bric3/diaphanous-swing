@@ -68,6 +68,29 @@ public final class MacWindowStyler {
 
     /**
      * Applies an {@code NSVisualEffectView}-based backdrop (vibrancy) to the window content.
+     * <p>
+     * The style object can be partial: properties that are not explicitly changed by caller code
+     * are taken from {@link MacVibrancyStyle#builder()} defaults.
+     *
+     * <p>Examples:
+     * <pre>{@code
+     * MacWindowStyler.applyVibrancy(
+     *     window,
+     *     MacVibrancyStyle.builder()
+     *         .material(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+     *         .build()
+     * );
+     *
+     * MacWindowStyler.applyVibrancy(
+     *     window,
+     *     MacVibrancyStyle.builder()
+     *         .material(MacVibrancyMaterial.CONTENT_BACKGROUND)
+     *         .blendingMode(MacVibrancyBlendingMode.WITHIN_WINDOW)
+     *         .state(MacVibrancyState.ACTIVE)
+     *         .backdropAlpha(0.75)
+     *         .build()
+     * );
+     * }</pre>
      *
      * @param window the AWT/Swing window to mutate
      * @param style vibrancy configuration
@@ -268,15 +291,31 @@ public final class MacWindowStyler {
         }
 
         int material = (int) style.material().nativeValue();
+        int blendingMode = (int) style.blendingMode().nativeValue();
+        int state = (int) style.state().nativeValue();
         if (MacNativeVibrancyBridge.isAvailable()) {
-            boolean updated = MacNativeVibrancyBridge.update(nsWindowPtr, material, style.backdropAlpha());
+            boolean updated = MacNativeVibrancyBridge.update(
+                nsWindowPtr,
+                material,
+                style.backdropAlpha(),
+                blendingMode,
+                state,
+                style.emphasized()
+            );
             if (updated) {
                 if (DUMP_NATIVE) {
                     MacNativeVibrancyBridge.dump(nsWindowPtr);
                 }
                 return;
             }
-            boolean installed = MacNativeVibrancyBridge.install(nsWindowPtr, material, style.backdropAlpha());
+            boolean installed = MacNativeVibrancyBridge.install(
+                nsWindowPtr,
+                material,
+                style.backdropAlpha(),
+                blendingMode,
+                state,
+                style.emphasized()
+            );
             if (installed) {
                 if (DUMP_NATIVE) {
                     MacNativeVibrancyBridge.dump(nsWindowPtr);

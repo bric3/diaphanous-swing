@@ -15,7 +15,11 @@
 @interface DiaphanousWrappedAWTView : NSView
 
 - (instancetype) initWithAWTView: (NSView *) view;
-- (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material alpha: (CGFloat) alpha;
+- (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
+                                  blending: (NSVisualEffectBlendingMode) blendingMode
+                                      state: (NSVisualEffectState) state
+                                 emphasized: (BOOL) emphasized
+                                      alpha: (CGFloat) alpha;
 - (void) removeEffect;
 - (NSView *) awtView;
 - (NSVisualEffectView *) effectView;
@@ -50,16 +54,23 @@
     }
 }
 
-- (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material alpha: (CGFloat) alpha {
+- (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
+                                  blending: (NSVisualEffectBlendingMode) blendingMode
+                                      state: (NSVisualEffectState) state
+                                 emphasized: (BOOL) emphasized
+                                      alpha: (CGFloat) alpha {
     if (effectView == nil) {
         effectView = [[NSVisualEffectView alloc] initWithFrame: self.bounds];
-        effectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
-        effectView.state = NSVisualEffectStateActive;
         effectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         effectView.translatesAutoresizingMaskIntoConstraints = YES;
         [self addSubview: effectView positioned: NSWindowBelow relativeTo: awtView];
     }
     effectView.material = material;
+    effectView.blendingMode = blendingMode;
+    effectView.state = state;
+    if ([effectView respondsToSelector: @selector(setEmphasized:)]) {
+        effectView.emphasized = emphasized;
+    }
     effectView.alphaValue = alpha;
 }
 
@@ -180,7 +191,14 @@ static void configure_window_and_host(NSWindow *window, DiaphanousWrappedAWTView
     }
 }
 
-extern "C" int diaphanous_install_vibrant_wrapper(void* ns_window_ptr, int material, double alpha) {
+extern "C" int diaphanous_install_vibrant_wrapper(
+    void* ns_window_ptr,
+    int material,
+    double alpha,
+    int blending_mode,
+    int state,
+    int emphasized
+) {
     return run_on_main_sync(^int {
         if (ns_window_ptr == nullptr) {
             return -1;
@@ -195,12 +213,23 @@ extern "C" int diaphanous_install_vibrant_wrapper(void* ns_window_ptr, int mater
             return -1;
         }
         configure_window_and_host(window, wrapper);
-        [wrapper installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material alpha: (CGFloat) alpha];
+        [wrapper installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
+                                          blending: (NSVisualEffectBlendingMode) blending_mode
+                                              state: (NSVisualEffectState) state
+                                         emphasized: emphasized != 0
+                                              alpha: (CGFloat) alpha];
         return 0;
     });
 }
 
-extern "C" int diaphanous_update_vibrant_material(void* ns_window_ptr, int material, double alpha) {
+extern "C" int diaphanous_update_vibrant_material(
+    void* ns_window_ptr,
+    int material,
+    double alpha,
+    int blending_mode,
+    int state,
+    int emphasized
+) {
     return run_on_main_sync(^int {
         if (ns_window_ptr == nullptr) {
             return -1;
@@ -213,10 +242,21 @@ extern "C" int diaphanous_update_vibrant_material(void* ns_window_ptr, int mater
         NSView *content = window.contentView;
         if ([content isKindOfClass: [DiaphanousWrappedAWTView class]]) {
             DiaphanousWrappedAWTView *wrapper = (DiaphanousWrappedAWTView *) content;
-            [wrapper installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material alpha: (CGFloat) alpha];
+            [wrapper installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
+                                              blending: (NSVisualEffectBlendingMode) blending_mode
+                                                  state: (NSVisualEffectState) state
+                                             emphasized: emphasized != 0
+                                                  alpha: (CGFloat) alpha];
             return 0;
         }
-        return diaphanous_install_vibrant_wrapper(ns_window_ptr, material, alpha);
+        return diaphanous_install_vibrant_wrapper(
+            ns_window_ptr,
+            material,
+            alpha,
+            blending_mode,
+            state,
+            emphasized
+        );
     });
 }
 

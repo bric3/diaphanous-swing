@@ -14,6 +14,31 @@ import java.util.Objects;
 
 /**
  * Immutable configuration for macOS {@code NSVisualEffectView} vibrancy.
+ * <p>
+ * Common combinations:
+ * <ul>
+ *   <li>Full-window backdrop: {@code BEHIND_WINDOW + FOLLOWS_WINDOW_ACTIVE_STATE}</li>
+ *   <li>In-window grouped surfaces: {@code WITHIN_WINDOW + ACTIVE}</li>
+ *   <li>Sidebar-like emphasis: {@code material=SIDEBAR} with {@code emphasized=true}</li>
+ * </ul>
+ *
+ * <p>Example presets:
+ * <pre>{@code
+ * MacVibrancyStyle defaultBackdrop = MacVibrancyStyle.builder()
+ *     .build();
+ *
+ * MacVibrancyStyle strongerDarkBackdrop = MacVibrancyStyle.builder()
+ *     .material(MacVibrancyMaterial.HUD_WINDOW)
+ *     .state(MacVibrancyState.ACTIVE)
+ *     .backdropAlpha(0.85)
+ *     .build();
+ *
+ * MacVibrancyStyle withinWindowSurface = MacVibrancyStyle.builder()
+ *     .material(MacVibrancyMaterial.CONTENT_BACKGROUND)
+ *     .blendingMode(MacVibrancyBlendingMode.WITHIN_WINDOW)
+ *     .state(MacVibrancyState.ACTIVE)
+ *     .build();
+ * }</pre>
  *
  * @param enabled whether vibrancy should be present on the window
  * @param material vibrancy material
@@ -32,6 +57,15 @@ public record MacVibrancyStyle(
 ) {
     /**
      * @return a builder with practical defaults for a backdrop effect behind window content
+     *
+     * <p>Defaults:
+     * <ul>
+     *   <li>{@code material=UNDER_WINDOW_BACKGROUND}</li>
+     *   <li>{@code blendingMode=BEHIND_WINDOW}</li>
+     *   <li>{@code state=FOLLOWS_WINDOW_ACTIVE_STATE}</li>
+     *   <li>{@code emphasized=false}</li>
+     *   <li>{@code backdropAlpha=1.0}</li>
+     * </ul>
      */
     public static Builder builder() {
         return new Builder();
@@ -68,6 +102,9 @@ public record MacVibrancyStyle(
 
         /**
          * @param blendingMode vibrancy blending mode
+         *
+         * <p>Use {@code BEHIND_WINDOW} for full-window backdrops. Use {@code WITHIN_WINDOW}
+         * for effects intended to blend inside window content regions.
          * @return this builder
          */
         public Builder blendingMode(MacVibrancyBlendingMode blendingMode) {
@@ -77,6 +114,12 @@ public record MacVibrancyStyle(
 
         /**
          * @param state vibrancy state behavior
+         *
+         * <p>Typical pairing is:
+         * <ul>
+         *   <li>{@code FOLLOWS_WINDOW_ACTIVE_STATE} with standard window backdrops</li>
+         *   <li>{@code ACTIVE} when the effect should remain visually active regardless of focus</li>
+         * </ul>
          * @return this builder
          */
         public Builder state(MacVibrancyState state) {
@@ -86,6 +129,9 @@ public record MacVibrancyStyle(
 
         /**
          * @param emphasized emphasis hint for materials that support it
+         *
+         * <p>This is most meaningful with semantic materials such as {@code SIDEBAR} and
+         * {@code TITLEBAR}. It may have no visible effect for other materials.
          * @return this builder
          */
         public Builder emphasized(boolean emphasized) {
