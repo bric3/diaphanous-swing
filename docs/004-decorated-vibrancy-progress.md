@@ -60,7 +60,7 @@ While a small `.mm` bridge provides stable Objective-C behavior while Java/FFM r
    - wraps the original `AWTView`,
    - inserts `NSVisualEffectView` behind it,
    - forwards AWT mouse selectors.
-3. In `diaphanous-core` module a new FFM bridge (`MacosNativeVibrancyBridge`) to call native functions.
+3. In `diaphanous-core` module a new FFM bridge (`MacosNativeBackdropBridge`) to call native functions.
 
 
 Additionally, in the demo app, two system properties were added to dump the structure:
@@ -107,7 +107,7 @@ flowchart TB
   subgraph Java["java side"]
     Demo["DemoApp"]
     Styler["MacosWindowStyler"]
-    Bridge["MacosNativeVibrancyBridge (FFM)"]
+    Bridge["MacosNativeBackdropBridge (FFM)"]
     Peer["MacosWindowPeerAccess (NSWindow*)"]
     SwingTree["Swing component tree"]
     Demo --> Styler

@@ -106,12 +106,12 @@ If the native bridge is not built/loaded, fallback may still require `--add-open
 
 ### changed files (implementation)
 
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosNativeLibrary.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosNativeWindowHandleBridge.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosWindowPeerAccess.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosNativeVibrancyBridge.java`
-- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/MacosWindowStyler.java`
-- `diaphanous-core-macos-native/src/main/cpp/diaphanous_window_bridge.mm`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/platform/macos/MacosNativeLibrary.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/platform/macos/MacosNativeWindowHandleBridge.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/platform/macos/MacosWindowPeerAccess.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/platform/macos/MacosNativeBackdropBridge.java`
+- `diaphanous-core/src/main/java/io/github/bric3/diaphanous/platform/macos/MacosWindowStyler.java`
+- `diaphanous-core-macos-native/src/main/cpp/diaphanous_window_bridge_backdrop.mm`
 - `diaphanous-core-macos-native/src/main/headers/diaphanous_window_bridge.h`
 - `diaphanous-core-macos-native/build.gradle.kts`
 - `demo-swing/build.gradle.kts`

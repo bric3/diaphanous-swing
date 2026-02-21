@@ -49,7 +49,7 @@ extern "C" {
  * @param state `NSVisualEffectState` raw value.
  * @param emphasized boolean flag (`0` false, non-zero true).
  */
-int diaphanous_install_vibrant_wrapper(
+int diaphanous_install_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
@@ -61,7 +61,7 @@ int diaphanous_install_vibrant_wrapper(
  * Updates backdrop parameters for an installed visual effect view.
  *
  * If the wrapper/effect does not exist yet, this behaves like
- * `diaphanous_install_vibrant_wrapper`.
+ * `diaphanous_install_backdrop_effect`.
  *
  * @param ns_window_ptr borrowed `NSWindow*`.
  * @param material `NSVisualEffectMaterial` raw value.
@@ -70,7 +70,7 @@ int diaphanous_install_vibrant_wrapper(
  * @param state `NSVisualEffectState` raw value.
  * @param emphasized boolean flag (`0` false, non-zero true).
  */
-int diaphanous_update_vibrant_material(
+int diaphanous_update_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
@@ -86,7 +86,7 @@ int diaphanous_update_vibrant_material(
  *
  * @param ns_window_ptr borrowed `NSWindow*`.
  */
-int diaphanous_remove_vibrant_wrapper(void* ns_window_ptr);
+int diaphanous_remove_backdrop_effect(void* ns_window_ptr);
 /**
  * Emits a best-effort diagnostic dump of window/view/layer state to NSLog.
  *

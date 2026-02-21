@@ -26,10 +26,10 @@ import java.util.Optional;
 /**
  * Optional bridge to the macOS native helper library that can wrap the AWT host view.
  */
-final class MacosNativeVibrancyBridge {
+final class MacosNativeBackdropBridge {
     private static final NativeFns FNS = loadNativeFns().orElse(null);
 
-    private MacosNativeVibrancyBridge() {
+    private MacosNativeBackdropBridge() {
     }
 
     static boolean isAvailable() {
@@ -144,8 +144,8 @@ final class MacosNativeVibrancyBridge {
             Linker linker = Linker.nativeLinker();
 
             MethodHandle installHandle = linker.downcallHandle(
-                lookup.find("diaphanous_install_vibrant_wrapper")
-                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_install_vibrant_wrapper")),
+                lookup.find("diaphanous_install_backdrop_effect")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_install_backdrop_effect")),
                 FunctionDescriptor.of(
                     ValueLayout.JAVA_INT,
                     ValueLayout.ADDRESS,
@@ -157,8 +157,8 @@ final class MacosNativeVibrancyBridge {
                 )
             );
             MethodHandle updateHandle = linker.downcallHandle(
-                lookup.find("diaphanous_update_vibrant_material")
-                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_update_vibrant_material")),
+                lookup.find("diaphanous_update_backdrop_effect")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_update_backdrop_effect")),
                 FunctionDescriptor.of(
                     ValueLayout.JAVA_INT,
                     ValueLayout.ADDRESS,
@@ -170,8 +170,8 @@ final class MacosNativeVibrancyBridge {
                 )
             );
             MethodHandle removeHandle = linker.downcallHandle(
-                lookup.find("diaphanous_remove_vibrant_wrapper")
-                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_remove_vibrant_wrapper")),
+                lookup.find("diaphanous_remove_backdrop_effect")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_remove_backdrop_effect")),
                 FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
             );
             MethodHandle dumpHandle = linker.downcallHandle(

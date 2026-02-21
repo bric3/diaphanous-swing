@@ -12,7 +12,7 @@
 #include "diaphanous_window_bridge.h"
 #include "diaphanous_window_bridge_internal.h"
 
-extern "C" int diaphanous_install_vibrant_wrapper(
+extern "C" int diaphanous_install_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
@@ -43,7 +43,7 @@ extern "C" int diaphanous_install_vibrant_wrapper(
     });
 }
 
-extern "C" int diaphanous_update_vibrant_material(
+extern "C" int diaphanous_update_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
@@ -70,7 +70,7 @@ extern "C" int diaphanous_update_vibrant_material(
                                                   alpha: (CGFloat) alpha];
             return 0;
         }
-        return diaphanous_install_vibrant_wrapper(
+        return diaphanous_install_backdrop_effect(
             ns_window_ptr,
             material,
             alpha,
@@ -81,7 +81,7 @@ extern "C" int diaphanous_update_vibrant_material(
     });
 }
 
-extern "C" int diaphanous_remove_vibrant_wrapper(void* ns_window_ptr) {
+extern "C" int diaphanous_remove_backdrop_effect(void* ns_window_ptr) {
     return diaphanous_run_on_main_sync(^int {
         if (ns_window_ptr == nullptr) {
             return -1;
