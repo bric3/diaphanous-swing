@@ -78,22 +78,17 @@ object DemoApp {
     }
 
     private fun parseOptions(args: Array<String>): LaunchOptions {
-        var mode = WindowMode.DECORATED
         var appearance = MacWindowAppearance.SYSTEM
 
         for (arg in args) {
             when {
-                arg.equals("undecorated", ignoreCase = true) || arg.equals("--undecorated", ignoreCase = true) ->
-                    mode = WindowMode.UNDECORATED
-                arg.equals("decorated", ignoreCase = true) || arg.equals("--decorated", ignoreCase = true) ->
-                    mode = WindowMode.DECORATED
                 arg.startsWith("--appearance=", ignoreCase = true) -> {
                     val raw = arg.substringAfter('=')
                     appearance = parseAppearance(raw) ?: appearance
                 }
             }
         }
-        return LaunchOptions(mode, appearance)
+        return LaunchOptions(appearance)
     }
 
     private fun parseAppearance(raw: String): MacWindowAppearance? {
@@ -104,13 +99,8 @@ object DemoApp {
     private fun showWindow(options: LaunchOptions) {
         val frame = JFrame("Diaphanous Swing Demo")
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        val undecorated = options.mode == WindowMode.UNDECORATED
-        frame.isUndecorated = undecorated
         frame.setSize(980, 640)
         frame.setLocationRelativeTo(null)
-        if (undecorated) {
-            frame.background = Color(0, 0, 0, 0)
-        }
         frame.rootPane.isOpaque = false
         frame.layeredPane.isOpaque = false
 
@@ -118,27 +108,6 @@ object DemoApp {
         title.font = Font("SF Pro Text", Font.BOLD, 22)
 
         val topSeriesPanel = RandomTimeseriesPanel()
-
-        val dragListener = object : MouseAdapter() {
-            private var clickPoint: Point? = null
-
-            override fun mousePressed(e: MouseEvent) {
-                clickPoint = e.point
-            }
-
-            override fun mouseDragged(e: MouseEvent) {
-                val point = clickPoint ?: return
-                val location = frame.location
-                frame.setLocation(
-                    location.x + e.x - point.x,
-                    location.y + e.y - point.y
-                )
-            }
-        }
-        if (undecorated) {
-            topSeriesPanel.addMouseListener(dragListener)
-            topSeriesPanel.addMouseMotionListener(dragListener)
-        }
 
         val nativeDefaultAlpha = MacWindowBackdrop.defaultAlpha()
         val initialAlpha = if (nativeDefaultAlpha in 0.0..1.0) nativeDefaultAlpha else DEFAULT_BACKDROP_ALPHA
@@ -204,9 +173,7 @@ object DemoApp {
             .backdropAlpha(alphaSlider.value / 100.0)
             .build()
 
-        fun transparentPanel(layout: LayoutManager): JPanel = (
-            if (undecorated) ErasingPanel(layout) else JPanel(layout)
-        ).apply {
+        fun transparentPanel(layout: LayoutManager): JPanel = JPanel(layout).apply {
             isOpaque = false
             background = Color(0, 0, 0, 0)
         }
@@ -300,9 +267,6 @@ object DemoApp {
                 .toolbarStyle(toolbarStyleCombo.selectedItem as MacToolbarStyle)
                 .build()
             MacWindowDecorations.applyStyle(frame, style)
-            if (!undecorated) {
-                MacWindowBackdrop.apply(frame, currentStyle())
-            }
         }
         transparentTitleBarCheck.addActionListener { applyWindowStyleFromControls() }
         fullSizeContentCheck.addActionListener { applyWindowStyleFromControls() }
@@ -342,30 +306,23 @@ object DemoApp {
         styleGbc.gridwidth = 2
         stylePanel.add(JLabel("Window style settings"), styleGbc)
 
-        if (undecorated) {
-            styleGbc.gridy = styleRow++
-            styleGbc.gridx = 0
-            styleGbc.gridwidth = 2
-            stylePanel.add(undecoratedInfo, styleGbc)
-        } else {
-            styleGbc.gridy = styleRow++
-            styleGbc.gridx = 0
-            styleGbc.gridwidth = 2
-            stylePanel.add(transparentTitleBarCheck, styleGbc)
+        styleGbc.gridy = styleRow++
+        styleGbc.gridx = 0
+        styleGbc.gridwidth = 2
+        stylePanel.add(transparentTitleBarCheck, styleGbc)
 
-            styleGbc.gridy = styleRow++
-            stylePanel.add(fullSizeContentCheck, styleGbc)
+        styleGbc.gridy = styleRow++
+        stylePanel.add(fullSizeContentCheck, styleGbc)
 
-            styleGbc.gridy = styleRow++
-            stylePanel.add(titleVisibleCheck, styleGbc)
+        styleGbc.gridy = styleRow++
+        stylePanel.add(titleVisibleCheck, styleGbc)
 
-            styleGbc.gridy = styleRow++
-            styleGbc.gridx = 0
-            styleGbc.gridwidth = 1
-            stylePanel.add(JLabel("Toolbar style"), styleGbc)
-            styleGbc.gridx = 1
-            stylePanel.add(toolbarStyleCombo, styleGbc)
-        }
+        styleGbc.gridy = styleRow++
+        styleGbc.gridx = 0
+        styleGbc.gridwidth = 1
+        stylePanel.add(JLabel("Toolbar style"), styleGbc)
+        styleGbc.gridx = 1
+        stylePanel.add(toolbarStyleCombo, styleGbc)
 
         styleGbc.gridy = styleRow
         styleGbc.gridx = 0
@@ -423,34 +380,27 @@ object DemoApp {
         mainContentPanel.add(colorPanel, BorderLayout.WEST)
         centerPanel.add(mainContentPanel, BorderLayout.CENTER)
 
-        val panel = ErasingPanel(BorderLayout(16, 16))
+        val rootContentPane = RootErasingContentPane(BorderLayout(16, 16))
         val centered = transparentPanel(GridBagLayout())
         centered.add(centerPanel)
-        panel.add(topSeriesPanel, BorderLayout.NORTH)
-        panel.add(centered, BorderLayout.CENTER)
+        rootContentPane.add(topSeriesPanel, BorderLayout.NORTH)
+        rootContentPane.add(centered, BorderLayout.CENTER)
 
-        frame.contentPane = panel
+        frame.contentPane = rootContentPane
         val initialAppearance = appearanceCombo.selectedItem as MacWindowAppearance
         MacWindowDecorations.applyAppearance(frame, initialAppearance)
         MacBackdropSupport.configure(frame, initialAppearance)
-        if (undecorated) {
-            MacWindowBackdrop.apply(frame, currentStyle())
-        } else {
-            applyWindowStyleFromControls()
-        }
+
+        applyWindowStyleFromControls()
+
+        MacWindowBackdrop.apply(frame, currentStyle())
         MacStartupReveal.show(frame)
         if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
             dumpComponentTree(frame.rootPane, 0)
         }
     }
 
-    private enum class WindowMode {
-        DECORATED,
-        UNDECORATED
-    }
-
     private data class LaunchOptions(
-        val mode: WindowMode,
         val appearance: MacWindowAppearance
     )
 
@@ -546,7 +496,7 @@ object DemoApp {
         }
     }
 
-    private class ErasingPanel(
+    private class RootErasingContentPane(
         layout: LayoutManager
     ) : JPanel(layout) {
         init {

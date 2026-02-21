@@ -29,13 +29,7 @@
 Decorated mode:
 
 ```bash
-./gradlew :demo-swing:run --args='--decorated'
-```
-
-Undecorated mode:
-
-```bash
-./gradlew :demo-swing:run --args='--undecorated'
+./gradlew :demo-swing:run
 ```
 
 The demo is preconfigured with this JVM argument:
