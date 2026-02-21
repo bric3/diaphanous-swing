@@ -10,9 +10,9 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacosToolbarStyle
-import io.github.bric3.diaphanous.MacosWindowAppearance
-import io.github.bric3.diaphanous.MacBackdropSupport
+import io.github.bric3.diaphanous.backdrop.ComponentBackdropSupport
+import io.github.bric3.diaphanous.decorations.MacosToolbarStyle
+import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
 import java.awt.Component
 import java.awt.Container
 import java.awt.EventQueue
@@ -74,15 +74,15 @@ class DemoRobotTest {
 
         clickComponent(robot, requireNotNull(appearanceCombo))
         EventQueue.invokeAndWait {
-            appearanceCombo.selectedItem = MacosWindowAppearance.AQUA
+            appearanceCombo.selectedItem = MacosWindowAppearanceSpec.AQUA
         }
         Thread.sleep(300)
-        val disabledOnAqua = invokeAndWaitResult { MacBackdropSupport.isEnabledFor(demoFrame.rootPane) }
+        val disabledOnAqua = invokeAndWaitResult { ComponentBackdropSupport.isEnabledFor(demoFrame.rootPane) }
         assertFalse(disabledOnAqua, "Backdrop erase should be disabled for AQUA")
 
         clickComponent(robot, requireNotNull(appearanceCombo))
         EventQueue.invokeAndWait {
-            appearanceCombo.selectedItem = MacosWindowAppearance.VIBRANT_DARK
+            appearanceCombo.selectedItem = MacosWindowAppearanceSpec.VIBRANT_DARK
         }
         clickComponent(robot, requireNotNull(toolbarCombo))
         EventQueue.invokeAndWait {
@@ -92,7 +92,7 @@ class DemoRobotTest {
         clickComponent(robot, requireNotNull(transparentTitleBarCheck))
 
         Thread.sleep(600)
-        val enabledOnVibrant = invokeAndWaitResult { MacBackdropSupport.isEnabledFor(demoFrame.rootPane) }
+        val enabledOnVibrant = invokeAndWaitResult { ComponentBackdropSupport.isEnabledFor(demoFrame.rootPane) }
         assertTrue(enabledOnVibrant, "Backdrop erase should be enabled for VIBRANT_DARK")
         capture(demoFrame, outputDir.resolve("02-after-controls.png"), robot)
         report.appendLine("Captured: 02-after-controls.png")
