@@ -47,7 +47,9 @@ import javax.swing.JButton
 import javax.swing.JColorChooser
 import javax.swing.BorderFactory
 import javax.swing.JComponent
+import kotlin.div
 import kotlin.random.Random
+import kotlin.toString
 
 /**
  * Manual demo for toggling native macOS style attributes on a Swing frame.
@@ -97,167 +99,54 @@ object DemoApp {
     }
 
     private fun showWindow(options: LaunchOptions) {
-        val frame = JFrame("Diaphanous Swing Demo")
-        frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        frame.setSize(980, 640)
-        frame.setLocationRelativeTo(null)
-        frame.rootPane.isOpaque = false
-        frame.layeredPane.isOpaque = false
+        val frame = JFrame("Diaphanous Swing Demo").apply {
+            defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+            setSize(980, 640)
+            setLocationRelativeTo(null)
+            rootPane.isOpaque = false
+            layeredPane.isOpaque = false
+        }
 
-        val title = JLabel("Native macOS experimental backdrop for this Swing window", JLabel.CENTER)
-        title.font = Font("SF Pro Text", Font.BOLD, 22)
+        val title = JLabel("Native macOS experimental backdrop for this Swing window", JLabel.CENTER).apply {
+            font = Font("SF Pro Text", Font.BOLD, 22)
+        }
 
         val topSeriesPanel = RandomTimeseriesPanel()
-
-        val nativeDefaultAlpha = MacWindowBackdrop.defaultAlpha()
-        val initialAlpha = if (nativeDefaultAlpha in 0.0..1.0) nativeDefaultAlpha else DEFAULT_BACKDROP_ALPHA
-        fun blurStrengthForMaterial(material: MacVibrancyMaterial): Int = when (material) {
-            MacVibrancyMaterial.CONTENT_BACKGROUND -> 10
-            MacVibrancyMaterial.WINDOW_BACKGROUND -> 30
-            MacVibrancyMaterial.SIDEBAR -> 50
-            MacVibrancyMaterial.MENU -> 70
-            MacVibrancyMaterial.HUD_WINDOW -> 90
-            else -> DEFAULT_BLUR_STRENGTH
-        }
-        val initialMaterial = MacWindowBackdrop.defaultMaterial()
-            .orElse(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
-        val initialBlurStrength = MacWindowBackdrop.defaultMaterial()
-            .map(::blurStrengthForMaterial)
-            .orElse(DEFAULT_BLUR_STRENGTH)
-        val alphaValue = JLabel("%.2f".format(initialAlpha))
-        alphaValue.foreground = Color(230, 230, 230, 190)
-        val alphaLabel = JLabel("Backdrop alpha")
-        val alphaSlider = JSlider(0, 100, (initialAlpha * 100.0).toInt())
-        alphaSlider.name = "alphaSlider"
-        alphaSlider.isOpaque = false
-        val blurValue = JLabel("$initialBlurStrength")
-        blurValue.foreground = Color(230, 230, 230, 190)
-        val blurLabel = JLabel("Blur strength")
-        val blurSlider = JSlider(0, 100, initialBlurStrength)
-        blurSlider.name = "blurSlider"
-        blurSlider.isOpaque = false
-        val materialLabel = JLabel("Material")
-        val materialCombo = JComboBox(MacVibrancyMaterial.entries.toTypedArray())
-        materialCombo.name = "materialCombo"
-        materialCombo.selectedItem = initialMaterial
-        val blendingLabel = JLabel("Blending mode")
-        val blendingCombo = JComboBox(MacVibrancyBlendingMode.entries.toTypedArray())
-        blendingCombo.name = "blendingModeCombo"
-        blendingCombo.selectedItem = MacVibrancyBlendingMode.BEHIND_WINDOW
-        val stateLabel = JLabel("State")
-        val stateCombo = JComboBox(MacVibrancyState.entries.toTypedArray())
-        stateCombo.name = "vibrancyStateCombo"
-        stateCombo.selectedItem = MacVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE
-        val emphasizedCheck = JCheckBox("Emphasized")
-        emphasizedCheck.name = "emphasizedCheck"
-        emphasizedCheck.isOpaque = false
-        val undecoratedInfo = JLabel(
-            "<html><div style='width:260px'>Undecorated mode: alpha/blur controls apply experimental NSVisualEffectView backdrop.</div></html>",
-            JLabel.LEFT
-        )
-        undecoratedInfo.foreground = Color(220, 220, 220, 210)
-
-        fun materialForBlurStrength(value: Int): MacVibrancyMaterial = when {
-            value < 20 -> MacVibrancyMaterial.CONTENT_BACKGROUND
-            value < 40 -> MacVibrancyMaterial.WINDOW_BACKGROUND
-            value < 60 -> MacVibrancyMaterial.SIDEBAR
-            value < 80 -> MacVibrancyMaterial.MENU
-            else -> MacVibrancyMaterial.HUD_WINDOW
-        }
-
-        fun currentStyle(): MacVibrancyStyle = MacVibrancyStyle.builder()
-            .material(materialCombo.selectedItem as MacVibrancyMaterial)
-            .blendingMode(blendingCombo.selectedItem as MacVibrancyBlendingMode)
-            .state(stateCombo.selectedItem as MacVibrancyState)
-            .emphasized(emphasizedCheck.isSelected)
-            .backdropAlpha(alphaSlider.value / 100.0)
-            .build()
-
-        fun transparentPanel(layout: LayoutManager): JPanel = JPanel(layout).apply {
-            isOpaque = false
-            background = Color(0, 0, 0, 0)
-        }
 
         val centerPanel = transparentPanel(BorderLayout(0, 0))
         centerPanel.add(title, BorderLayout.NORTH)
         val mainContentPanel = transparentPanel(BorderLayout(0, 16))
 
-        val controlsPanel = transparentPanel(GridBagLayout())
-        val gbc = GridBagConstraints()
-        gbc.insets = Insets(4, 8, 4, 8)
-        gbc.fill = GridBagConstraints.HORIZONTAL
-        gbc.gridy = 0
-        gbc.gridx = 0
-        gbc.gridwidth = 1
-        controlsPanel.add(alphaLabel, gbc)
-        gbc.gridx = 1
-        controlsPanel.add(alphaValue, gbc)
-
-        gbc.gridy = 1
-        gbc.gridx = 0
-        gbc.weightx = 1.0
-        gbc.gridwidth = 2
-        controlsPanel.add(alphaSlider, gbc)
-
-        gbc.gridy = 2
-        gbc.gridx = 0
-        gbc.gridwidth = 1
-        gbc.weightx = 0.0
-        controlsPanel.add(blurLabel, gbc)
-        gbc.gridx = 1
-        controlsPanel.add(blurValue, gbc)
-
-        gbc.gridy = 3
-        gbc.gridx = 0
-        gbc.weightx = 1.0
-        gbc.gridwidth = 2
-        controlsPanel.add(blurSlider, gbc)
-
-        gbc.gridy = 4
-        gbc.gridx = 0
-        gbc.gridwidth = 1
-        gbc.weightx = 0.0
-        controlsPanel.add(materialLabel, gbc)
-        gbc.gridx = 1
-        controlsPanel.add(materialCombo, gbc)
-
-        gbc.gridy = 5
-        gbc.gridx = 0
-        controlsPanel.add(blendingLabel, gbc)
-        gbc.gridx = 1
-        controlsPanel.add(blendingCombo, gbc)
-
-        gbc.gridy = 6
-        gbc.gridx = 0
-        controlsPanel.add(stateLabel, gbc)
-        gbc.gridx = 1
-        controlsPanel.add(stateCombo, gbc)
-
-        gbc.gridy = 7
-        gbc.gridx = 0
-        gbc.gridwidth = 2
-        controlsPanel.add(emphasizedCheck, gbc)
+        val windowBackdropControls = WindowBackdropControls() {
+            MacWindowBackdrop.apply(frame, it)
+        }
 
         val stylePanel = transparentPanel(GridBagLayout())
-        val styleGbc = GridBagConstraints()
-        styleGbc.insets = Insets(4, 8, 4, 8)
-        styleGbc.fill = GridBagConstraints.HORIZONTAL
+        val styleGbc = GridBagConstraints().apply {
+            insets = Insets(4, 8, 4, 8)
+            fill = GridBagConstraints.HORIZONTAL
+        }
 
-        val transparentTitleBarCheck = JCheckBox("Transparent title bar", true)
-        transparentTitleBarCheck.name = "transparentTitleBarCheck"
-        transparentTitleBarCheck.isOpaque = false
-        val fullSizeContentCheck = JCheckBox("Full-size content view", true)
-        fullSizeContentCheck.name = "fullSizeContentCheck"
-        fullSizeContentCheck.isOpaque = false
-        val titleVisibleCheck = JCheckBox("Title visible", false)
-        titleVisibleCheck.name = "titleVisibleCheck"
-        titleVisibleCheck.isOpaque = false
-        val toolbarStyleCombo = JComboBox(MacToolbarStyle.entries.toTypedArray())
-        toolbarStyleCombo.name = "toolbarStyleCombo"
-        toolbarStyleCombo.selectedItem = MacToolbarStyle.UNIFIED_COMPACT
-        val appearanceCombo = JComboBox(MacWindowAppearance.entries.toTypedArray())
-        appearanceCombo.name = "appearanceCombo"
-        appearanceCombo.selectedItem = options.appearance
+        val transparentTitleBarCheck = JCheckBox("Transparent title bar", true).apply {
+            name = "transparentTitleBarCheck"
+            isOpaque = false
+        }
+        val fullSizeContentCheck = JCheckBox("Full-size content view", true).apply {
+            name = "fullSizeContentCheck"
+            isOpaque = false
+        }
+        val titleVisibleCheck = JCheckBox("Title visible", false).apply {
+            name = "titleVisibleCheck"
+            isOpaque = false
+        }
+        val toolbarStyleCombo = JComboBox(MacToolbarStyle.entries.toTypedArray()).apply {
+            name = "toolbarStyleCombo"
+            selectedItem = MacToolbarStyle.UNIFIED_COMPACT
+        }
+        val appearanceCombo = JComboBox(MacWindowAppearance.entries.toTypedArray()).apply {
+            name = "appearanceCombo"
+            selectedItem = options.appearance
+        }
 
         fun applyWindowStyleFromControls() {
             val style = MacWindowStyle.builder()
@@ -278,37 +167,19 @@ object DemoApp {
             MacBackdropSupport.configure(frame, appearance)
         }
 
-        alphaSlider.addChangeListener {
-            val alpha = alphaSlider.value / 100.0
-            alphaValue.text = "%.2f".format(alpha)
-            MacWindowBackdrop.apply(frame, currentStyle())
-        }
-        blurSlider.addChangeListener {
-            blurValue.text = blurSlider.value.toString()
-            materialCombo.selectedItem = materialForBlurStrength(blurSlider.value)
-            MacWindowBackdrop.apply(frame, currentStyle())
-        }
-        materialCombo.addActionListener {
-            val material = materialCombo.selectedItem as MacVibrancyMaterial
-            val strength = blurStrengthForMaterial(material)
-            if (blurSlider.value != strength) {
-                blurSlider.value = strength
-            }
-            MacWindowBackdrop.apply(frame, currentStyle())
-        }
-        blendingCombo.addActionListener { MacWindowBackdrop.apply(frame, currentStyle()) }
-        stateCombo.addActionListener { MacWindowBackdrop.apply(frame, currentStyle()) }
-        emphasizedCheck.addActionListener { MacWindowBackdrop.apply(frame, currentStyle()) }
-
         var styleRow = 0
-        styleGbc.gridy = styleRow++
-        styleGbc.gridx = 0
-        styleGbc.gridwidth = 2
+        styleGbc.apply {
+            gridy = styleRow++
+            gridx = 0
+            gridwidth = 2
+        }
         stylePanel.add(JLabel("Window style settings"), styleGbc)
 
-        styleGbc.gridy = styleRow++
-        styleGbc.gridx = 0
-        styleGbc.gridwidth = 2
+        styleGbc.apply {
+            gridy = styleRow++
+            gridx = 0
+            gridwidth = 2
+        }
         stylePanel.add(transparentTitleBarCheck, styleGbc)
 
         styleGbc.gridy = styleRow++
@@ -317,27 +188,32 @@ object DemoApp {
         styleGbc.gridy = styleRow++
         stylePanel.add(titleVisibleCheck, styleGbc)
 
-        styleGbc.gridy = styleRow++
-        styleGbc.gridx = 0
-        styleGbc.gridwidth = 1
+        styleGbc.apply {
+            gridy = styleRow++
+            gridx = 0
+            gridwidth = 1
+        }
         stylePanel.add(JLabel("Toolbar style"), styleGbc)
         styleGbc.gridx = 1
         stylePanel.add(toolbarStyleCombo, styleGbc)
 
-        styleGbc.gridy = styleRow
-        styleGbc.gridx = 0
-        styleGbc.gridwidth = 1
+        styleGbc.apply {
+            gridy = styleRow
+            gridx = 0
+            gridwidth = 1
+        }
         stylePanel.add(JLabel("Appearance"), styleGbc)
         styleGbc.gridx = 1
         stylePanel.add(appearanceCombo, styleGbc)
 
         val colorPanel = transparentPanel(GridBagLayout())
-        val colorGbc = GridBagConstraints()
-        colorGbc.insets = Insets(4, 8, 4, 8)
-        colorGbc.fill = GridBagConstraints.HORIZONTAL
-        colorGbc.gridx = 0
-        colorGbc.gridy = 0
-        colorGbc.gridwidth = 2
+        val colorGbc = GridBagConstraints().apply {
+            insets = Insets(4, 8, 4, 8)
+            fill = GridBagConstraints.HORIZONTAL
+            gridx = 0
+            gridy = 0
+            gridwidth = 2
+        }
         colorPanel.add(JLabel("Color settings"), colorGbc)
 
         fun addColorControl(
@@ -346,16 +222,19 @@ object DemoApp {
             current: () -> Color,
             apply: (Color) -> Unit
         ) {
-            val pickButton = JButton("Pick")
-            pickButton.isOpaque = false
-            pickButton.background = Color(0, 0, 0, 0)
-            pickButton.addActionListener {
-                val selected = JColorChooser.showDialog(frame, "Choose $label", current()) ?: return@addActionListener
-                apply(selected)
+            val pickButton = JButton("Pick").apply {
+                isOpaque = false
+                background = Color(0, 0, 0, 0)
+                addActionListener {
+                    val selected = JColorChooser.showDialog(frame, "Choose $label", current()) ?: return@addActionListener
+                    apply(selected)
+                }
             }
-            colorGbc.gridy = row
-            colorGbc.gridx = 0
-            colorGbc.gridwidth = 1
+            colorGbc.apply {
+                gridy = row
+                gridx = 0
+                gridwidth = 1
+            }
             colorPanel.add(JLabel(label), colorGbc)
             colorGbc.gridx = 1
             colorPanel.add(pickButton, colorGbc)
@@ -374,7 +253,7 @@ object DemoApp {
 
         val settingsPanel = transparentPanel(BorderLayout(0, 8))
         settingsPanel.add(stylePanel, BorderLayout.NORTH)
-        settingsPanel.add(controlsPanel, BorderLayout.CENTER)
+        settingsPanel.add(windowBackdropControls.component, BorderLayout.CENTER)
         settingsPanel.preferredSize = Dimension(320, settingsPanel.preferredSize.height)
         mainContentPanel.add(settingsPanel, BorderLayout.EAST)
         mainContentPanel.add(colorPanel, BorderLayout.WEST)
@@ -393,11 +272,16 @@ object DemoApp {
 
         applyWindowStyleFromControls()
 
-        MacWindowBackdrop.apply(frame, currentStyle())
+        MacWindowBackdrop.apply(frame, windowBackdropControls.currentStyle())
         MacStartupReveal.show(frame)
         if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
             dumpComponentTree(frame.rootPane, 0)
         }
+    }
+
+    fun transparentPanel(layout: LayoutManager): JPanel = JPanel(layout).apply {
+        isOpaque = false
+        background = Color(0, 0, 0, 0)
     }
 
     private data class LaunchOptions(
@@ -418,6 +302,189 @@ object DemoApp {
         }
     }
 
+    private class WindowBackdropControls(
+        private val onChange: (style: MacVibrancyStyle) -> Unit
+    ) : JPanel() {
+        init {
+            isOpaque = false
+        }
+        private val nativeDefaultAlpha = MacWindowBackdrop.defaultAlpha()
+        private val initialAlpha = if (nativeDefaultAlpha in 0.0..1.0) nativeDefaultAlpha else DEFAULT_BACKDROP_ALPHA
+        private val initialMaterial = MacWindowBackdrop.defaultMaterial()
+            .orElse(MacVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+        private val initialBlurStrength = MacWindowBackdrop.defaultMaterial()
+            .map(::blurStrengthForMaterial)
+            .orElse(DEFAULT_BLUR_STRENGTH)
+
+        private val alphaValue = JLabel("%.2f".format(initialAlpha)).apply {
+            foreground = Color(230, 230, 230, 190)
+        }
+
+        private val alphaSlider = JSlider(0, 100, (initialAlpha * 100.0).toInt()).apply {
+            name = "alphaSlider"
+            isOpaque = false
+            addChangeListener {
+                val alpha = value / 100.0
+                alphaValue.text = "%.2f".format(alpha)
+                onChange(currentStyle())
+            }
+        }
+
+        private val blurValue = JLabel("$initialBlurStrength").apply {
+            foreground = Color(230, 230, 230, 190)
+        }
+
+        private val blurSlider = JSlider(0, 100, initialBlurStrength).apply {
+            name = "blurSlider"
+            isOpaque = false
+            addChangeListener {
+                blurValue.text = value.toString()
+                materialCombo.selectedItem = materialForBlurStrength(value)
+                onChange(currentStyle())
+            }
+        }
+
+        private val materialCombo = JComboBox(MacVibrancyMaterial.entries.toTypedArray()).apply {
+            name = "materialCombo"
+            selectedItem = initialMaterial
+            addActionListener { onChange(currentStyle()) }
+        }
+
+        private val blendingCombo = JComboBox(MacVibrancyBlendingMode.entries.toTypedArray()).apply {
+            name = "blendingModeCombo"
+            selectedItem = MacVibrancyBlendingMode.BEHIND_WINDOW
+            addActionListener { onChange(currentStyle()) }
+        }
+
+        private val stateCombo = JComboBox(MacVibrancyState.entries.toTypedArray()).apply {
+            name = "vibrancyStateCombo"
+            selectedItem = MacVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE
+            addActionListener { onChange(currentStyle()) }
+        }
+
+        private val emphasizedCheck = JCheckBox("Emphasized").apply {
+            name = "emphasizedCheck"
+            isOpaque = false
+            addActionListener { onChange(currentStyle()) }
+        }
+
+        private fun blurStrengthForMaterial(material: MacVibrancyMaterial): Int = when (material) {
+            MacVibrancyMaterial.CONTENT_BACKGROUND -> 10
+            MacVibrancyMaterial.WINDOW_BACKGROUND -> 30
+            MacVibrancyMaterial.SIDEBAR -> 50
+            MacVibrancyMaterial.MENU -> 70
+            MacVibrancyMaterial.HUD_WINDOW -> 90
+            else -> DEFAULT_BLUR_STRENGTH
+        }
+
+        private fun materialForBlurStrength(value: Int): MacVibrancyMaterial = when {
+            value < 20 -> MacVibrancyMaterial.CONTENT_BACKGROUND
+            value < 40 -> MacVibrancyMaterial.WINDOW_BACKGROUND
+            value < 60 -> MacVibrancyMaterial.SIDEBAR
+            value < 80 -> MacVibrancyMaterial.MENU
+            else -> MacVibrancyMaterial.HUD_WINDOW
+        }
+
+        fun currentStyle(): MacVibrancyStyle = MacVibrancyStyle.builder()
+            .material(materialCombo.selectedItem as MacVibrancyMaterial)
+            .blendingMode(blendingCombo.selectedItem as MacVibrancyBlendingMode)
+            .state(stateCombo.selectedItem as MacVibrancyState)
+            .emphasized(emphasizedCheck.isSelected)
+            .backdropAlpha(alphaSlider.value / 100.0)
+            .build()
+
+        val component by lazy { windowBackdropControls() }
+        private fun windowBackdropControls(): JPanel {
+            val alphaLabel = JLabel("Backdrop alpha")
+            val blurLabel = JLabel("Blur strength")
+            val materialLabel = JLabel("Material")
+            val blendingLabel = JLabel("Blending mode")
+            val stateLabel = JLabel("State")
+
+            materialCombo.addActionListener {
+                val material = materialCombo.selectedItem as MacVibrancyMaterial
+                val strength = blurStrengthForMaterial(material)
+                if (blurSlider.value != strength) {
+                    blurSlider.value = strength
+                }
+                onChange(currentStyle())
+            }
+
+            val controlsPanel = transparentPanel(GridBagLayout())
+            val gbc = GridBagConstraints().apply {
+                insets = Insets(4, 8, 4, 8)
+                fill = GridBagConstraints.HORIZONTAL
+                gridy = 0
+                gridx = 0
+                gridwidth = 1
+            }
+            controlsPanel.add(alphaLabel, gbc)
+            gbc.gridx = 1
+            controlsPanel.add(alphaValue, gbc)
+
+            gbc.apply {
+                gridy = 1
+                gridx = 0
+                weightx = 1.0
+                gridwidth = 2
+            }
+            controlsPanel.add(alphaSlider, gbc)
+
+            gbc.apply {
+                gridy = 2
+                gridx = 0
+                gridwidth = 1
+                weightx = 0.0
+            }
+            controlsPanel.add(blurLabel, gbc)
+            gbc.gridx = 1
+            controlsPanel.add(blurValue, gbc)
+
+            gbc.apply {
+                gridy = 3
+                gridx = 0
+                weightx = 1.0
+                gridwidth = 2
+            }
+            controlsPanel.add(blurSlider, gbc)
+
+            gbc.apply {
+                gridy = 4
+                gridx = 0
+                gridwidth = 1
+                weightx = 0.0
+            }
+            controlsPanel.add(materialLabel, gbc)
+            gbc.gridx = 1
+            controlsPanel.add(materialCombo, gbc)
+
+            gbc.apply {
+                gridy = 5
+                gridx = 0
+            }
+            controlsPanel.add(blendingLabel, gbc)
+            gbc.gridx = 1
+            controlsPanel.add(blendingCombo, gbc)
+
+            gbc.apply {
+                gridy = 6
+                gridx = 0
+            }
+            controlsPanel.add(stateLabel, gbc)
+            gbc.gridx = 1
+            controlsPanel.add(stateCombo, gbc)
+
+            gbc.apply {
+                gridy = 7
+                gridx = 0
+                gridwidth = 2
+            }
+            controlsPanel.add(emphasizedCheck, gbc)
+            return controlsPanel
+        }
+
+    }
+
     private class RandomTimeseriesPanel : JPanel() {
         private val values: DoubleArray = DoubleArray(180) { Random.nextDouble(0.0, 1.0) }
         private var areaColor = Color(170, 110, 255, 100)
@@ -426,10 +493,12 @@ object DemoApp {
         private var barBorderColor = Color(150, 110, 220, 170)
 
         init {
-            isOpaque = false
-            preferredSize = java.awt.Dimension(1, 72)
-            minimumSize = java.awt.Dimension(1, 56)
-            border = BorderFactory.createMatteBorder(0, 0, 1, 0, barBorderColor)
+            apply {
+                isOpaque = false
+                preferredSize = java.awt.Dimension(1, 72)
+                minimumSize = java.awt.Dimension(1, 56)
+                border = BorderFactory.createMatteBorder(0, 0, 1, 0, barBorderColor)
+            }
         }
 
         fun setLineColor(color: Color) {
@@ -459,9 +528,11 @@ object DemoApp {
         fun barBorderColor(): Color = barBorderColor
         override fun paintComponent(g: Graphics) {
             val g2 = g.create() as Graphics2D
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-            g2.color = barBackgroundColor
-            g2.fillRect(0, 0, width, height)
+            g2.apply {
+                setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+                color = barBackgroundColor
+                fillRect(0, 0, width, height)
+            }
 
             val w = width.toDouble().coerceAtLeast(1.0)
             val h = height.toDouble().coerceAtLeast(1.0)
@@ -488,10 +559,12 @@ object DemoApp {
                 }
             }
 
-            g2.color = areaColor
-            g2.fill(area)
-            g2.color = lineColor
-            g2.draw(line)
+            g2.apply {
+                color = areaColor
+                fill(area)
+                color = lineColor
+                draw(line)
+            }
             g2.dispose()
         }
     }
@@ -500,8 +573,10 @@ object DemoApp {
         layout: LayoutManager
     ) : JPanel(layout) {
         init {
-            isOpaque = false
-            background = Color(0, 0, 0, 0)
+            apply {
+                isOpaque = false
+                background = Color(0, 0, 0, 0)
+            }
         }
 
         override fun paintComponent(g: Graphics) {
