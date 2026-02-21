@@ -55,7 +55,7 @@ public final class NativeWindowBackdropManager {
         return !(provider instanceof NoOpWindowBackdropProvider);
     }
 
-    public void apply(Window window, WindowBackdropSpec spec) {
+    public void apply(Window window, WindowBackgroundEffectSpec spec) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(spec, "spec");
         provider.apply(window, spec);

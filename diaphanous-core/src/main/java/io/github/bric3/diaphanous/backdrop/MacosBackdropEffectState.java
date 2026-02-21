@@ -11,16 +11,16 @@
 package io.github.bric3.diaphanous.backdrop;
 
 /**
- * Values mapped to macOS {@code NSVisualEffectState}.
+ * Values mapped 1:1 to AppKit {@code NSVisualEffectState} used by {@code NSVisualEffectView.state}.
  */
-public enum MacosVibrancyState {
+public enum MacosBackdropEffectState {
     FOLLOWS_WINDOW_ACTIVE_STATE(0),
     ACTIVE(1),
     INACTIVE(2);
 
     private final long nativeValue;
 
-    MacosVibrancyState(long nativeValue) {
+    MacosBackdropEffectState(long nativeValue) {
         this.nativeValue = nativeValue;
     }
 

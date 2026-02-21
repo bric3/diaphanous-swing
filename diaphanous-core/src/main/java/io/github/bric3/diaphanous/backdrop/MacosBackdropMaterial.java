@@ -15,7 +15,7 @@ import java.util.Optional;
 /**
  * Values mapped to macOS {@code NSVisualEffectMaterial}.
  */
-public enum MacosVibrancyMaterial implements WindowBackdropMaterialSpec {
+public enum MacosBackdropMaterial implements WindowBackdropMaterialSpec {
     APPEARANCE_BASED(0),
     LIGHT(1),
     DARK(2),
@@ -36,7 +36,7 @@ public enum MacosVibrancyMaterial implements WindowBackdropMaterialSpec {
 
     private final long nativeValue;
 
-    MacosVibrancyMaterial(long nativeValue) {
+    MacosBackdropMaterial(long nativeValue) {
         this.nativeValue = nativeValue;
     }
 
@@ -48,8 +48,8 @@ public enum MacosVibrancyMaterial implements WindowBackdropMaterialSpec {
      *
      * <p>Returns empty when the runtime exposes a material value not represented in this enum.
      */
-    public static Optional<MacosVibrancyMaterial> fromNativeValue(long nativeValue) {
-        for (MacosVibrancyMaterial material : values()) {
+    public static Optional<MacosBackdropMaterial> fromNativeValue(long nativeValue) {
+        for (MacosBackdropMaterial material : values()) {
             if (material.nativeValue == nativeValue) {
                 return Optional.of(material);
             }

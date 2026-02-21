@@ -17,15 +17,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class MacosVibrancySpecTest {
+class MacosBackdropEffectSpecTest {
     @Test
     void builderCreatesExpectedDefaults() {
-        MacosVibrancySpec style = MacosVibrancySpec.builder().build();
+        MacosBackdropEffectSpec style = MacosBackdropEffectSpec.builder().build();
 
         assertTrue(style.enabled());
-        assertEquals(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND, style.material());
-        assertEquals(MacosVibrancyBlendingMode.BEHIND_WINDOW, style.blendingMode());
-        assertEquals(MacosVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE, style.state());
+        assertEquals(MacosBackdropEffectSpec.MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND, style.material());
+        assertEquals(MacosBackdropEffectSpec.MacosBackdropEffectBlendingMode.BEHIND_WINDOW, style.blendingMode());
+        assertEquals(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE, style.state());
         assertFalse(style.emphasized());
         assertEquals(1.0d, style.backdropAlpha());
     }

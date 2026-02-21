@@ -13,7 +13,7 @@ The article confirms the practical public knobs exposed by `NSVisualEffectView`:
 - `appearance` (including vibrant variants)
 - `alphaValue`
 
-These map cleanly to `MacosVibrancySpec` and can be applied through stable AppKit selectors.
+These map cleanly to `MacosBackdropEffectSpec` and can be applied through stable AppKit selectors.
 
 ## What is not publicly controllable
 

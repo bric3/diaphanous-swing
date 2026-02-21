@@ -71,23 +71,23 @@ public final class MacosWindowStyler {
      * Applies an {@code NSVisualEffectView}-based backdrop (vibrancy) to the window content.
      * <p>
      * The style object can be partial: properties that are not explicitly changed by caller code
-     * are taken from {@link MacosVibrancySpec#builder()} defaults.
+     * are taken from {@link MacosBackdropEffectSpec#builder()} defaults.
      *
      * <p>Examples:
      * <pre>{@code
      * MacosWindowStyler.applyVibrancy(
      *     window,
-     *     MacosVibrancySpec.builder()
-     *         .material(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+     *     MacosBackdropEffectSpec.builder()
+     *         .material(MacosBackdropEffectSpec.MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND)
      *         .build()
      * );
      *
      * MacosWindowStyler.applyVibrancy(
      *     window,
-     *     MacosVibrancySpec.builder()
-     *         .material(MacosVibrancyMaterial.CONTENT_BACKGROUND)
-     *         .blendingMode(MacosVibrancyBlendingMode.WITHIN_WINDOW)
-     *         .state(MacosVibrancyState.ACTIVE)
+     *     MacosBackdropEffectSpec.builder()
+     *         .material(MacosBackdropEffectSpec.MacosBackdropMaterial.CONTENT_BACKGROUND)
+     *         .blendingMode(MacosBackdropEffectSpec.MacosBackdropEffectBlendingMode.WITHIN_WINDOW)
+     *         .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
      *         .backdropAlpha(0.75)
      *         .build()
      * );
@@ -96,7 +96,7 @@ public final class MacosWindowStyler {
      * @param window the AWT/Swing window to mutate
      * @param style vibrancy configuration
      */
-    public static void applyVibrancy(Window window, MacosVibrancySpec style) {
+    public static void applyVibrancy(Window window, MacosBackdropEffectSpec style) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(style, "style");
 
@@ -234,12 +234,12 @@ public final class MacosWindowStyler {
      *
      * <p>The value is read from a freshly created native effect view and reflects current OS defaults.
      */
-    public static Optional<MacosVibrancyMaterial> defaultBackdropMaterial() {
+    public static Optional<MacosBackdropEffectSpec.MacosBackdropMaterial> defaultBackdropMaterial() {
         if (!IS_MAC || !MacosNativeVibrancyBridge.isAvailable()) {
             return Optional.empty();
         }
         int value = MacosNativeVibrancyBridge.defaultMaterial();
-        return value >= 0 ? MacosVibrancyMaterial.fromNativeValue(value) : Optional.empty();
+        return value >= 0 ? MacosBackdropEffectSpec.MacosBackdropMaterial.fromNativeValue(value) : Optional.empty();
     }
 
     /**
@@ -250,7 +250,7 @@ public final class MacosWindowStyler {
      *
      * <p>Returns empty when no native wrapper/effect view is installed or native bridge is unavailable.
      */
-    public static Optional<MacosVibrancyMaterial> readBackdropMaterial(Window window) {
+    public static Optional<MacosBackdropEffectSpec.MacosBackdropMaterial> readBackdropMaterial(Window window) {
         Objects.requireNonNull(window, "window");
         if (!IS_MAC || !MacosNativeVibrancyBridge.isAvailable()) {
             return Optional.empty();
@@ -258,7 +258,7 @@ public final class MacosWindowStyler {
 
         long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
         int value = nsWindowPtr == 0L ? -1 : MacosNativeVibrancyBridge.readMaterial(nsWindowPtr);
-        return value >= 0 ? MacosVibrancyMaterial.fromNativeValue(value) : Optional.empty();
+        return value >= 0 ? MacosBackdropEffectSpec.MacosBackdropMaterial.fromNativeValue(value) : Optional.empty();
     }
 
     private static void applyWithNativeBridge(Window window, MacosWindowDecorationsSpec style) {
@@ -271,7 +271,7 @@ public final class MacosWindowStyler {
         }
     }
 
-    private static void applyVibrancyWithNativeBridge(Window window, MacosVibrancySpec style) {
+    private static void applyVibrancyWithNativeBridge(Window window, MacosBackdropEffectSpec style) {
         try {
             MacosWindowPeerAccess.setPeerOpaque(window, false);
         } catch (RuntimeException ignored) {
@@ -342,7 +342,7 @@ public final class MacosWindowStyler {
         }
     }
 
-    private static void applyVibrancyOnAppKit(Window window, MacosVibrancySpec style) {
+    private static void applyVibrancyOnAppKit(Window window, MacosBackdropEffectSpec style) {
         try {
             MacosWindowPeerAccess.setPeerOpaque(window, false);
         } catch (RuntimeException ignored) {

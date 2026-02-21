@@ -42,7 +42,7 @@ public final class WindowBackdrop {
      * @param window target window
      * @param spec platform backdrop style carrier
      */
-    public static void apply(Window window, WindowBackdropSpec spec) {
+    public static void apply(Window window, WindowBackgroundEffectSpec spec) {
         apply(window, spec, null);
     }
 
@@ -58,7 +58,7 @@ public final class WindowBackdrop {
      * @param spec platform backdrop style carrier
      * @param activationPredicate predicate deciding if backdrop erase is enabled
      */
-    public static void apply(Window window, WindowBackdropSpec spec, Predicate<Window> activationPredicate) {
+    public static void apply(Window window, WindowBackgroundEffectSpec spec, Predicate<Window> activationPredicate) {
         NativeWindowBackdropManager.getSharedInstance().apply(window, spec);
         boolean enabled = shouldEnableErase(window, spec)
             && (activationPredicate == null || activationPredicate.test(window));
@@ -119,14 +119,14 @@ public final class WindowBackdrop {
         return NativeWindowBackdropManager.getSharedInstance().readMaterial(window);
     }
 
-    private static boolean shouldEnableErase(Window window, WindowBackdropSpec spec) {
+    private static boolean shouldEnableErase(Window window, WindowBackgroundEffectSpec spec) {
         if (!isSupported() || window == null || spec == null) {
             return false;
         }
         if (!(window instanceof RootPaneContainer)) {
             return false;
         }
-        if (spec instanceof MacosVibrancySpec macSpec) {
+        if (spec instanceof MacosBackdropEffectSpec macSpec) {
             return macSpec.enabled();
         }
         return true;

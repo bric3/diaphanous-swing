@@ -17,10 +17,10 @@ import java.util.Optional;
 
 final class MacosWindowBackdropProvider implements WindowBackdropProvider {
     @Override
-    public void apply(Window window, WindowBackdropSpec spec) {
+    public void apply(Window window, WindowBackgroundEffectSpec spec) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(spec, "spec");
-        if (!(spec instanceof MacosVibrancySpec macStyle)) {
+        if (!(spec instanceof MacosBackdropEffectSpec macStyle)) {
             throw new IllegalArgumentException(
                 "Unsupported backdrop spec for macOS provider: " + spec.getClass().getName()
             );

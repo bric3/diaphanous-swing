@@ -48,8 +48,9 @@ Robot smoke test:
 ## Library usage
 
 ```java
-import io.github.bric3.diaphanous.backdrop.MacosVibrancyMaterial;
-import io.github.bric3.diaphanous.backdrop.MacosVibrancySpec;
+import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdropMaterial;
+import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec;
+import io.github.bric3.diaphanous.backdrop.WindowBackgroundEffectSpec;
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop;
 import io.github.bric3.diaphanous.decorations.MacosToolbarStyle;
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec;
@@ -64,8 +65,8 @@ MacosWindowDecorationsSpec style = MacosWindowDecorationsSpec.builder()
     .build();
 WindowPresentations.applyDecorations(frame, style);
 
-MacosVibrancySpec vibrancy = MacosVibrancySpec.builder()
-    .material(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
+WindowBackgroundEffectSpec vibrancy = MacosBackdropEffectSpec.builder()
+    .material(MacosBackdropEffectSpec.MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND)
     .build();
 WindowBackdrop.apply(frame, vibrancy);
 

@@ -11,15 +11,16 @@
 package io.github.bric3.diaphanous.backdrop;
 
 /**
- * Values mapped to macOS {@code NSVisualEffectBlendingMode}.
+ * Values mapped 1:1 to AppKit {@code NSVisualEffectBlendingMode} used by
+ * {@code NSVisualEffectView.blendingMode}.
  */
-public enum MacosVibrancyBlendingMode {
+public enum MacosBackdropEffectBlendingMode {
     BEHIND_WINDOW(0),
     WITHIN_WINDOW(1);
 
     private final long nativeValue;
 
-    MacosVibrancyBlendingMode(long nativeValue) {
+    MacosBackdropEffectBlendingMode(long nativeValue) {
         this.nativeValue = nativeValue;
     }
 

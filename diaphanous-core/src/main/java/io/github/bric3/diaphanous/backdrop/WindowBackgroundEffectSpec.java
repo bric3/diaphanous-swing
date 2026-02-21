@@ -11,8 +11,7 @@
 package io.github.bric3.diaphanous.backdrop;
 
 /**
- * Marker interface for OS-specific backdrop/vibrancy style carriers.
+ * Marker interface for OS-specific window background effect carriers.
  */
-public interface WindowBackdropSpec {
+public interface WindowBackgroundEffectSpec {
 }
-

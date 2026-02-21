@@ -11,6 +11,7 @@
 package io.github.bric3.diaphanous.backdrop;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Immutable configuration for macOS {@code NSVisualEffectView} vibrancy.
@@ -24,19 +25,19 @@ import java.util.Objects;
  *
  * <p>Example presets:
  * <pre>{@code
- * MacosVibrancySpec defaultBackdrop = MacosVibrancySpec.builder()
+ * MacosBackdropEffectSpec defaultBackdrop = MacosBackdropEffectSpec.builder()
  *     .build();
  *
- * MacosVibrancySpec strongerDarkBackdrop = MacosVibrancySpec.builder()
- *     .material(MacosVibrancyMaterial.HUD_WINDOW)
- *     .state(MacosVibrancyState.ACTIVE)
+ * MacosBackdropEffectSpec strongerDarkBackdrop = MacosBackdropEffectSpec.builder()
+ *     .material(MacosBackdropMaterial.HUD_WINDOW)
+ *     .state(MacosBackdropEffectState.ACTIVE)
  *     .backdropAlpha(0.85)
  *     .build();
  *
- * MacosVibrancySpec withinWindowSurface = MacosVibrancySpec.builder()
- *     .material(MacosVibrancyMaterial.CONTENT_BACKGROUND)
- *     .blendingMode(MacosVibrancyBlendingMode.WITHIN_WINDOW)
- *     .state(MacosVibrancyState.ACTIVE)
+ * MacosBackdropEffectSpec withinWindowSurface = MacosBackdropEffectSpec.builder()
+ *     .material(MacosBackdropMaterial.CONTENT_BACKGROUND)
+ *     .blendingMode(MacosBackdropEffectBlendingMode.WITHIN_WINDOW)
+ *     .state(MacosBackdropEffectState.ACTIVE)
  *     .build();
  * }</pre>
  *
@@ -47,14 +48,100 @@ import java.util.Objects;
  * @param emphasized emphasis flag used by some materials
  * @param backdropAlpha alpha of the native backdrop layer, from {@code 0.0} (fully transparent) to {@code 1.0}
  */
-public record MacosVibrancySpec(
+public record MacosBackdropEffectSpec(
     boolean enabled,
-    MacosVibrancyMaterial material,
-    MacosVibrancyBlendingMode blendingMode,
-    MacosVibrancyState state,
+    MacosBackdropMaterial material,
+    MacosBackdropEffectBlendingMode blendingMode,
+    MacosBackdropEffectState state,
     boolean emphasized,
     double backdropAlpha
-) implements WindowBackdropSpec {
+) implements WindowBackgroundEffectSpec {
+    /**
+     * Values mapped to macOS {@code NSVisualEffectMaterial}.
+     */
+    public enum MacosBackdropMaterial implements WindowBackdropMaterialSpec {
+        APPEARANCE_BASED(0),
+        LIGHT(1),
+        DARK(2),
+        TITLEBAR(3),
+        SELECTION(4),
+        MENU(5),
+        POPOVER(6),
+        SIDEBAR(7),
+        HEADER_VIEW(10),
+        SHEET(11),
+        WINDOW_BACKGROUND(12),
+        HUD_WINDOW(13),
+        FULL_SCREEN_UI(15),
+        TOOLTIP(17),
+        CONTENT_BACKGROUND(18),
+        UNDER_WINDOW_BACKGROUND(21),
+        UNDER_PAGE_BACKGROUND(22);
+
+        private final long nativeValue;
+
+        MacosBackdropMaterial(long nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        /**
+         * Returns the mapped enum for a native {@code NSVisualEffectMaterial} value.
+         *
+         * @param nativeValue native material value
+         * @return matching material when known
+         */
+        public static Optional<MacosBackdropMaterial> fromNativeValue(long nativeValue) {
+            for (MacosBackdropMaterial material : values()) {
+                if (material.nativeValue == nativeValue) {
+                    return Optional.of(material);
+                }
+            }
+            return Optional.empty();
+        }
+
+        public long nativeValue() {
+            return nativeValue;
+        }
+    }
+
+    /**
+     * Values mapped 1:1 to AppKit {@code NSVisualEffectState} used by {@code NSVisualEffectView.state}.
+     */
+    public enum MacosBackdropEffectState {
+        FOLLOWS_WINDOW_ACTIVE_STATE(0),
+        ACTIVE(1),
+        INACTIVE(2);
+
+        private final long nativeValue;
+
+        MacosBackdropEffectState(long nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        public long nativeValue() {
+            return nativeValue;
+        }
+    }
+
+    /**
+     * Values mapped 1:1 to AppKit {@code NSVisualEffectBlendingMode} used by
+     * {@code NSVisualEffectView.blendingMode}.
+     */
+    public enum MacosBackdropEffectBlendingMode {
+        BEHIND_WINDOW(0),
+        WITHIN_WINDOW(1);
+
+        private final long nativeValue;
+
+        MacosBackdropEffectBlendingMode(long nativeValue) {
+            this.nativeValue = nativeValue;
+        }
+
+        public long nativeValue() {
+            return nativeValue;
+        }
+    }
+
     /**
      * @return a builder with practical defaults for a backdrop effect behind window content
      *
@@ -72,13 +159,13 @@ public record MacosVibrancySpec(
     }
 
     /**
-     * Builder for {@link MacosVibrancySpec}.
+     * Builder for {@link MacosBackdropEffectSpec}.
      */
     public static final class Builder {
         private boolean enabled = true;
-        private MacosVibrancyMaterial material = MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND;
-        private MacosVibrancyBlendingMode blendingMode = MacosVibrancyBlendingMode.BEHIND_WINDOW;
-        private MacosVibrancyState state = MacosVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE;
+        private MacosBackdropMaterial material = MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND;
+        private MacosBackdropEffectBlendingMode blendingMode = MacosBackdropEffectBlendingMode.BEHIND_WINDOW;
+        private MacosBackdropEffectState state = MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE;
         private boolean emphasized;
         private double backdropAlpha = 1.0d;
 
@@ -95,7 +182,7 @@ public record MacosVibrancySpec(
          * @param material vibrancy material to apply
          * @return this builder
          */
-        public Builder material(MacosVibrancyMaterial material) {
+        public Builder material(MacosBackdropMaterial material) {
             this.material = Objects.requireNonNull(material, "material");
             return this;
         }
@@ -107,7 +194,7 @@ public record MacosVibrancySpec(
          * for effects intended to blend inside window content regions.
          * @return this builder
          */
-        public Builder blendingMode(MacosVibrancyBlendingMode blendingMode) {
+        public Builder blendingMode(MacosBackdropEffectBlendingMode blendingMode) {
             this.blendingMode = Objects.requireNonNull(blendingMode, "blendingMode");
             return this;
         }
@@ -122,7 +209,7 @@ public record MacosVibrancySpec(
          * </ul>
          * @return this builder
          */
-        public Builder state(MacosVibrancyState state) {
+        public Builder state(MacosBackdropEffectState state) {
             this.state = Objects.requireNonNull(state, "state");
             return this;
         }
@@ -151,11 +238,11 @@ public record MacosVibrancySpec(
         /**
          * @return immutable vibrancy configuration
          */
-        public MacosVibrancySpec build() {
+        public MacosBackdropEffectSpec build() {
             if (backdropAlpha < 0.0d || backdropAlpha > 1.0d) {
                 throw new IllegalArgumentException("backdropAlpha must be within [0.0, 1.0]");
             }
-            return new MacosVibrancySpec(enabled, material, blendingMode, state, emphasized, backdropAlpha);
+            return new MacosBackdropEffectSpec(enabled, material, blendingMode, state, emphasized, backdropAlpha);
         }
     }
 }
