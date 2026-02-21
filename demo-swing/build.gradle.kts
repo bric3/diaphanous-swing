@@ -34,10 +34,7 @@ tasks.named<JavaExec>("run") {
         .file("libdiaphanous-core-macos-native.dylib")
         .asFile
     jvmArgs(
-        "--enable-native-access=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED"
+        "--enable-native-access=ALL-UNNAMED"
     )
     systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)
     val dumpSwing = System.getProperty("diaphanous.dump.swing")
@@ -76,10 +73,7 @@ val robotTestTask = tasks.register<Test>("robotTest") {
 
     useJUnitPlatform()
     jvmArgs(
-        "--enable-native-access=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED"
+        "--enable-native-access=ALL-UNNAMED"
     )
     systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotTest").get().asFile.absolutePath)
     systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)
@@ -106,10 +100,7 @@ tasks.register<Test>("robotShot") {
         includeTestsMatching("io.github.bric3.diaphanous.demo.ScreenshotRobotTest")
     }
     jvmArgs(
-        "--enable-native-access=ALL-UNNAMED",
-        "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
-        "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED"
+        "--enable-native-access=ALL-UNNAMED"
     )
     systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotShot").get().asFile.absolutePath)
     systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)

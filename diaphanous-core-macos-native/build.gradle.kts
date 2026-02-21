@@ -24,8 +24,19 @@ library {
 }
 
 tasks.withType(CppCompile::class).configureEach {
+    val javaHome = providers.systemProperty("java.home").get()
+    val javaHomeDir = file(javaHome).let { if (it.name == "jre") it.parentFile else it }
     source.from(fileTree("src/main/cpp") { include("**/*.mm") })
-    compilerArgs.addAll(listOf("-std=c++17", "-x", "objective-c++", "-fobjc-arc"))
+    compilerArgs.addAll(
+        listOf(
+            "-std=c++17",
+            "-x",
+            "objective-c++",
+            "-fobjc-arc",
+            "-I${javaHomeDir.absolutePath}/include",
+            "-I${javaHomeDir.absolutePath}/include/darwin"
+        )
+    )
 }
 
 tasks.withType(LinkSharedLibrary::class).configureEach {

@@ -27,24 +27,41 @@ final class MacWindowPeerAccess {
     private static final Field CF_PTR_FIELD;
     private static final Method GET_PLATFORM_WINDOW;
     private static final Method SET_PEER_OPAQUE;
+    private static final boolean REFLECTIVE_AVAILABLE;
 
     static {
+        Field componentPeerField = null;
+        Field cfPtrField = null;
+        Method getPlatformWindow = null;
+        Method setPeerOpaque = null;
+        boolean reflectiveAvailable = false;
         try {
-            COMPONENT_PEER_FIELD = Component.class.getDeclaredField("peer");
-            COMPONENT_PEER_FIELD.setAccessible(true);
+            componentPeerField = Component.class.getDeclaredField("peer");
+            componentPeerField.setAccessible(true);
 
             Class<?> lwWindowPeerClass = Class.forName(LW_WINDOW_PEER);
-            GET_PLATFORM_WINDOW = lwWindowPeerClass.getMethod("getPlatformWindow");
-            GET_PLATFORM_WINDOW.setAccessible(true);
-            SET_PEER_OPAQUE = lwWindowPeerClass.getMethod("setOpaque", boolean.class);
-            SET_PEER_OPAQUE.setAccessible(true);
+            getPlatformWindow = lwWindowPeerClass.getMethod("getPlatformWindow");
+            getPlatformWindow.setAccessible(true);
+            setPeerOpaque = lwWindowPeerClass.getMethod("setOpaque", boolean.class);
+            setPeerOpaque.setAccessible(true);
 
             Class<?> cfRetainedResourceClass = Class.forName(CF_RETAINED_RESOURCE);
-            CF_PTR_FIELD = cfRetainedResourceClass.getDeclaredField("ptr");
-            CF_PTR_FIELD.setAccessible(true);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
+            cfPtrField = cfRetainedResourceClass.getDeclaredField("ptr");
+            cfPtrField.setAccessible(true);
+            reflectiveAvailable = true;
+
+        } catch (Throwable ignored) {
+            // Native resolver path can operate without reflective access.
+            reflectiveAvailable = false;
         }
+        COMPONENT_PEER_FIELD = componentPeerField;
+        GET_PLATFORM_WINDOW = getPlatformWindow;
+        SET_PEER_OPAQUE = setPeerOpaque;
+        CF_PTR_FIELD = cfPtrField;
+        REFLECTIVE_AVAILABLE = reflectiveAvailable || (componentPeerField != null
+            && getPlatformWindow != null
+            && setPeerOpaque != null
+            && cfPtrField != null);
     }
 
     private MacWindowPeerAccess() {
@@ -61,6 +78,17 @@ final class MacWindowPeerAccess {
             window.addNotify();
         }
 
+        long nativePtr = MacNativeWindowHandleBridge.resolveNSWindowPointer(window);
+        if (nativePtr != 0L) {
+            return nativePtr;
+        }
+        if (!REFLECTIVE_AVAILABLE) {
+            throw new IllegalStateException(
+                "Cannot resolve NSWindow pointer: native bridge unavailable and reflective fallback is not accessible. " +
+                    "Build/load diaphanous native bridge to avoid --add-opens."
+            );
+        }
+
         Object peer = getPeer(window);
         if (peer == null) {
             throw new IllegalStateException("AWT peer is not initialized yet; make sure the window is displayable");
@@ -71,6 +99,12 @@ final class MacWindowPeerAccess {
     }
 
     static void setPeerOpaque(Window window, boolean opaque) {
+        if (MacNativeWindowHandleBridge.setPeerOpaque(window, opaque)) {
+            return;
+        }
+        if (!REFLECTIVE_AVAILABLE) {
+            throw new IllegalStateException("Cannot change AWT peer opacity");
+        }
         Object peer = getPeer(window);
         if (peer == null) {
             throw new IllegalStateException("AWT peer is not initialized yet; make sure the window is displayable");

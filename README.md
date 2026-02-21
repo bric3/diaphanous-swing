@@ -31,13 +31,9 @@ Undecorated mode:
 ./gradlew :demo-swing:run --args='--undecorated'
 ```
 
-The demo is preconfigured with these JVM arguments:
+The demo is preconfigured with this JVM argument:
 
-- `--add-opens=java.desktop/java.awt=ALL-UNNAMED`
-- `--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED`
-- `--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED`
-
-These are required to access the AWT macOS peer and obtain `NSWindow*`.
+- `--enable-native-access=ALL-UNNAMED`
 
 Robot smoke test:
 

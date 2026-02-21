@@ -25,9 +25,6 @@ import java.util.Optional;
  * Optional bridge to the macOS native helper library that can wrap the AWT host view.
  */
 final class MacNativeVibrancyBridge {
-    private static final String LIB_PATH_PROPERTY = "diaphanous.macos.nativeLib";
-    private static final String DEFAULT_RELATIVE_LIB =
-        "diaphanous-core-macos-native/build/lib/main/debug/libdiaphanous-core-macos-native.dylib";
     private static final NativeFns FNS = loadNativeFns().orElse(null);
 
     private MacNativeVibrancyBridge() {
@@ -107,11 +104,42 @@ final class MacNativeVibrancyBridge {
         return FNS.readMaterial(nsWindowPtr);
     }
 
+    static boolean applyWindowStyle(long nsWindowPtr, MacWindowStyle style) {
+        if (FNS == null || nsWindowPtr == 0L || style == null) {
+            return false;
+        }
+        long toolbarValue = style.toolbarStyle() == null ? 0L : style.toolbarStyle().nativeValue();
+        int hasToolbar = style.toolbarStyle() == null ? 0 : 1;
+        return FNS.applyWindowStyle(
+            nsWindowPtr,
+            style.transparentTitleBar() ? 1 : 0,
+            style.fullSizeContentView() ? 1 : 0,
+            style.titleVisible() ? 1 : 0,
+            toolbarValue,
+            hasToolbar
+        ) == 0;
+    }
+
+    static boolean applyWindowAppearance(long nsWindowPtr, String appearanceNativeName) {
+        if (FNS == null || nsWindowPtr == 0L) {
+            return false;
+        }
+        return FNS.applyWindowAppearance(nsWindowPtr, appearanceNativeName) == 0;
+    }
+
+    static boolean setWindowAlpha(long nsWindowPtr, double alpha) {
+        if (FNS == null || nsWindowPtr == 0L) {
+            return false;
+        }
+        return FNS.setWindowAlpha(nsWindowPtr, alpha) == 0;
+    }
+
     private static Optional<NativeFns> loadNativeFns() {
-        Path libPath = resolveLibraryPath();
+        Path libPath = MacNativeLibrary.resolveLibraryPath();
         if (libPath == null || !Files.isRegularFile(libPath)) {
             return Optional.empty();
         }
+        MacNativeLibrary.ensureLoaded();
 
         try {
             SymbolLookup lookup = SymbolLookup.libraryLookup(libPath, Arena.global());
@@ -173,6 +201,29 @@ final class MacNativeVibrancyBridge {
                     .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_read_effect_material")),
                 FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
             );
+            MethodHandle applyWindowStyleHandle = linker.downcallHandle(
+                lookup.find("diaphanous_apply_window_style")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_apply_window_style")),
+                FunctionDescriptor.of(
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.ADDRESS,
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.JAVA_INT,
+                    ValueLayout.JAVA_LONG,
+                    ValueLayout.JAVA_INT
+                )
+            );
+            MethodHandle applyWindowAppearanceHandle = linker.downcallHandle(
+                lookup.find("diaphanous_apply_window_appearance")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_apply_window_appearance")),
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
+            );
+            MethodHandle setWindowAlphaHandle = linker.downcallHandle(
+                lookup.find("diaphanous_set_window_alpha")
+                    .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_set_window_alpha")),
+                FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_DOUBLE)
+            );
 
             return Optional.of(
                 new NativeFns(
@@ -183,25 +234,15 @@ final class MacNativeVibrancyBridge {
                     defaultAlphaHandle,
                     defaultMaterialHandle,
                     readAlphaHandle,
-                    readMaterialHandle
+                    readMaterialHandle,
+                    applyWindowStyleHandle,
+                    applyWindowAppearanceHandle,
+                    setWindowAlphaHandle
                 )
             );
         } catch (Throwable ignored) {
             return Optional.empty();
         }
-    }
-
-    private static Path resolveLibraryPath() {
-        String explicit = System.getProperty(LIB_PATH_PROPERTY);
-        if (explicit != null && !explicit.isBlank()) {
-            return Path.of(explicit).toAbsolutePath().normalize();
-        }
-
-        Path fromCwd = Path.of(System.getProperty("user.dir", "."), DEFAULT_RELATIVE_LIB).toAbsolutePath().normalize();
-        if (Files.isRegularFile(fromCwd)) {
-            return fromCwd;
-        }
-        return null;
     }
 
     private static final class NativeFns {
@@ -213,6 +254,9 @@ final class MacNativeVibrancyBridge {
         private final MethodHandle defaultMaterialHandle;
         private final MethodHandle readAlphaHandle;
         private final MethodHandle readMaterialHandle;
+        private final MethodHandle applyWindowStyleHandle;
+        private final MethodHandle applyWindowAppearanceHandle;
+        private final MethodHandle setWindowAlphaHandle;
 
         private NativeFns(
             MethodHandle installHandle,
@@ -222,7 +266,10 @@ final class MacNativeVibrancyBridge {
             MethodHandle defaultAlphaHandle,
             MethodHandle defaultMaterialHandle,
             MethodHandle readAlphaHandle,
-            MethodHandle readMaterialHandle
+            MethodHandle readMaterialHandle,
+            MethodHandle applyWindowStyleHandle,
+            MethodHandle applyWindowAppearanceHandle,
+            MethodHandle setWindowAlphaHandle
         ) {
             this.installHandle = installHandle;
             this.updateHandle = updateHandle;
@@ -232,6 +279,9 @@ final class MacNativeVibrancyBridge {
             this.defaultMaterialHandle = defaultMaterialHandle;
             this.readAlphaHandle = readAlphaHandle;
             this.readMaterialHandle = readMaterialHandle;
+            this.applyWindowStyleHandle = applyWindowStyleHandle;
+            this.applyWindowAppearanceHandle = applyWindowAppearanceHandle;
+            this.setWindowAlphaHandle = setWindowAlphaHandle;
         }
 
         private int install(
@@ -323,6 +373,46 @@ final class MacNativeVibrancyBridge {
                 return (int) readMaterialHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr));
             } catch (Throwable t) {
                 throw new IllegalStateException("Native read material call failed", t);
+            }
+        }
+
+        private int applyWindowStyle(
+            long nsWindowPtr,
+            int transparentTitleBar,
+            int fullSizeContentView,
+            int titleVisible,
+            long toolbarStyle,
+            int hasToolbarStyle
+        ) {
+            try {
+                return (int) applyWindowStyleHandle.invokeExact(
+                    MemorySegment.ofAddress(nsWindowPtr),
+                    transparentTitleBar,
+                    fullSizeContentView,
+                    titleVisible,
+                    toolbarStyle,
+                    hasToolbarStyle
+                );
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native apply window style call failed", t);
+            }
+        }
+
+        private int applyWindowAppearance(long nsWindowPtr, String appearanceNativeName) {
+            try (Arena arena = Arena.ofConfined()) {
+                MemorySegment appearance =
+                    appearanceNativeName == null ? MemorySegment.NULL : arena.allocateFrom(appearanceNativeName);
+                return (int) applyWindowAppearanceHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr), appearance);
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native apply window appearance call failed", t);
+            }
+        }
+
+        private int setWindowAlpha(long nsWindowPtr, double alpha) {
+            try {
+                return (int) setWindowAlphaHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr), alpha);
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native set window alpha call failed", t);
             }
         }
     }

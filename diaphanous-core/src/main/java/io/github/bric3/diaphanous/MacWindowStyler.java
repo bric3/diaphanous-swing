@@ -64,6 +64,10 @@ final class MacWindowStyler {
             throw new UnsupportedOperationException("macOS window styling is only supported on macOS");
         }
 
+        if (MacNativeVibrancyBridge.isAvailable()) {
+            applyWithNativeBridge(window, style);
+            return;
+        }
         MacThreading.runOnAppKitThread(() -> applyOnAppKit(window, style));
     }
 
@@ -104,6 +108,10 @@ final class MacWindowStyler {
             throw new UnsupportedOperationException("macOS window styling is only supported on macOS");
         }
 
+        if (MacNativeVibrancyBridge.isAvailable()) {
+            applyVibrancyWithNativeBridge(window, style);
+            return;
+        }
         MacThreading.runOnAppKitThread(() -> applyVibrancyOnAppKit(window, style));
     }
 
@@ -119,6 +127,14 @@ final class MacWindowStyler {
             throw new UnsupportedOperationException("macOS window styling is only supported on macOS");
         }
 
+        if (MacNativeVibrancyBridge.isAvailable()) {
+            long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+            if (nsWindowPtr == 0L) {
+                throw new IllegalStateException("Cannot resolve NSWindow pointer");
+            }
+            MacNativeVibrancyBridge.remove(nsWindowPtr);
+            return;
+        }
         MacThreading.runOnAppKitThread(() -> clearVibrancyOnAppKit(window));
     }
 
@@ -136,6 +152,16 @@ final class MacWindowStyler {
             throw new UnsupportedOperationException("macOS window styling is only supported on macOS");
         }
 
+        if (MacNativeVibrancyBridge.isAvailable()) {
+            long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+            if (nsWindowPtr == 0L) {
+                throw new IllegalStateException("Cannot resolve NSWindow pointer");
+            }
+            if (!MacNativeVibrancyBridge.applyWindowAppearance(nsWindowPtr, appearance.nativeName())) {
+                throw new IllegalStateException("Cannot apply native window appearance");
+            }
+            return;
+        }
         MacThreading.runOnAppKitThread(() -> applyAppearanceOnAppKit(window, appearance));
     }
 
@@ -159,6 +185,16 @@ final class MacWindowStyler {
         }
 
         double clamped = Math.max(0.0, Math.min(1.0, alpha));
+        if (MacNativeVibrancyBridge.isAvailable()) {
+            long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+            if (nsWindowPtr == 0L) {
+                throw new IllegalStateException("Cannot resolve NSWindow pointer");
+            }
+            if (!MacNativeVibrancyBridge.setWindowAlpha(nsWindowPtr, clamped)) {
+                throw new IllegalStateException("Cannot set native window alpha");
+            }
+            return;
+        }
         MacThreading.runOnAppKitThread(() -> setWindowAlphaOnAppKit(window, clamped));
     }
 
@@ -173,9 +209,7 @@ final class MacWindowStyler {
         if (!isSupported() || !MacNativeVibrancyBridge.isAvailable()) {
             return -1.0;
         }
-        final double[] value = {-1.0};
-        MacThreading.runOnAppKitThread(() -> value[0] = MacNativeVibrancyBridge.defaultAlpha());
-        return value[0];
+        return MacNativeVibrancyBridge.defaultAlpha();
     }
 
     /**
@@ -192,12 +226,9 @@ final class MacWindowStyler {
             return Optional.empty();
         }
 
-        final double[] value = {-1.0};
-        MacThreading.runOnAppKitThread(() -> {
-            long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
-            value[0] = nsWindowPtr == 0L ? -1.0 : MacNativeVibrancyBridge.readAlpha(nsWindowPtr);
-        });
-        return value[0] >= 0.0 ? Optional.of(value[0]) : Optional.empty();
+        long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+        double value = nsWindowPtr == 0L ? -1.0 : MacNativeVibrancyBridge.readAlpha(nsWindowPtr);
+        return value >= 0.0 ? Optional.of(value) : Optional.empty();
     }
 
     /**
@@ -211,9 +242,8 @@ final class MacWindowStyler {
         if (!isSupported() || !MacNativeVibrancyBridge.isAvailable()) {
             return Optional.empty();
         }
-        final int[] value = {-1};
-        MacThreading.runOnAppKitThread(() -> value[0] = MacNativeVibrancyBridge.defaultMaterial());
-        return value[0] >= 0 ? MacVibrancyMaterial.fromNativeValue(value[0]) : Optional.empty();
+        int value = MacNativeVibrancyBridge.defaultMaterial();
+        return value >= 0 ? MacVibrancyMaterial.fromNativeValue(value) : Optional.empty();
     }
 
     /**
@@ -230,12 +260,59 @@ final class MacWindowStyler {
             return Optional.empty();
         }
 
-        final int[] value = {-1};
-        MacThreading.runOnAppKitThread(() -> {
-            long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
-            value[0] = nsWindowPtr == 0L ? -1 : MacNativeVibrancyBridge.readMaterial(nsWindowPtr);
-        });
-        return value[0] >= 0 ? MacVibrancyMaterial.fromNativeValue(value[0]) : Optional.empty();
+        long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+        int value = nsWindowPtr == 0L ? -1 : MacNativeVibrancyBridge.readMaterial(nsWindowPtr);
+        return value >= 0 ? MacVibrancyMaterial.fromNativeValue(value) : Optional.empty();
+    }
+
+    private static void applyWithNativeBridge(Window window, MacWindowStyle style) {
+        long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+        if (nsWindowPtr == 0) {
+            throw new IllegalStateException("Cannot resolve NSWindow pointer");
+        }
+        if (!MacNativeVibrancyBridge.applyWindowStyle(nsWindowPtr, style)) {
+            throw new IllegalStateException("Cannot apply native window style");
+        }
+    }
+
+    private static void applyVibrancyWithNativeBridge(Window window, MacVibrancyStyle style) {
+        try {
+            MacWindowPeerAccess.setPeerOpaque(window, false);
+        } catch (RuntimeException ignored) {
+            // Some peers may reject opacity changes depending on lifecycle/state.
+        }
+        long nsWindowPtr = MacWindowPeerAccess.resolveNSWindowPointer(window);
+        if (nsWindowPtr == 0L) {
+            throw new IllegalStateException("Cannot resolve NSWindow pointer");
+        }
+        if (!style.enabled()) {
+            MacNativeVibrancyBridge.remove(nsWindowPtr);
+            return;
+        }
+        boolean updated = MacNativeVibrancyBridge.update(
+            nsWindowPtr,
+            (int) style.material().nativeValue(),
+            style.backdropAlpha(),
+            (int) style.blendingMode().nativeValue(),
+            (int) style.state().nativeValue(),
+            style.emphasized()
+        );
+        if (!updated) {
+            boolean installed = MacNativeVibrancyBridge.install(
+                nsWindowPtr,
+                (int) style.material().nativeValue(),
+                style.backdropAlpha(),
+                (int) style.blendingMode().nativeValue(),
+                (int) style.state().nativeValue(),
+                style.emphasized()
+            );
+            if (!installed) {
+                throw new IllegalStateException("Cannot apply native vibrancy");
+            }
+        }
+        if (DUMP_NATIVE) {
+            MacNativeVibrancyBridge.dump(nsWindowPtr);
+        }
     }
 
     private static void applyOnAppKit(Window window, MacWindowStyle style) {

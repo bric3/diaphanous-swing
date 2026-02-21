@@ -9,6 +9,8 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#include <jawt.h>
+#include <jni.h>
 
 #include "diaphanous_window_bridge.h"
 
@@ -113,6 +115,121 @@ static int run_on_main_sync(int (^block)(void)) {
         result = block();
     });
     return result;
+}
+
+/**
+ * JNI helper: clear pending Java exception and report whether one existed.
+ *
+ * Native resolver intentionally behaves as best-effort: it clears reflective
+ * access exceptions and returns sentinel values so Java can fallback.
+ */
+static bool clear_exception(JNIEnv *env) {
+    if (env != nullptr && env->ExceptionCheck()) {
+        env->ExceptionClear();
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Walks `java.awt.Window -> peer` and returns the AWT peer object.
+ *
+ * Returns null when graph access fails or is denied.
+ */
+static jobject resolve_component_peer(JNIEnv *env, jobject window) {
+    if (env == nullptr || window == nullptr) {
+        return nullptr;
+    }
+    jclass windowClass = env->GetObjectClass(window);
+    if (windowClass == nullptr || clear_exception(env)) {
+        return nullptr;
+    }
+    jfieldID peerField = env->GetFieldID(windowClass, "peer", "Ljava/awt/peer/ComponentPeer;");
+    if (peerField == nullptr || clear_exception(env)) {
+        return nullptr;
+    }
+    jobject peer = env->GetObjectField(window, peerField);
+    if (clear_exception(env)) {
+        return nullptr;
+    }
+    return peer;
+}
+
+/**
+ * Resolves native `NSWindow*` pointer from AWT peer internals.
+ *
+ * Java path: `Window.peer -> platformWindow -> ptr`.
+ * Returns 0 on failure.
+ */
+static jlong resolve_platform_window_ptr(JNIEnv *env, jobject window) {
+    jobject peer = resolve_component_peer(env, window);
+    if (peer == nullptr) {
+        return 0;
+    }
+
+    jclass peerClass = env->GetObjectClass(peer);
+    if (peerClass == nullptr || clear_exception(env)) {
+        return 0;
+    }
+    jfieldID platformWindowField = env->GetFieldID(peerClass, "platformWindow", "Lsun/lwawt/PlatformWindow;");
+    if (platformWindowField == nullptr || clear_exception(env)) {
+        return 0;
+    }
+    jobject platformWindow = env->GetObjectField(peer, platformWindowField);
+    if (platformWindow == nullptr || clear_exception(env)) {
+        return 0;
+    }
+
+    jclass platformWindowClass = env->GetObjectClass(platformWindow);
+    if (platformWindowClass == nullptr || clear_exception(env)) {
+        return 0;
+    }
+    jfieldID ptrField = env->GetFieldID(platformWindowClass, "ptr", "J");
+    if (ptrField == nullptr || clear_exception(env)) {
+        return 0;
+    }
+    jlong ptr = env->GetLongField(platformWindow, ptrField);
+    if (clear_exception(env)) {
+        return 0;
+    }
+    return ptr;
+}
+
+/// JNI entry point: resolve `NSWindow*` pointer from AWT peer graph.
+extern "C" JNIEXPORT jlong JNICALL
+Java_io_github_bric3_diaphanous_MacNativeWindowHandleBridge_resolveNSWindowPointer0(
+    JNIEnv *env,
+    jclass,
+    jobject window
+) {
+    return resolve_platform_window_ptr(env, window);
+}
+
+/// JNI entry point: best-effort `ComponentPeer.setOpaque(boolean)` bridge.
+extern "C" JNIEXPORT jboolean JNICALL
+Java_io_github_bric3_diaphanous_MacNativeWindowHandleBridge_setPeerOpaque0(
+    JNIEnv *env,
+    jclass,
+    jobject window,
+    jboolean opaque
+) {
+    jobject peer = resolve_component_peer(env, window);
+    if (peer == nullptr) {
+        return JNI_FALSE;
+    }
+    jclass peerClass = env->GetObjectClass(peer);
+    if (peerClass == nullptr || clear_exception(env)) {
+        return JNI_FALSE;
+    }
+    jmethodID setOpaque = env->GetMethodID(peerClass, "setOpaque", "(Z)V");
+    if (setOpaque == nullptr || clear_exception(env)) {
+        return JNI_FALSE;
+    }
+    env->CallVoidMethod(peer, setOpaque, opaque);
+    if (clear_exception(env)) {
+        return JNI_FALSE;
+    }
+    return JNI_TRUE;
 }
 
 static NSString *color_desc(NSColor *color) {
@@ -280,6 +397,112 @@ extern "C" int diaphanous_remove_vibrant_wrapper(void* ns_window_ptr) {
     });
 }
 
+/**
+ * Applies style-related AppKit properties to an existing NSWindow.
+ *
+ * This mutates:
+ * - `NSWindowStyleMaskFullSizeContentView`
+ * - `titlebarAppearsTransparent`
+ * - `titleVisibility`
+ * - `toolbarStyle` (when requested/supported)
+ *
+ * @return 0 on success, -1 on failure.
+ */
+extern "C" int diaphanous_apply_window_style(
+    void* ns_window_ptr,
+    int transparent_title_bar,
+    int full_size_content_view,
+    int title_visible,
+    long toolbar_style,
+    int has_toolbar_style
+) {
+    return run_on_main_sync(^int {
+        if (ns_window_ptr == nullptr) {
+            return -1;
+        }
+        NSWindow *window = (__bridge NSWindow *) ns_window_ptr;
+        if (window == nil) {
+            return -1;
+        }
+
+        NSUInteger styleMask = window.styleMask;
+        if (full_size_content_view != 0) {
+            styleMask |= NSWindowStyleMaskFullSizeContentView;
+        } else {
+            styleMask &= ~NSWindowStyleMaskFullSizeContentView;
+        }
+        window.styleMask = styleMask;
+        window.titlebarAppearsTransparent = transparent_title_bar != 0 ? YES : NO;
+        window.titleVisibility = title_visible != 0 ? NSWindowTitleVisible : NSWindowTitleHidden;
+        if (has_toolbar_style != 0 && [window respondsToSelector: @selector(setToolbarStyle:)]) {
+            window.toolbarStyle = (NSWindowToolbarStyle) toolbar_style;
+        }
+        return 0;
+    });
+}
+
+/**
+ * Applies named NSAppearance or resets to system appearance.
+ *
+ * Pass `appearance_name_utf8 == nullptr` to clear explicit appearance.
+ *
+ * @return 0 on success, -1 on invalid pointer/invalid UTF-8 name conversion.
+ */
+extern "C" int diaphanous_apply_window_appearance(void* ns_window_ptr, const char* appearance_name_utf8) {
+    return run_on_main_sync(^int {
+        if (ns_window_ptr == nullptr) {
+            return -1;
+        }
+        NSWindow *window = (__bridge NSWindow *) ns_window_ptr;
+        if (window == nil) {
+            return -1;
+        }
+
+        if (appearance_name_utf8 == nullptr) {
+            window.appearance = nil;
+            return 0;
+        }
+
+        NSString *name = [NSString stringWithUTF8String: appearance_name_utf8];
+        if (name == nil) {
+            return -1;
+        }
+        NSAppearance *appearance = [NSAppearance appearanceNamed: name];
+        window.appearance = appearance;
+        return 0;
+    });
+}
+
+/**
+ * Sets `NSWindow.alphaValue` with clamp to `[0,1]`.
+ *
+ * @return 0 on success, -1 on failure.
+ */
+extern "C" int diaphanous_set_window_alpha(void* ns_window_ptr, double alpha) {
+    return run_on_main_sync(^int {
+        if (ns_window_ptr == nullptr) {
+            return -1;
+        }
+        NSWindow *window = (__bridge NSWindow *) ns_window_ptr;
+        if (window == nil) {
+            return -1;
+        }
+
+        CGFloat clamped = (CGFloat) alpha;
+        if (clamped < 0.0) clamped = 0.0;
+        if (clamped > 1.0) clamped = 1.0;
+        window.alphaValue = clamped;
+        return 0;
+    });
+}
+
+/**
+ * Logs a structured native dump for diagnostics.
+ *
+ * Output includes window properties and recursive view/layer tree state.
+ *
+ * @return 0 when dump is produced, -1 on invalid window pointer.
+ */
 extern "C" int diaphanous_dump_window_state(void* ns_window_ptr) {
     return run_on_main_sync(^int {
         if (ns_window_ptr == nullptr) {
