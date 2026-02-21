@@ -14,7 +14,7 @@ import io.github.bric3.diaphanous.MacosStartupReveal
 import io.github.bric3.diaphanous.backdrop.RootErasingContentPane
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
-import io.github.bric3.diaphanous.decorations.WindowDecorations
+import io.github.bric3.diaphanous.decorations.WindowPresentations
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -86,15 +86,15 @@ object DemoApp {
 
 
         val windowBackdropControls = WindowBackdropControls {
-            WindowBackdrop.apply(frame, it, WindowDecorations.isCompatibleWithBackdropPredicate())
+            WindowBackdrop.apply(frame, it, WindowPresentations.isCompatibleWithBackdropPredicate())
         }
         val windowDecorationsControls = WindowDecorationsControls(
             initialAppearance = options.appearance,
-            onStyleChange = { style -> WindowDecorations.applyDecorations(frame, style) },
+            onStyleChange = { style -> WindowPresentations.applyDecorations(frame, style) },
             onAppearanceChange = { appearance ->
-                WindowDecorations.applyAppearance(frame, appearance)
+                WindowPresentations.applyAppearance(frame, appearance)
                 WindowBackdrop.apply(frame, windowBackdropControls.currentSpec(),
-                    WindowDecorations.isCompatibleWithBackdropPredicate())
+                    WindowPresentations.isCompatibleWithBackdropPredicate())
             }
         )
         val topSeriesPanel = RandomTimeseriesPanel()
@@ -126,10 +126,10 @@ object DemoApp {
                 BorderLayout.CENTER
             )
         }
-        WindowDecorations.applyAppearance(frame, windowDecorationsControls.currentAppearanceSpec())
-        WindowDecorations.applyDecorations(frame, windowDecorationsControls.currentDecorationsSpec())
+        WindowPresentations.applyAppearance(frame, windowDecorationsControls.currentAppearanceSpec())
+        WindowPresentations.applyDecorations(frame, windowDecorationsControls.currentDecorationsSpec())
         WindowBackdrop.apply(frame, windowBackdropControls.currentSpec(),
-            WindowDecorations.isCompatibleWithBackdropPredicate())
+            WindowPresentations.isCompatibleWithBackdropPredicate())
         MacosStartupReveal.show(frame)
         if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
             dumpComponentTree(frame.rootPane, 0)

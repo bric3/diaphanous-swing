@@ -22,10 +22,10 @@ import javax.swing.RootPaneContainer;
  * The facade accepts generic option markers and dispatches to the matching
  * platform implementation. Current built-in backend is macOS.
  */
-public final class WindowDecorations {
+public final class WindowPresentations {
     private static final String APPEARANCE_KEY = "diaphanous.windowAppearanceSpec";
 
-    private WindowDecorations() {
+    private WindowPresentations() {
     }
 
     /**

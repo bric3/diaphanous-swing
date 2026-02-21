@@ -36,7 +36,7 @@ final class MacosWindowDecorationsProvider implements WindowDecorationsProvider 
 
     @Override
     public Predicate<Window> isCompatibleWithBackdropPredicate() {
-        return window -> WindowDecorations.currentAppearance(window)
+        return window -> WindowPresentations.currentAppearance(window)
             .map(spec -> {
                 if (spec instanceof MacosWindowAppearanceSpec macSpec) {
                     return macSpec != MacosWindowAppearanceSpec.AQUA

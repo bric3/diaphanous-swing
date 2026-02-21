@@ -54,7 +54,7 @@ import io.github.bric3.diaphanous.backdrop.WindowBackdrop;
 import io.github.bric3.diaphanous.decorations.MacosToolbarStyle;
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec;
 import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec;
-import io.github.bric3.diaphanous.decorations.WindowDecorations;
+import io.github.bric3.diaphanous.decorations.WindowPresentations;
 
 MacosWindowDecorationsSpec style = MacosWindowDecorationsSpec.builder()
     .transparentTitleBar(true)
@@ -62,14 +62,14 @@ MacosWindowDecorationsSpec style = MacosWindowDecorationsSpec.builder()
     .titleVisible(false)
     .toolbarStyle(MacosToolbarStyle.UNIFIED_COMPACT)
     .build();
-WindowDecorations.applyDecorations(frame, style);
+WindowPresentations.applyDecorations(frame, style);
 
 MacosVibrancySpec vibrancy = MacosVibrancySpec.builder()
     .material(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
     .build();
 WindowBackdrop.apply(frame, vibrancy);
 
-WindowDecorations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
+WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
 ```
 
 The facades delegate to platform managers:
