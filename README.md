@@ -35,6 +35,9 @@ The demo is preconfigured with this JVM argument:
 
 - `--enable-native-access=ALL-UNNAMED`
 
+`diaphanous-core` bundles the macOS native library (`native/macos/libdiaphanous-core-macos-native-macos-aarch64.dylib`) and loads it from classpath by default.
+For local override/debug, set `-Ddiaphanous.macos.nativeLib=/absolute/path/to/libdiaphanous-core-macos-native.dylib`.
+
 Robot smoke test:
 
 ```bash

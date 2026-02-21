@@ -29,14 +29,9 @@ application {
 
 tasks.named<JavaExec>("run") {
     dependsOn(":diaphanous-core-macos-native:assemble")
-    val nativeLib = rootProject.layout.projectDirectory
-        .dir("diaphanous-core-macos-native/build/lib/main/debug")
-        .file("libdiaphanous-core-macos-native.dylib")
-        .asFile
     jvmArgs(
         "--enable-native-access=ALL-UNNAMED"
     )
-    systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)
     val dumpSwing = System.getProperty("diaphanous.dump.swing")
     if (!dumpSwing.isNullOrBlank()) {
         systemProperty("diaphanous.dump.swing", dumpSwing)
@@ -61,10 +56,6 @@ fun passRobotPropToJvm(task: Test, key: String) {
 
 val robotTestTask = tasks.register<Test>("robotTest") {
     dependsOn(":diaphanous-core-macos-native:assemble")
-    val nativeLib = rootProject.layout.projectDirectory
-        .dir("diaphanous-core-macos-native/build/lib/main/debug")
-        .file("libdiaphanous-core-macos-native.dylib")
-        .asFile
     description = "Runs macOS desktop Robot smoke tests and writes screenshots/reports."
     group = "verification"
     testClassesDirs = robotTest.output.classesDirs
@@ -76,7 +67,6 @@ val robotTestTask = tasks.register<Test>("robotTest") {
         "--enable-native-access=ALL-UNNAMED"
     )
     systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotTest").get().asFile.absolutePath)
-    systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)
     passRobotPropToJvm(this, "diaphanous.robot.wallpaperName")
     passRobotPropToJvm(this, "diaphanous.robot.wallpaper")
     passRobotPropToJvm(this, "diaphanous.robot.alpha")
@@ -85,10 +75,6 @@ val robotTestTask = tasks.register<Test>("robotTest") {
 
 tasks.register<Test>("robotShot") {
     dependsOn(":diaphanous-core-macos-native:assemble")
-    val nativeLib = rootProject.layout.projectDirectory
-        .dir("diaphanous-core-macos-native/build/lib/main/debug")
-        .file("libdiaphanous-core-macos-native.dylib")
-        .asFile
     description = "Captures a screenshot of the demo app via Robot."
     group = "verification"
     testClassesDirs = robotTest.output.classesDirs
@@ -103,7 +89,6 @@ tasks.register<Test>("robotShot") {
         "--enable-native-access=ALL-UNNAMED"
     )
     systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotShot").get().asFile.absolutePath)
-    systemProperty("diaphanous.macos.nativeLib", nativeLib.absolutePath)
     systemProperty("diaphanous.projectDir", rootProject.layout.projectDirectory.asFile.absolutePath)
     passRobotPropToJvm(this, "diaphanous.robot.wallpaperName")
     passRobotPropToJvm(this, "diaphanous.robot.wallpaper")
