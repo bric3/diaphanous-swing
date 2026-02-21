@@ -22,7 +22,7 @@ import javax.swing.JComboBox
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class WindowDecorationControls(
+class WindowDecorationsControls(
     initialAppearance: MacosWindowAppearanceSpec,
     private val onStyleChange: (style: MacosWindowDecorationsSpec) -> Unit,
     private val onAppearanceChange: (appearance: MacosWindowAppearanceSpec) -> Unit
@@ -34,37 +34,37 @@ class WindowDecorationControls(
     private val transparentTitleBarCheck = JCheckBox("Transparent title bar", true).apply {
         name = "transparentTitleBarCheck"
         isOpaque = false
-        addActionListener { onStyleChange(currentStyle()) }
+        addActionListener { onStyleChange(currentDecorationsSpec()) }
     }
     private val fullSizeContentCheck = JCheckBox("Full-size content view", true).apply {
         name = "fullSizeContentCheck"
         isOpaque = false
-        addActionListener { onStyleChange(currentStyle()) }
+        addActionListener { onStyleChange(currentDecorationsSpec()) }
     }
     private val titleVisibleCheck = JCheckBox("Title visible", false).apply {
         name = "titleVisibleCheck"
         isOpaque = false
-        addActionListener { onStyleChange(currentStyle()) }
+        addActionListener { onStyleChange(currentDecorationsSpec()) }
     }
     private val toolbarStyleCombo = JComboBox(MacosToolbarStyle.entries.toTypedArray()).apply {
         name = "toolbarStyleCombo"
         selectedItem = MacosToolbarStyle.UNIFIED_COMPACT
-        addActionListener { onStyleChange(currentStyle()) }
+        addActionListener { onStyleChange(currentDecorationsSpec()) }
     }
     private val appearanceCombo = JComboBox(MacosWindowAppearanceSpec.entries.toTypedArray()).apply {
         name = "appearanceCombo"
         selectedItem = initialAppearance
-        addActionListener { onAppearanceChange(currentAppearance()) }
+        addActionListener { onAppearanceChange(currentAppearanceSpec()) }
     }
 
-    fun currentStyle(): MacosWindowDecorationsSpec = MacosWindowDecorationsSpec.builder()
+    fun currentDecorationsSpec(): MacosWindowDecorationsSpec = MacosWindowDecorationsSpec.builder()
         .transparentTitleBar(transparentTitleBarCheck.isSelected)
         .fullSizeContentView(fullSizeContentCheck.isSelected)
         .titleVisible(titleVisibleCheck.isSelected)
         .toolbarStyle(toolbarStyleCombo.selectedItem as MacosToolbarStyle)
         .build()
 
-    fun currentAppearance(): MacosWindowAppearanceSpec = appearanceCombo.selectedItem as MacosWindowAppearanceSpec
+    fun currentAppearanceSpec(): MacosWindowAppearanceSpec = appearanceCombo.selectedItem as MacosWindowAppearanceSpec
 
     val component by lazy { windowDecorationControls() }
 

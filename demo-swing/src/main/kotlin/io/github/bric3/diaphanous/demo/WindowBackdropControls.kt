@@ -48,7 +48,7 @@ class WindowBackdropControls(
         addChangeListener {
             val alpha = value / 100.0
             alphaValue.text = "%.2f".format(alpha)
-            onChange(currentStyle())
+            onChange(currentSpec())
         }
     }
 
@@ -62,32 +62,32 @@ class WindowBackdropControls(
         addChangeListener {
             blurValue.text = value.toString()
             materialCombo.selectedItem = materialForBlurStrength(value)
-            onChange(currentStyle())
+            onChange(currentSpec())
         }
     }
 
     private val materialCombo = JComboBox(MacosVibrancyMaterial.entries.toTypedArray()).apply {
         name = "materialCombo"
         selectedItem = initialMaterial
-        addActionListener { onChange(currentStyle()) }
+        addActionListener { onChange(currentSpec()) }
     }
 
     private val blendingCombo = JComboBox(MacosVibrancyBlendingMode.entries.toTypedArray()).apply {
         name = "blendingModeCombo"
         selectedItem = MacosVibrancyBlendingMode.BEHIND_WINDOW
-        addActionListener { onChange(currentStyle()) }
+        addActionListener { onChange(currentSpec()) }
     }
 
     private val stateCombo = JComboBox(MacosVibrancyState.entries.toTypedArray()).apply {
         name = "vibrancyStateCombo"
         selectedItem = MacosVibrancyState.FOLLOWS_WINDOW_ACTIVE_STATE
-        addActionListener { onChange(currentStyle()) }
+        addActionListener { onChange(currentSpec()) }
     }
 
     private val emphasizedCheck = JCheckBox("Emphasized").apply {
         name = "emphasizedCheck"
         isOpaque = false
-        addActionListener { onChange(currentStyle()) }
+        addActionListener { onChange(currentSpec()) }
     }
 
     private fun blurStrengthForMaterial(material: MacosVibrancyMaterial): Int = when (material) {
@@ -107,7 +107,7 @@ class WindowBackdropControls(
         else -> MacosVibrancyMaterial.HUD_WINDOW
     }
 
-    fun currentStyle(): MacosVibrancySpec = MacosVibrancySpec.builder()
+    fun currentSpec(): MacosVibrancySpec = MacosVibrancySpec.builder()
         .material(materialCombo.selectedItem as MacosVibrancyMaterial)
         .blendingMode(blendingCombo.selectedItem as MacosVibrancyBlendingMode)
         .state(stateCombo.selectedItem as MacosVibrancyState)
@@ -129,7 +129,7 @@ class WindowBackdropControls(
             if (blurSlider.value != strength) {
                 blurSlider.value = strength
             }
-            onChange(currentStyle())
+            onChange(currentSpec())
         }
 
         val controlsPanel = DemoApp.transparentPanel(GridBagLayout())

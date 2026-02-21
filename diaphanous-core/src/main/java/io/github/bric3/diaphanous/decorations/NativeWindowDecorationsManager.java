@@ -12,6 +12,7 @@ package io.github.bric3.diaphanous.decorations;
 
 import java.awt.Window;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * Manager that selects and owns the active native window decorations provider.
@@ -64,10 +65,10 @@ public final class NativeWindowDecorationsManager {
      * @param window target window
      * @param spec style spec
      */
-    public void applyStyle(Window window, WindowDecorationSpec spec) {
+    public void applyDecorations(Window window, WindowDecorationSpec spec) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(spec, "spec");
-        provider.applyStyle(window, spec);
+        provider.applyDecorations(window, spec);
     }
 
     /**
@@ -80,6 +81,15 @@ public final class NativeWindowDecorationsManager {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(spec, "spec");
         provider.applyAppearance(window, spec);
+    }
+
+    /**
+     * Returns backdrop compatibility predicate from the active OS provider.
+     *
+     * @return compatibility predicate
+     */
+    public Predicate<Window> isCompatibleWithBackdropPredicate() {
+        return provider.isCompatibleWithBackdropPredicate();
     }
 
     private static WindowDecorationsProvider selectProvider() {

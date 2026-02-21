@@ -15,14 +15,14 @@
 
 ### macOS
     
-- Window backdrop support via `io.github.bric3.diaphanous.backdrop.BackdropSupport`
+- Window backdrop support via `io.github.bric3.diaphanous.backdrop.ComponentBackdropSupport`
 
 - Simple Windows decorations (however, support is limited, and weisJ/darklaf platform-decorations is preferred)
   - Transparent title bar (`setTitlebarAppearsTransparent:`)
   - Full-size content view style bit (`setStyleMask:` with `NSWindowStyleMaskFullSizeContentView`)
   - Title visibility (`setTitleVisibility:`)
   - Toolbar style when available (`setToolbarStyle:`)
-  - Vibrancy backdrop with `NSVisualEffectView` (`WindowBackdrop.apply(...)` / `WindowBackdrop.clear(...)`)
+  - Vibrancy backdrop with `NSVisualEffectView` (`WindowBackdrop.apply(...)` / `WindowBackdrop.remove(...)`)
 
 ## Run the demo
 
@@ -48,7 +48,6 @@ Robot smoke test:
 ## Library usage
 
 ```java
-import io.github.bric3.diaphanous.backdrop.BackdropSupport;
 import io.github.bric3.diaphanous.backdrop.MacosVibrancyMaterial;
 import io.github.bric3.diaphanous.backdrop.MacosVibrancySpec;
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop;
@@ -63,16 +62,14 @@ MacosWindowDecorationsSpec style = MacosWindowDecorationsSpec.builder()
     .titleVisible(false)
     .toolbarStyle(MacosToolbarStyle.UNIFIED_COMPACT)
     .build();
-
-WindowDecorations.applyStyle(frame, style);
+WindowDecorations.applyDecorations(frame, style);
 
 MacosVibrancySpec vibrancy = MacosVibrancySpec.builder()
     .material(MacosVibrancyMaterial.UNDER_WINDOW_BACKGROUND)
     .build();
 WindowBackdrop.apply(frame, vibrancy);
 
-WindowDecorations.applyAppearance(frame, MacosWindowAppearance.SYSTEM);
-BackdropSupport.configure(frame, MacosWindowAppearance.SYSTEM);
+WindowDecorations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
 ```
 
 The facades delegate to platform managers:

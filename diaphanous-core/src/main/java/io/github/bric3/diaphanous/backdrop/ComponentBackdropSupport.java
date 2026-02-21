@@ -10,9 +10,6 @@
 
 package io.github.bric3.diaphanous.backdrop;
 
-import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec;
-import io.github.bric3.diaphanous.decorations.WindowAppearanceSpec;
-import io.github.bric3.diaphanous.decorations.WindowDecorations;
 import java.awt.AlphaComposite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -30,30 +27,13 @@ import javax.swing.SwingUtilities;
  * <p>
  * Current behavior is implemented for the macOS backend.
  */
-public final class BackdropSupport {
+public final class ComponentBackdropSupport {
     private static final String BACKDROP_ERASE_ENABLED_KEY = "diaphanous.backdropEraseEnabled";
 
-    private BackdropSupport() {
+    private ComponentBackdropSupport() {
     }
 
-    /**
-     * Enables or disables backdrop erase on the window root pane based on platform, decoration and appearance.
-     *
-     * @param window the target window
-     * @param spec the selected platform appearance
-     */
-    public static void configure(Window window, WindowAppearanceSpec spec) {
-        boolean enabled = shouldEnable(window, spec);
-        configure(window, enabled);
-    }
-
-    /**
-     * Enables or disables backdrop erase on the window root pane.
-     *
-     * @param window the target window
-     * @param enabled whether erase is enabled
-     */
-    public static void configure(Window window, boolean enabled) {
+    static void setEraseEnabled(Window window, boolean enabled) {
         if (!(window instanceof RootPaneContainer container)) {
             return;
         }
@@ -63,28 +43,6 @@ public final class BackdropSupport {
         }
         rootPane.putClientProperty(BACKDROP_ERASE_ENABLED_KEY, enabled);
         rootPane.repaint();
-    }
-
-    /**
-     * Returns {@code true} when backdrop erase should be enabled for the given window and appearance.
-     *
-     * @param window the target window
-     * @param spec selected appearance
-     * @return {@code true} if backdrop erase should be active
-     */
-    public static boolean shouldEnable(Window window, WindowAppearanceSpec spec) {
-        if (!WindowDecorations.isSupported() || window == null || spec == null) {
-            return false;
-        }
-        if (window instanceof java.awt.Frame frame && frame.isUndecorated()) {
-            return false;
-        }
-        if (spec instanceof MacosWindowAppearanceSpec macAppearance) {
-            return macAppearance == MacosWindowAppearanceSpec.SYSTEM
-                || macAppearance == MacosWindowAppearanceSpec.VIBRANT_LIGHT
-                || macAppearance == MacosWindowAppearanceSpec.VIBRANT_DARK;
-        }
-        return false;
     }
 
     /**

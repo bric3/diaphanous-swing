@@ -11,6 +11,10 @@
 package io.github.bric3.diaphanous.decorations;
 
 import java.awt.Window;
+import java.util.Optional;
+import java.util.function.Predicate;
+import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
 
 /**
  * OS-agnostic facade for native window decoration controls.
@@ -19,6 +23,8 @@ import java.awt.Window;
  * platform implementation. Current built-in backend is macOS.
  */
 public final class WindowDecorations {
+    private static final String APPEARANCE_KEY = "diaphanous.windowAppearanceSpec";
+
     private WindowDecorations() {
     }
 
@@ -35,8 +41,8 @@ public final class WindowDecorations {
      * @param window target window
      * @param spec platform style carrier
      */
-    public static void applyStyle(Window window, WindowDecorationSpec spec) {
-        NativeWindowDecorationsManager.getSharedInstance().applyStyle(window, spec);
+    public static void applyDecorations(Window window, WindowDecorationSpec spec) {
+        NativeWindowDecorationsManager.getSharedInstance().applyDecorations(window, spec);
     }
 
     /**
@@ -47,5 +53,42 @@ public final class WindowDecorations {
      */
     public static void applyAppearance(Window window, WindowAppearanceSpec spec) {
         NativeWindowDecorationsManager.getSharedInstance().applyAppearance(window, spec);
+        if (window instanceof RootPaneContainer container) {
+            JRootPane rootPane = container.getRootPane();
+            if (rootPane != null) {
+                rootPane.putClientProperty(APPEARANCE_KEY, spec);
+            }
+        }
+    }
+
+    /**
+     * Returns the last applied appearance spec tracked on this window.
+     *
+     * @param window target window
+     * @return tracked appearance spec when available
+     */
+    public static Optional<WindowAppearanceSpec> currentAppearance(Window window) {
+        if (!(window instanceof RootPaneContainer container)) {
+            return Optional.empty();
+        }
+        JRootPane rootPane = container.getRootPane();
+        if (rootPane == null) {
+            return Optional.empty();
+        }
+        Object value = rootPane.getClientProperty(APPEARANCE_KEY);
+        if (value instanceof WindowAppearanceSpec spec) {
+            return Optional.of(spec);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Predicate used by backdrop integration to decide whether Swing erase
+     * should be enabled for the current window appearance.
+     *
+     * @return compatibility predicate
+     */
+    public static Predicate<Window> isCompatibleWithBackdropPredicate() {
+        return NativeWindowDecorationsManager.getSharedInstance().isCompatibleWithBackdropPredicate();
     }
 }

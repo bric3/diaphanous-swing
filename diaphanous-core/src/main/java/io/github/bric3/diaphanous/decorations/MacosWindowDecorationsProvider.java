@@ -11,10 +11,11 @@
 package io.github.bric3.diaphanous.decorations;
 
 import java.awt.Window;
+import java.util.function.Predicate;
 
 final class MacosWindowDecorationsProvider implements WindowDecorationsProvider {
     @Override
-    public void applyStyle(Window window, WindowDecorationSpec spec) {
+    public void applyDecorations(Window window, WindowDecorationSpec spec) {
         if (!(spec instanceof MacosWindowDecorationsSpec macStyle)) {
             throw new IllegalArgumentException(
                 "Unsupported style spec for macOS provider: " + spec.getClass().getName()
@@ -31,5 +32,18 @@ final class MacosWindowDecorationsProvider implements WindowDecorationsProvider 
             );
         }
         MacosWindowDecorations.applyAppearance(window, macAppearance);
+    }
+
+    @Override
+    public Predicate<Window> isCompatibleWithBackdropPredicate() {
+        return window -> WindowDecorations.currentAppearance(window)
+            .map(spec -> {
+                if (spec instanceof MacosWindowAppearanceSpec macSpec) {
+                    return macSpec != MacosWindowAppearanceSpec.AQUA
+                        && macSpec != MacosWindowAppearanceSpec.DARK_AQUA;
+                }
+                return true;
+            })
+            .orElse(true);
     }
 }

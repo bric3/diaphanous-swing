@@ -10,12 +10,11 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.backdrop.BackdropSupport
+import io.github.bric3.diaphanous.MacosStartupReveal
 import io.github.bric3.diaphanous.backdrop.RootErasingContentPane
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
 import io.github.bric3.diaphanous.decorations.WindowDecorations
-import io.github.bric3.diaphanous.MacosStartupReveal
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -86,22 +85,23 @@ object DemoApp {
         }
 
 
-        val windowBackdropControls = WindowBackdropControls() {
-            WindowBackdrop.apply(frame, it)
+        val windowBackdropControls = WindowBackdropControls {
+            WindowBackdrop.apply(frame, it, WindowDecorations.isCompatibleWithBackdropPredicate())
         }
-        val windowDecorationControls = WindowDecorationControls(
+        val windowDecorationsControls = WindowDecorationsControls(
             initialAppearance = options.appearance,
-            onStyleChange = { style -> WindowDecorations.applyStyle(frame, style) },
+            onStyleChange = { style -> WindowDecorations.applyDecorations(frame, style) },
             onAppearanceChange = { appearance ->
                 WindowDecorations.applyAppearance(frame, appearance)
-                BackdropSupport.configure(frame, appearance)
+                WindowBackdrop.apply(frame, windowBackdropControls.currentSpec(),
+                    WindowDecorations.isCompatibleWithBackdropPredicate())
             }
         )
         val topSeriesPanel = RandomTimeseriesPanel()
         val topTimeseriesColorControls = TopTimeseriesColorControls(topSeriesPanel)
 
         val settingsPanel = transparentPanel(BorderLayout(0, 8)).apply {
-            add(windowDecorationControls.component, BorderLayout.NORTH)
+            add(windowDecorationsControls.component, BorderLayout.NORTH)
             add(windowBackdropControls.component, BorderLayout.CENTER)
             preferredSize = Dimension(320, preferredSize.height)
         }
@@ -117,7 +117,7 @@ object DemoApp {
             )
         }
 
-        val rootContentPane = RootErasingContentPane(BorderLayout(16, 16)).apply {
+        frame.contentPane = RootErasingContentPane(BorderLayout(16, 16)).apply {
             add(topSeriesPanel, BorderLayout.NORTH)
             add(
                 transparentPanel(GridBagLayout()).apply {
@@ -126,14 +126,10 @@ object DemoApp {
                 BorderLayout.CENTER
             )
         }
-
-        frame.contentPane = rootContentPane
-        val initialAppearance = windowDecorationControls.currentAppearance()
-        WindowDecorations.applyAppearance(frame, initialAppearance)
-        BackdropSupport.configure(frame, initialAppearance)
-        WindowDecorations.applyStyle(frame, windowDecorationControls.currentStyle())
-
-        WindowBackdrop.apply(frame, windowBackdropControls.currentStyle())
+        WindowDecorations.applyAppearance(frame, windowDecorationsControls.currentAppearanceSpec())
+        WindowDecorations.applyDecorations(frame, windowDecorationsControls.currentDecorationsSpec())
+        WindowBackdrop.apply(frame, windowBackdropControls.currentSpec(),
+            WindowDecorations.isCompatibleWithBackdropPredicate())
         MacosStartupReveal.show(frame)
         if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
             dumpComponentTree(frame.rootPane, 0)

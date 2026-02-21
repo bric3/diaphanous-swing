@@ -11,12 +11,15 @@
 package io.github.bric3.diaphanous.decorations;
 
 import java.awt.Window;
+import java.util.function.Predicate;
 
 /**
  * Internal SPI for OS-specific decoration backends.
  */
 interface WindowDecorationsProvider {
-    void applyStyle(Window window, WindowDecorationSpec spec);
+    void applyDecorations(Window window, WindowDecorationSpec spec);
 
     void applyAppearance(Window window, WindowAppearanceSpec spec);
+
+    Predicate<Window> isCompatibleWithBackdropPredicate();
 }

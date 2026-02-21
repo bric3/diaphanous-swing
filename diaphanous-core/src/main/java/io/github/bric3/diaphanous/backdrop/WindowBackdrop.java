@@ -10,8 +10,10 @@
 
 package io.github.bric3.diaphanous.backdrop;
 
-import java.awt.Window;
+import java.awt.*;
 import java.util.Optional;
+import java.util.function.Predicate;
+import javax.swing.*;
 
 /**
  * OS-agnostic facade for native window backdrop effects.
@@ -33,11 +35,34 @@ public final class WindowBackdrop {
     /**
      * Applies a platform-specific backdrop style.
      *
+     * This enables the Swing contentPane erasing. For this to work, it is necessary to use
+     * contentPane to be {@link RootErasingContentPane} or use of
+     * {@link ComponentBackdropSupport#clearBackgroundIfEnabled(Graphics, JComponent)}.
+     *
      * @param window target window
      * @param spec platform backdrop style carrier
      */
     public static void apply(Window window, WindowBackdropSpec spec) {
+        apply(window, spec, null);
+    }
+
+    /**
+     * Applies a platform-specific backdrop style and toggles Swing backdrop erase
+     * depending on the activation predicate.
+     *
+     * Predicate controls whether Swing backdrop erase is enabled. For this to work,
+     * it is necessary to use contentPane to be {@link RootErasingContentPane} or use of
+     * {@link ComponentBackdropSupport#clearBackgroundIfEnabled(Graphics, JComponent)}.
+     *
+     * @param window target window
+     * @param spec platform backdrop style carrier
+     * @param activationPredicate predicate deciding if backdrop erase is enabled
+     */
+    public static void apply(Window window, WindowBackdropSpec spec, Predicate<Window> activationPredicate) {
         NativeWindowBackdropManager.getSharedInstance().apply(window, spec);
+        boolean enabled = shouldEnableErase(window, spec)
+            && (activationPredicate == null || activationPredicate.test(window));
+        ComponentBackdropSupport.setEraseEnabled(window, enabled);
     }
 
     /**
@@ -45,8 +70,9 @@ public final class WindowBackdrop {
      *
      * @param window target window
      */
-    public static void clear(Window window) {
+    public static void remove(Window window) {
         NativeWindowBackdropManager.getSharedInstance().clear(window);
+        ComponentBackdropSupport.setEraseEnabled(window, false);
     }
 
     /**
@@ -91,5 +117,18 @@ public final class WindowBackdrop {
      */
     public static Optional<WindowBackdropMaterialSpec> readMaterial(Window window) {
         return NativeWindowBackdropManager.getSharedInstance().readMaterial(window);
+    }
+
+    private static boolean shouldEnableErase(Window window, WindowBackdropSpec spec) {
+        if (!isSupported() || window == null || spec == null) {
+            return false;
+        }
+        if (!(window instanceof RootPaneContainer)) {
+            return false;
+        }
+        if (spec instanceof MacosVibrancySpec macSpec) {
+            return macSpec.enabled();
+        }
+        return true;
     }
 }

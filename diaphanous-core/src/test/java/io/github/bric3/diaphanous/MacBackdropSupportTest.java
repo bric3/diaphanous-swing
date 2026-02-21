@@ -10,7 +10,7 @@
 
 package io.github.bric3.diaphanous;
 
-import io.github.bric3.diaphanous.backdrop.BackdropSupport;
+import io.github.bric3.diaphanous.backdrop.ComponentBackdropSupport;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.JPanel;
@@ -22,17 +22,17 @@ import java.awt.image.BufferedImage;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class BackdropSupportTest {
+class ComponentBackdropSupportTest {
     @Test
     void isEnabledForReadsRootPaneClientProperty() {
         JPanel panel = new JPanel();
         JRootPane rootPane = new JRootPane();
         rootPane.setContentPane(panel);
 
-        assertFalse(BackdropSupport.isEnabledFor(panel));
+        assertFalse(ComponentBackdropSupport.isEnabledFor(panel));
 
         rootPane.putClientProperty("diaphanous.backdropEraseEnabled", Boolean.TRUE);
-        assertTrue(BackdropSupport.isEnabledFor(panel));
+        assertTrue(ComponentBackdropSupport.isEnabledFor(panel));
     }
 
     @Test
@@ -48,7 +48,7 @@ class BackdropSupportTest {
         g2.setColor(new Color(255, 0, 0, 255));
         g2.fillRect(0, 0, 8, 8);
 
-        boolean applied = BackdropSupport.clearBackgroundIfEnabled(g2, panel);
+        boolean applied = ComponentBackdropSupport.clearBackgroundIfEnabled(g2, panel);
         g2.dispose();
 
         assertTrue(applied);

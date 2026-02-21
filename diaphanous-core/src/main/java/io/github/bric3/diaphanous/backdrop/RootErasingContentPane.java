@@ -36,7 +36,7 @@ public final class RootErasingContentPane extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
-        if (!BackdropSupport.clearBackgroundIfEnabled(g, this)) {
+        if (!ComponentBackdropSupport.clearBackgroundIfEnabled(g, this)) {
             super.paintComponent(g);
         }
     }
