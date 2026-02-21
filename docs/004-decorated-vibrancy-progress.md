@@ -4,7 +4,7 @@
 
 A native wrapper path was implemented and verified to insert `NSVisualEffectView` correctly behind the AWT host view in decorated mode.
 
-The window is still rendered as opaque gray in practice.
+The native tree tweak is not enough in practice for at least Swing apps because the panels are actually drawing on the buffer, and it needs to be cleaned to see the OS window.
 
 ## Why a native library was introduced?
 
@@ -14,11 +14,16 @@ From the Java side, the first approach was direct Objective-C runtime calls to:
 2. toggle `NSWindow`/`NSView` properties,
 3. insert `NSVisualEffectView`.
 
-That worked for property updates, but it did not provide a robust way to control native view ownership in decorated AWT windows.
+That worked for window's property updates, but it did not provide a robust way to control native view ownership in decorated AWT windows.
 
 In the native AppKit view hierarchy, the effect view must sit between `NSWindow` and the existing `AWTView` as a sibling-behind arrangement.
 
-With that previous Java-only one-shot call approach, the native structure effectively stayed:
+This native direction is inspired by [JavaFX PR 2048](https://github.com/openjdk/jfx/pull/2048), 
+where the platform implementation installs an `NSVisualEffectView` in the native view chain so 
+Java-rendered content stays in front while the system backdrop is behind.  
+It's the same core idea but adapted to AWT native view (`AWTView`).
+
+Before this the native structure had effectively this "tree":
 
 ```text
 NSWindow
@@ -30,38 +35,72 @@ In this structure, there is no stable parent container that owns both:
 1. the original `AWTView` as front content, and
 2. the `NSVisualEffectView` as backdrop behind content.
 
-The missing piece is structural:
+The missing piece is a native wrapper view that can be the new `contentView` and have both the original `AWTView` and the new `NSVisualEffectView` as children.:
 
 1. create a stable wrapper around the existing AWT host view,
 2. install/remove an effect view under that host view,
 3. preserve AWT-specific selector/event behavior on the wrapper boundary.
 
+
+### Why not using FFM for that?
+
 FFM can handle part of this, but not cleanly for this case.
 
-1. FFM is great for calling C symbols and simple Objective-C runtime functions.
-2. This solution needs a real native `NSView` subclass (`DiaphanousWrappedAWTView`) with Objective-C methods (`mouseIsOver`, `deliverJavaMouseEvent:`), lifecycle, and ownership semantics.
+1. FFM is indeed great for calling C symbols and simple Objective-C runtime functions.
+2. But this solution needs a real native `NSView` subclass (`DiaphanousWrappedAWTView`) with Objective-C methods (`mouseIsOver`, `deliverJavaMouseEvent:`), lifecycle, and ownership semantics.
 3. Doing that from pure FFM would require dynamic Objective-C class creation, method injection with exact Objective-C ABI signatures, and careful upcall/trampoline lifetime handling.
-4. A small `.mm` bridge provides stable Objective-C behavior while Java/FFM remains the orchestration layer.
 
 So this is not impossible with FFM; it is possible but significantly higher risk and complex.
+While a small `.mm` bridge provides stable Objective-C behavior while Java/FFM remains the orchestration layer.
 
-## what is now implemented
+## Implementation
 
-1. A native macOS helper project (`diaphanous-core-macos-native`) built with Gradle native support.
-2. A native wrapper content view (`DiaphanousWrappedAWTView`) that:
+1. New module for the native macOS helper project (`diaphanous-core-macos-native`).
+2. This module will have a native wrapper content view (`DiaphanousWrappedAWTView`) that:
    - wraps the original `AWTView`,
    - inserts `NSVisualEffectView` behind it,
    - forwards AWT mouse selectors.
-3. Java FFM bridge (`MacNativeVibrancyBridge`) that calls native install/update/remove functions.
+3. In `diaphanous-core` module a new FFM bridge (`MacNativeVibrancyBridge`) to call native functions.
 
 
-Addtionally two system properties were added to dump the structure:
+Additionally, in the demo app, two system properties were added to dump the structure:
 - `-Ddiaphanous.dump.swing=true`
 - `-Ddiaphanous.dump.native=true`
 
 ## Structure layout
 
-This is the new component tree:
+```mermaid
+flowchart TB
+   subgraph JavaFX["javafx side (after PR 2048)"]
+      Stage["Stage / Scene"]
+      Glass["Glass macOS window layer"]
+      Stage --> Glass
+   end
+
+   subgraph Native["native tree"]
+      Win["NSWindow"]
+      Host["GlassHostView (wrapper/container)"]
+      FxContent["GlassView / JavaFX content NSView"]
+      Effect["NSVisualEffectView (backdrop)"]
+      Metal["MTLLayer / CAMetalLayer (content backing)"]
+      Win --> Host
+      Host --> FxContent
+      Host --> Effect
+      FxContent --> Metal
+   end
+
+   Glass --> Win
+
+   classDef pureJavaJfx fill:#d9f7be,stroke:#389e0d,color:#1f4d12
+   classDef nativeJfx fill:#ffd6e7,stroke:#c41d7f,color:#5c1433
+   classDef nativeMac fill:#e6f7ff,stroke:#08979c,color:#00474f
+
+   class Stage,Glass pureJavaJfx
+   class Host,FxContent nativeJfx
+   class Win,Effect,Metal nativeMac
+```
+
+For AWT here's the new component tree:
 
 ```mermaid
 flowchart TB
@@ -77,7 +116,7 @@ flowchart TB
     Demo --> SwingTree
   end
 
-  subgraph Native["native layered structure (top -> bottom)"]
+  subgraph Native["native tree"]
     Win["NSWindow"]
     Wrapper["DiaphanousWrappedAWTView"]
     Awt["AWTView (front content)"]
@@ -105,7 +144,7 @@ flowchart TB
   class Win,Mtl,Effect nativeMac
 ```
 
-## Attempted approaches
+## Previous attempted approaches
 
 1. Pure Java insertion:
    - resolved `NSWindow*` from AWT peer,
@@ -122,25 +161,30 @@ flowchart TB
    - set non-opaque/clear background on window, wrapper, and AWT host layers.
 4. Runtime dumps:
    - dumped Swing tree opacity/background state,
-   - dumped native AppKit hierarchy and layer flags before and after vibrancy install.
+   - dumped native AppKit hierarchy and layer flags before and after vibrancy installation.
+   - dumped native AppKit hierarchy and layer flags before and after vibrancy installation.
 
 ## What the hierarchy dump showed
 
 Before install:
 
 - `contentView` was directly `AWTView`.
-- window was opaque with default light background.
+- the window was opaque with a default light background.
 - `AWTView` had an `MTLLayer`.
 
 After install:
 
-- window became non-opaque with clear background,
-- content view switched from `AWTView` to `DiaphanousWrappedAWTView`,
+- the window became non-opaque with a clear background,
+- the content view switched from `AWTView` to `DiaphanousWrappedAWTView`,
 - `NSVisualEffectView` is present,
-- wrapped `AWTView` is non-opaque with a clear layer background,
+- the wrapped `AWTView` is non-opaque with a clear layer background,
 - `AWTView` is still backed by `MTLLayer`.
 
-This confirms The dump confirms the follwing:
+> [!TIP]
+> `MTLLayer` is a Metal-backed surface that can is used as a Java2D surface.
+> The JDK has started to use it since Java 17, with the JEP 382 [Metal for Java](https://openjdk.java.net/jeps/382) ([`libawt_lwawt`](https://github.com/openjdk/jdk/tree/jdk-25%2B36/src/java.desktop/macosx/native/libawt_lwawt/java2d/metal)). 
+
+This confirms The dump confirms the following:
 
 1. Native wrapper installation is correct.
 2. `NSVisualEffectView` is present and placed behind `AWTView`.
@@ -150,7 +194,7 @@ This confirms The dump confirms the follwing:
 So the blocker is no longer native hierarchy setup. The blocker is the decorated AWT rendering pipeline (Metal-backed surface) covering the effect view.
 
 <details>
-  <summary>dumped properties (swing + native)</summary>
+  <summary>dumped properties (swing and native)</summary>
 
 ```text
 - JRootPane visible=true opaque=false bg=rgba(238,238,238,255)
@@ -181,15 +225,15 @@ So the blocker is no longer native hierarchy setup. The blocker is the decorated
 
 ## Digging into `MTLLayer` 
 
-In modern macOS JDKs, Swing/AWT rendering is routed through the Metal pipeline. In this model, `AWTView` is backed by `MTLLayer`, and Java2D renders into an intermediate surface that is then copied to the layer for presentation.
+In modern macOS JDKs, Swing/AWT rendering is routed through the Metal pipeline. In this model, `AWTView` is backed by `MTLLayer`, and Java2D renders into an intermediate surface then copied to the layer for presentation.
 
 Practical effect in this setup:
 
 1. the effect view is present behind `AWTView`,
 2. but the Metal-backed AWT content still presents a full frame over it,
-3. so backdrop blur is not visible even when the native hierarchy is correct.
+3. so the backdrop blur is not visible even when the native hierarchy is correct.
 
-The dump aligns with that model: after installation the tree is correct and non-opaque flags are set, yet the displayed result stays flat gray.
+The dump aligns with that model: after installation the tree is correct, and non-opaque flags are set, yet the displayed result stays flat gray.
 
 > [!TIP]
 > **What is blitting?**
@@ -208,19 +252,45 @@ The following tuning properties are no longer considered effective for fixing de
 5. `AWTView wantsLayer + clear layer background` alone.
 6. `NSVisualEffectView.material` and alpha tuning alone.
 
-These are still useful building blocks, but not sufficient to make decorated AWT content reveal backdrop blur.
+These are still useful building blocks, but not sufficient to make decorated AWT content reveal a backdrop blur.
 
 ## Preventing Java overpaint on decorated windows
 
-Earlier sections identified the main blocker: even with correct native wrapper insertion, AWT content (via `MTLLayer` blitting) was still painting a full surface over `NSVisualEffectView`.
+In earlier sections, the main remining issue: even with correct native wrapper insertion, AWT content (via `MTLLayer` blitting) was still painting a full surface over `NSVisualEffectView`.
 
-This iteration addresses that specific blocker by reducing Java-side overpaint in selected containers.
+That specific blocker is addressed by preventing background paint Java side in containers. In particular, the
+frame content pane needs a special treatment to avoid full-surface overpaint:
 
-The decorated-window path now produces visible backdrop vibrancy/blur in practice (validated with `SYSTEM`, `VIBRANT_LIGHT`, and `VIBRANT_DARK` appearances).
+```kotlin
+private class RootErasingContentPane(
+        layout: LayoutManager
+) : JPanel(layout) {
+   init {
+      isOpaque = false
+      background = Color(0, 0, 0, 0)
+   }
+
+   override fun paintComponent(g: Graphics) {
+      if (!MacBackdropSupport.clearBackgroundIfEnabled(g, this)) {
+         super.paintComponent(g)
+      }
+   }
+}
+```
+
+Other containers like `JPanel` only need to be **not** opaque.
+
+```kotlin
+JPanel(layout).apply {
+    isOpaque = false
+}
+```
+
+Once the Swing container doesn't paint anymore, the window backdrop vibrancy/blur is visible.
 
 Implemented outcomes:
 
-1. Java-side clear/erase support was added via `MacBackdropSupport` to avoid full-surface overpaint on the Metal-backed AWT host.
+1. For the root container the clearing support was added via `MacBackdropSupport` to avoid full-surface overpaint.
 2. Erase activation is gated:
    - enabled for decorated macOS windows with `SYSTEM` / `VIBRANT_*` appearance,
    - disabled for undecorated mode and non-vibrant appearances (`AQUA`, `DARK_AQUA`).
