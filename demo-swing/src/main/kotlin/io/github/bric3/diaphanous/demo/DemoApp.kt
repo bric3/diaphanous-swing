@@ -10,11 +10,11 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacWindowAppearance
-import io.github.bric3.diaphanous.MacWindowDecorations
-import io.github.bric3.diaphanous.MacWindowBackdrop
-import io.github.bric3.diaphanous.MacStartupReveal
 import io.github.bric3.diaphanous.MacBackdropSupport
+import io.github.bric3.diaphanous.MacStartupReveal
+import io.github.bric3.diaphanous.MacWindowAppearance
+import io.github.bric3.diaphanous.MacWindowBackdrop
+import io.github.bric3.diaphanous.MacWindowDecorations
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Dimension
@@ -22,11 +22,11 @@ import java.awt.Font
 import java.awt.Graphics
 import java.awt.GridBagLayout
 import java.awt.LayoutManager
+import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import javax.swing.JComponent
 
 /**
  * Manual demo for toggling native macOS style attributes on a Swing frame.
@@ -85,11 +85,6 @@ object DemoApp {
             font = Font("SF Pro Text", Font.BOLD, 22)
         }
 
-        val topSeriesPanel = RandomTimeseriesPanel()
-
-        val centerPanel = transparentPanel(BorderLayout(0, 0))
-        centerPanel.add(title, BorderLayout.NORTH)
-        val mainContentPanel = transparentPanel(BorderLayout(0, 16))
 
         val windowBackdropControls = WindowBackdropControls() {
             MacWindowBackdrop.apply(frame, it)
@@ -102,27 +97,35 @@ object DemoApp {
                 MacBackdropSupport.configure(frame, appearance)
             }
         )
-        val topTimeseriesColorControls = TopTimeseriesColorControls(
-            parent = frame,
-            currentLineColor = { topSeriesPanel.lineColor },
-            setLineColor = { color -> topSeriesPanel.lineColor = color },
-            currentFillColor = { topSeriesPanel.areaColor },
-            setFillColor = { color -> topSeriesPanel.areaColor = color }
-        )
+        val topSeriesPanel = RandomTimeseriesPanel()
+        val topTimeseriesColorControls = TopTimeseriesColorControls(topSeriesPanel)
 
-        val settingsPanel = transparentPanel(BorderLayout(0, 8))
-        settingsPanel.add(windowDecorationControls.component, BorderLayout.NORTH)
-        settingsPanel.add(windowBackdropControls.component, BorderLayout.CENTER)
-        settingsPanel.preferredSize = Dimension(320, settingsPanel.preferredSize.height)
-        mainContentPanel.add(settingsPanel, BorderLayout.EAST)
-        mainContentPanel.add(topTimeseriesColorControls.component, BorderLayout.WEST)
-        centerPanel.add(mainContentPanel, BorderLayout.CENTER)
+        val settingsPanel = transparentPanel(BorderLayout(0, 8)).apply {
+            add(windowDecorationControls.component, BorderLayout.NORTH)
+            add(windowBackdropControls.component, BorderLayout.CENTER)
+            preferredSize = Dimension(320, preferredSize.height)
+        }
 
-        val rootContentPane = RootErasingContentPane(BorderLayout(16, 16))
-        val centered = transparentPanel(GridBagLayout())
-        centered.add(centerPanel)
-        rootContentPane.add(topSeriesPanel, BorderLayout.NORTH)
-        rootContentPane.add(centered, BorderLayout.CENTER)
+        val centerPanel = transparentPanel(BorderLayout(0, 0)).apply {
+            add(title, BorderLayout.NORTH)
+            add(
+                transparentPanel(BorderLayout(0, 16)).apply {
+                    add(topTimeseriesColorControls.component, BorderLayout.WEST)
+                    add(settingsPanel, BorderLayout.EAST)
+                },
+                BorderLayout.CENTER
+            )
+        }
+
+        val rootContentPane = RootErasingContentPane(BorderLayout(16, 16)).apply {
+            add(topSeriesPanel, BorderLayout.NORTH)
+            add(
+                transparentPanel(GridBagLayout()).apply {
+                    add(centerPanel)
+                },
+                BorderLayout.CENTER
+            )
+        }
 
         frame.contentPane = rootContentPane
         val initialAppearance = windowDecorationControls.currentAppearance()
@@ -153,7 +156,7 @@ object DemoApp {
         val namePart = if (component.name != null) " name=${component.name}" else ""
         println(
             "$indent- ${component.javaClass.simpleName}$namePart visible=${component.isVisible} " +
-                "opaque=$opaque bg=rgba(${background.red},${background.green},${background.blue},${background.alpha})"
+                    "opaque=$opaque bg=rgba(${background.red},${background.green},${background.blue},${background.alpha})"
         )
         if (component is java.awt.Container) {
             component.components.forEach { child -> dumpComponentTree(child, depth + 1) }

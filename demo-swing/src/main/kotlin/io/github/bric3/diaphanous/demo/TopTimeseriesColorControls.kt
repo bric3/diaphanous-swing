@@ -11,7 +11,6 @@
 package io.github.bric3.diaphanous.demo
 
 import java.awt.Color
-import java.awt.Component
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Insets
@@ -21,11 +20,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class TopTimeseriesColorControls(
-    private val parent: Component,
-    private val currentLineColor: () -> Color,
-    private val setLineColor: (Color) -> Unit,
-    private val currentFillColor: () -> Color,
-    private val setFillColor: (Color) -> Unit
+    private val topSeriesPanel: RandomTimeseriesPanel
 ) : JPanel() {
     init {
         isOpaque = false
@@ -53,16 +48,16 @@ class TopTimeseriesColorControls(
             gbc = colorGbc,
             row = 1,
             label = "Timeseries line",
-            current = currentLineColor,
-            apply = setLineColor
+            current = { topSeriesPanel.lineColor },
+            apply = { color -> topSeriesPanel.lineColor = color }
         )
         addColorControl(
             colorPanel = colorPanel,
             gbc = colorGbc,
             row = 2,
             label = "Timeseries fill",
-            current = currentFillColor,
-            apply = setFillColor
+            current = { topSeriesPanel.areaColor },
+            apply = { color -> topSeriesPanel.areaColor = color }
         )
         return colorPanel
     }
@@ -79,7 +74,7 @@ class TopTimeseriesColorControls(
             isOpaque = false
             background = Color(0, 0, 0, 0)
             addActionListener {
-                val selected = JColorChooser.showDialog(parent, "Choose $label", current()) ?: return@addActionListener
+                val selected = JColorChooser.showDialog(topSeriesPanel, "Choose $label", current()) ?: return@addActionListener
                 apply(selected)
             }
         }
@@ -93,4 +88,3 @@ class TopTimeseriesColorControls(
         colorPanel.add(pickButton, gbc)
     }
 }
-
