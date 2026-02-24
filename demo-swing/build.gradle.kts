@@ -28,7 +28,7 @@ application {
 }
 
 tasks.named<JavaExec>("run") {
-    dependsOn(":diaphanous-core-macos-native:assemble")
+//    dependsOn(":diaphanous-core-macos-native:assemble")
     jvmArgs(
         "--enable-native-access=ALL-UNNAMED"
     )

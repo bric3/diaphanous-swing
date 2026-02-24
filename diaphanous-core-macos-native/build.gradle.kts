@@ -13,13 +13,14 @@ import org.gradle.nativeplatform.tasks.LinkSharedLibrary
 
 plugins {
     `cpp-library`
+    id("diaphanous.license-conventions")
 }
 
 group = "io.github.bric3"
 version = "0.1.0-SNAPSHOT"
 
 library {
-    linkage.add(org.gradle.nativeplatform.Linkage.SHARED)
+    linkage.add(Linkage.SHARED)
     targetMachines.add(machines.macOS)
 }
 
@@ -40,5 +41,10 @@ tasks.withType(CppCompile::class).configureEach {
 }
 
 tasks.withType(LinkSharedLibrary::class).configureEach {
-    linkerArgs.addAll(listOf("-framework", "Cocoa", "-framework", "Foundation"))
+    linkerArgs.addAll(listOf(
+        "-framework",
+        "Cocoa",
+        "-framework",
+        "Foundation"
+    ))
 }

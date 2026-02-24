@@ -10,6 +10,7 @@
 
 plugins {
     java
+    id("diaphanous.license-conventions")
 }
 
 group = "io.github.bric3"

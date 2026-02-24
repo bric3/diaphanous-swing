@@ -19,4 +19,5 @@ repositories {
 
 dependencies {
     implementation(libs.kotlin.gradle.plugin)
+    implementation(libs.yumi.licenser.gradle.plugin)
 }

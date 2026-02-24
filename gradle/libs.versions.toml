@@ -2,9 +2,11 @@
 kotlin = "2.3.10"
 junit = "5.12.1"
 junit-platform = "1.12.1"
+yumi-licenser = "2.2.2"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+yumi-licenser-gradle-plugin = { module = "dev.yumi.gradle.licenser:dev.yumi.gradle.licenser.gradle.plugin", version.ref = "yumi-licenser" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
