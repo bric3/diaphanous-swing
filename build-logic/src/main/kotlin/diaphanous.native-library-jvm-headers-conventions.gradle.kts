@@ -8,17 +8,13 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-import org.gradle.language.cpp.tasks.CppCompile
-import org.gradle.jvm.toolchain.JavaToolchainService
-import org.gradle.kotlin.dsl.support.serviceOf
-
 plugins {
     id("diaphanous.native-library-conventions")
+    `jvm-toolchains`
 }
 
 tasks.withType(CppCompile::class).configureEach {
-    val includedPlatformDirs = project.serviceOf<JavaToolchainService>()
-        .launcherFor {}
+    val includedPlatformDirs = javaToolchains.launcherFor {}
         .map {
             val jvmIncludeDir = it.metadata.installationPath.asFile.resolve("include")
             buildList {
