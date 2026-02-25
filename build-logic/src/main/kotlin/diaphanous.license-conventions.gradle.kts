@@ -11,6 +11,9 @@
 import dev.yumi.gradle.licenser.api.comment.CStyleHeaderComment
 import dev.yumi.gradle.licenser.task.ApplyLicenseTask
 import dev.yumi.gradle.licenser.task.CheckLicenseTask
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.file.SourceDirectorySet
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.register
 
 plugins {
@@ -38,19 +41,16 @@ plugins.withId("cpp-library") {
         CStyleHeaderComment.INSTANCE
     )
 
-    // source sets extension is not registered in cpp library, so this is manually created
-    val sourceSet = objects.sourceDirectorySet(
-        "native",
-        "${"native"} sources"
-    ).apply {
-        srcDirs("src/main/cpp", "src/main/headers")
-        include("**/*.c", "**/*.cpp", "**/*.h", "**/*.hpp", "**/*.mm")
+    val nativeSourceSets = extensions.getByType<NamedDomainObjectContainer<SourceDirectorySet>>()
+
+    tasks.register<CheckLicenseTask>("checkLicenseNative", license).configure {
+        description = "Checks whether source files in the native source set contain a valid license header."
+        sourceFiles.from(nativeSourceSets)
+        reportFile.set(layout.buildDirectory.file("reports/licenses/native-check-license-report.txt"))
     }
-    val titleCaseName = "native".replaceFirstChar { it.uppercase() }
-    tasks.register<CheckLicenseTask>("checkLicense$titleCaseName", license).configure {
-        CheckLicenseTask.configureDefault(license, this.project, sourceSet, "native").execute(this)
-    }
-    tasks.register<ApplyLicenseTask>("applyLicense$titleCaseName", license).configure {
-        ApplyLicenseTask.configureDefault(license, this.project, sourceSet, "native").execute(this)
+    tasks.register<ApplyLicenseTask>("applyLicenseNative", license).configure {
+        description = "Applies the correct license headers to source files in the native source set."
+        sourceFiles.from(nativeSourceSets)
+        reportFile.set(layout.buildDirectory.file("reports/licenses/native-apply-license-report.txt"))
     }
 }
