@@ -12,6 +12,3 @@ plugins {
     id("diaphanous.native-library-objectivec-conventions")
     id("diaphanous.native-library-jvm-headers-conventions")
 }
-
-group = "io.github.bric3"
-version = "0.1.0-SNAPSHOT"

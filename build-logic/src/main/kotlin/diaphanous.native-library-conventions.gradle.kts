@@ -14,6 +14,7 @@ import org.gradle.kotlin.dsl.domainObjectContainer
 
 plugins {
     `cpp-library`
+    id("diaphanous.base-conventions")
 }
 
 if (extensions.findByName("sourceSets") == null) {

@@ -10,11 +10,9 @@
 
 plugins {
     java
+    id("diaphanous.base-conventions")
     id("diaphanous.license-conventions")
 }
-
-group = "io.github.bric3"
-version = "0.1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
