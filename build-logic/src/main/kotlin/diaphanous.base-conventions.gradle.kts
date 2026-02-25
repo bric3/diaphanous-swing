@@ -8,7 +8,5 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-plugins {
-    `java-library`
-    id("diaphanous.jvm-base-conventions")
-}
+group = "io.github.bric3"
+version = "0.1.0-SNAPSHOT"
