@@ -483,6 +483,9 @@ public record MacosBackdropEffectSpec(
          * @return this builder
          */
         public Builder backdropAlpha(double alpha) {
+            if (alpha < 0.0d || alpha > 1.0d) {
+                throw new IllegalArgumentException("backdropAlpha must be within [0.0, 1.0]");
+            }
             this.backdropAlpha = alpha;
             return this;
         }
@@ -491,9 +494,6 @@ public record MacosBackdropEffectSpec(
          * @return immutable vibrancy configuration
          */
         public MacosBackdropEffectSpec build() {
-            if (backdropAlpha < 0.0d || backdropAlpha > 1.0d) {
-                throw new IllegalArgumentException("backdropAlpha must be within [0.0, 1.0]");
-            }
             return new MacosBackdropEffectSpec(enabled, material, blendingMode, state, emphasized, backdropAlpha);
         }
     }
