@@ -83,10 +83,6 @@ class ScreenshotRobotTest {
         val alphaDefault = invokeAndWaitResultShot {
             findByName(demoFrame.rootPane, "alphaSlider", JSlider::class.java)?.value
         } ?: -1
-        val blurDefault = invokeAndWaitResultShot {
-            findByName(demoFrame.rootPane, "blurSlider", JSlider::class.java)?.value
-        } ?: -1
-
         val outputDir = resolveOutputDir()
         val robot = Robot().apply { autoDelay = 120 }
         Thread.sleep(900)
@@ -135,7 +131,6 @@ class ScreenshotRobotTest {
                     "Alpha slider (capture override): unchanged"
                 }
             )
-            appendLine("Blur slider (default): $blurDefault")
             appendLine("Diagonal mix mode: ${diagonalMode.propertyValue}")
             appendLine("Captured: screenshot-dark.png")
             appendLine("Captured: screenshot-light.png")

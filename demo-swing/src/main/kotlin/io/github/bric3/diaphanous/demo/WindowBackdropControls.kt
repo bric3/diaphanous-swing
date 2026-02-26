@@ -30,7 +30,6 @@ class WindowBackdropControls(
 ) : JPanel() {
     companion object {
         private const val DEFAULT_BACKDROP_ALPHA = 0.55
-        private const val DEFAULT_BLUR_STRENGTH = 55
     }
 
     init {
@@ -42,11 +41,6 @@ class WindowBackdropControls(
         .filter { it is MacosBackdropMaterial }
         .map { it as MacosBackdropMaterial }
         .orElse(MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND)
-    private val initialBlurStrength = WindowBackdrop.defaultMaterial()
-        .filter { it is MacosBackdropMaterial }
-        .map { it as MacosBackdropMaterial }
-        .map(::blurStrengthForMaterial)
-        .orElse(DEFAULT_BLUR_STRENGTH)
 
     private val alphaValue = JLabel("%.2f".format(initialAlpha)).apply {
         foreground = Color(230, 230, 230, 190)
@@ -58,20 +52,6 @@ class WindowBackdropControls(
         addChangeListener {
             val alpha = value / 100.0
             alphaValue.text = "%.2f".format(alpha)
-            onChange(currentSpec())
-        }
-    }
-
-    private val blurValue = JLabel("$initialBlurStrength").apply {
-        foreground = Color(230, 230, 230, 190)
-    }
-
-    private val blurSlider = JSlider(0, 100, initialBlurStrength).apply {
-        name = "blurSlider"
-        isOpaque = false
-        addChangeListener {
-            blurValue.text = value.toString()
-            materialCombo.selectedItem = materialForBlurStrength(value)
             onChange(currentSpec())
         }
     }
@@ -100,23 +80,6 @@ class WindowBackdropControls(
         addActionListener { onChange(currentSpec()) }
     }
 
-    private fun blurStrengthForMaterial(material: MacosBackdropMaterial): Int = when (material) {
-        MacosBackdropMaterial.CONTENT_BACKGROUND -> 10
-        MacosBackdropMaterial.WINDOW_BACKGROUND -> 30
-        MacosBackdropMaterial.SIDEBAR -> 50
-        MacosBackdropMaterial.MENU -> 70
-        MacosBackdropMaterial.HUD_WINDOW -> 90
-        else -> DEFAULT_BLUR_STRENGTH
-    }
-
-    private fun materialForBlurStrength(value: Int): MacosBackdropMaterial = when {
-        value < 20 -> MacosBackdropMaterial.CONTENT_BACKGROUND
-        value < 40 -> MacosBackdropMaterial.WINDOW_BACKGROUND
-        value < 60 -> MacosBackdropMaterial.SIDEBAR
-        value < 80 -> MacosBackdropMaterial.MENU
-        else -> MacosBackdropMaterial.HUD_WINDOW
-    }
-
     fun currentSpec(): MacosBackdropEffectSpec = MacosBackdropEffectSpec.builder()
         .material(materialCombo.selectedItem as MacosBackdropMaterial)
         .blendingMode(blendingCombo.selectedItem as MacosBackdropEffectBlendingMode)
@@ -128,19 +91,9 @@ class WindowBackdropControls(
     val component by lazy { windowBackdropControls() }
     private fun windowBackdropControls(): JPanel {
         val alphaLabel = JLabel("Backdrop alpha")
-        val blurLabel = JLabel("Blur strength")
         val materialLabel = JLabel("Material")
         val blendingLabel = JLabel("Blending mode")
         val stateLabel = JLabel("State")
-
-        materialCombo.addActionListener {
-            val material = materialCombo.selectedItem as MacosBackdropMaterial
-            val strength = blurStrengthForMaterial(material)
-            if (blurSlider.value != strength) {
-                blurSlider.value = strength
-            }
-            onChange(currentSpec())
-        }
 
         val controlsPanel = DemoApp.transparentPanel(GridBagLayout())
         val gbc = GridBagConstraints().apply {
@@ -168,30 +121,12 @@ class WindowBackdropControls(
             gridwidth = 1
             weightx = 0.0
         }
-        controlsPanel.add(blurLabel, gbc)
-        gbc.gridx = 1
-        controlsPanel.add(blurValue, gbc)
-
-        gbc.apply {
-            gridy = 3
-            gridx = 0
-            weightx = 1.0
-            gridwidth = 2
-        }
-        controlsPanel.add(blurSlider, gbc)
-
-        gbc.apply {
-            gridy = 4
-            gridx = 0
-            gridwidth = 1
-            weightx = 0.0
-        }
         controlsPanel.add(materialLabel, gbc)
         gbc.gridx = 1
         controlsPanel.add(materialCombo, gbc)
 
         gbc.apply {
-            gridy = 5
+            gridy = 3
             gridx = 0
         }
         controlsPanel.add(blendingLabel, gbc)
@@ -199,7 +134,7 @@ class WindowBackdropControls(
         controlsPanel.add(blendingCombo, gbc)
 
         gbc.apply {
-            gridy = 6
+            gridy = 4
             gridx = 0
         }
         controlsPanel.add(stateLabel, gbc)
@@ -207,7 +142,7 @@ class WindowBackdropControls(
         controlsPanel.add(stateCombo, gbc)
 
         gbc.apply {
-            gridy = 7
+            gridy = 5
             gridx = 0
             gridwidth = 2
         }
