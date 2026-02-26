@@ -40,28 +40,26 @@ final class MacosNativeBackdropBridge {
         long nsWindowPtr,
         int material,
         double alpha,
-        int blendingMode,
         int state,
         boolean emphasized
     ) {
         if (FNS == null || nsWindowPtr == 0L) {
             return false;
         }
-        return FNS.install(nsWindowPtr, material, alpha, blendingMode, state, emphasized) == 0;
+        return FNS.install(nsWindowPtr, material, alpha, state, emphasized) == 0;
     }
 
     static boolean update(
         long nsWindowPtr,
         int material,
         double alpha,
-        int blendingMode,
         int state,
         boolean emphasized
     ) {
         if (FNS == null || nsWindowPtr == 0L) {
             return false;
         }
-        return FNS.update(nsWindowPtr, material, alpha, blendingMode, state, emphasized) == 0;
+        return FNS.update(nsWindowPtr, material, alpha, state, emphasized) == 0;
     }
 
     static boolean remove(long nsWindowPtr) {
@@ -152,7 +150,6 @@ final class MacosNativeBackdropBridge {
                     ValueLayout.JAVA_INT,
                     ValueLayout.JAVA_DOUBLE,
                     ValueLayout.JAVA_INT,
-                    ValueLayout.JAVA_INT,
                     ValueLayout.JAVA_INT
                 )
             );
@@ -164,7 +161,6 @@ final class MacosNativeBackdropBridge {
                     ValueLayout.ADDRESS,
                     ValueLayout.JAVA_INT,
                     ValueLayout.JAVA_DOUBLE,
-                    ValueLayout.JAVA_INT,
                     ValueLayout.JAVA_INT,
                     ValueLayout.JAVA_INT
                 )
@@ -284,7 +280,6 @@ final class MacosNativeBackdropBridge {
             long nsWindowPtr,
             int material,
             double alpha,
-            int blendingMode,
             int state,
             boolean emphasized
         ) {
@@ -293,7 +288,6 @@ final class MacosNativeBackdropBridge {
                     MemorySegment.ofAddress(nsWindowPtr),
                     material,
                     alpha,
-                    blendingMode,
                     state,
                     emphasized ? 1 : 0
                 );
@@ -306,7 +300,6 @@ final class MacosNativeBackdropBridge {
             long nsWindowPtr,
             int material,
             double alpha,
-            int blendingMode,
             int state,
             boolean emphasized
         ) {
@@ -315,7 +308,6 @@ final class MacosNativeBackdropBridge {
                     MemorySegment.ofAddress(nsWindowPtr),
                     material,
                     alpha,
-                    blendingMode,
                     state,
                     emphasized ? 1 : 0
                 );

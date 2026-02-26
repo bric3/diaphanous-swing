@@ -18,8 +18,7 @@ import java.util.Optional;
  * <p>
  * Common combinations:
  * <ul>
- *   <li>Full-window backdrop: {@code BEHIND_WINDOW + FOLLOWS_WINDOW_ACTIVE_STATE}</li>
- *   <li>In-window grouped surfaces: {@code WITHIN_WINDOW + ACTIVE}</li>
+ *   <li>Full-window backdrop: {@code UNDER_WINDOW_BACKGROUND + FOLLOWS_WINDOW_ACTIVE_STATE}</li>
  *   <li>Sidebar-like emphasis: {@code material=SIDEBAR} with {@code emphasized=true}</li>
  * </ul>
  *
@@ -34,16 +33,10 @@ import java.util.Optional;
  *     .backdropAlpha(0.85)
  *     .build();
  *
- * MacosBackdropEffectSpec withinWindowSurface = MacosBackdropEffectSpec.builder()
- *     .material(MacosBackdropMaterial.CONTENT_BACKGROUND)
- *     .blendingMode(MacosBackdropEffectBlendingMode.WITHIN_WINDOW)
- *     .state(MacosBackdropEffectState.ACTIVE)
- *     .build();
  * }</pre>
  *
  * @param enabled whether vibrancy should be present on the window
  * @param material vibrancy material
- * @param blendingMode vibrancy blending mode
  * @param state vibrancy active state behavior
  * @param emphasized emphasis flag used by some materials
  * @param backdropAlpha alpha of the native backdrop layer, from {@code 0.0} (fully transparent) to {@code 1.0}
@@ -51,7 +44,6 @@ import java.util.Optional;
 public record MacosBackdropEffectSpec(
     boolean enabled,
     MacosBackdropMaterial material,
-    MacosBackdropEffectBlendingMode blendingMode,
     MacosBackdropEffectState state,
     boolean emphasized,
     double backdropAlpha
@@ -60,7 +52,7 @@ public record MacosBackdropEffectSpec(
      * Values mapped to macOS {@code NSVisualEffectMaterial}.
      * <p>
      * Apple discussion: materials are dynamic; their exact rendering depends on effective appearance,
-     * blending mode, state, emphasis, and other factors.
+     * state, emphasis, and other factors.
      * <p>
      * See:
      * <a href="https://developer.apple.com/documentation/appkit/nsvisualeffectmaterial">NSVisualEffectMaterial</a>,
@@ -351,56 +343,11 @@ public record MacosBackdropEffectSpec(
     }
 
     /**
-     * Values mapped 1:1 to AppKit {@code NSVisualEffectBlendingMode} used by
-     * {@code NSVisualEffectView.blendingMode}.
-     * <p>
-     * Apple discussion: not all materials support both blending modes, and AppKit may fall back
-     * to a more appropriate mode.
-     * <p>
-     * See:
-     * <a href="https://developer.apple.com/documentation/appkit/nsvisualeffectblendingmode">NSVisualEffectBlendingMode</a>,
-     * <a href="https://developer.apple.com/documentation/appkit/nsvisualeffectview/blendingmode">NSVisualEffectView.blendingMode</a>.
-     */
-    public enum MacosBackdropEffectBlendingMode {
-        /**
-         * Native mapping: {@code NSVisualEffectBlendingModeBehindWindow}.
-         * <p>
-         * Blends against content behind the window (desktop/other windows).
-         * Apple discussion: intended for whole-window backdrop style effects.
-         * <p>
-         * See:
-         * <a href="https://developer.apple.com/documentation/appkit/nsvisualeffectblendingmodebehindwindow">NSVisualEffectBlendingModeBehindWindow</a>.
-         */
-        BEHIND_WINDOW(0),
-        /**
-         * Native mapping: {@code NSVisualEffectBlendingModeWithinWindow}.
-         * <p>
-         * Blends against content behind the view but within the same window.
-         * Apple discussion: intended for localized in-window vibrancy composition.
-         * <p>
-         * See:
-         * <a href="https://developer.apple.com/documentation/appkit/nsvisualeffectblendingmodewithinwindow">NSVisualEffectBlendingModeWithinWindow</a>.
-         */
-        WITHIN_WINDOW(1);
-
-        private final long nativeValue;
-
-        MacosBackdropEffectBlendingMode(long nativeValue) {
-            this.nativeValue = nativeValue;
-        }
-
-        public long nativeValue() {
-            return nativeValue;
-        }
-    }
-
-    /**
      * @return a builder with practical defaults for a backdrop effect behind window content
      *
      * <p>Defaults:
      * <ul>
      *   <li>{@code material=UNDER_WINDOW_BACKGROUND}</li>
-     *   <li>{@code blendingMode=BEHIND_WINDOW}</li>
      *   <li>{@code state=FOLLOWS_WINDOW_ACTIVE_STATE}</li>
      *   <li>{@code emphasized=false}</li>
      *   <li>{@code backdropAlpha=1.0}</li>
@@ -416,7 +363,6 @@ public record MacosBackdropEffectSpec(
     public static final class Builder {
         private boolean enabled = true;
         private MacosBackdropMaterial material = MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND;
-        private MacosBackdropEffectBlendingMode blendingMode = MacosBackdropEffectBlendingMode.BEHIND_WINDOW;
         private MacosBackdropEffectState state = MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE;
         private boolean emphasized;
         private double backdropAlpha = 1.0d;
@@ -436,18 +382,6 @@ public record MacosBackdropEffectSpec(
          */
         public Builder material(MacosBackdropMaterial material) {
             this.material = Objects.requireNonNull(material, "material");
-            return this;
-        }
-
-        /**
-         * @param blendingMode vibrancy blending mode
-         *
-         * <p>Use {@code BEHIND_WINDOW} for full-window backdrops. Use {@code WITHIN_WINDOW}
-         * for effects intended to blend inside window content regions.
-         * @return this builder
-         */
-        public Builder blendingMode(MacosBackdropEffectBlendingMode blendingMode) {
-            this.blendingMode = Objects.requireNonNull(blendingMode, "blendingMode");
             return this;
         }
 
@@ -494,7 +428,7 @@ public record MacosBackdropEffectSpec(
          * @return immutable vibrancy configuration
          */
         public MacosBackdropEffectSpec build() {
-            return new MacosBackdropEffectSpec(enabled, material, blendingMode, state, emphasized, backdropAlpha);
+            return new MacosBackdropEffectSpec(enabled, material, state, emphasized, backdropAlpha);
         }
     }
 }

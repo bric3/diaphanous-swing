@@ -40,7 +40,6 @@
 }
 
 - (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
-                                  blending: (NSVisualEffectBlendingMode) blendingMode
                                       state: (NSVisualEffectState) state
                                  emphasized: (BOOL) emphasized
                                       alpha: (CGFloat) alpha {
@@ -51,7 +50,9 @@
         [self addSubview: effectView positioned: NSWindowBelow relativeTo: awtView];
     }
     effectView.material = material;
-    effectView.blendingMode = blendingMode;
+    // Swing integration uses a wrapped top-level host view, so behind-window blending
+    // is the only practical mode and is intentionally fixed in the native layer.
+    effectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
     effectView.state = state;
     if ([effectView respondsToSelector: @selector(setEmphasized:)]) {
         effectView.emphasized = emphasized;

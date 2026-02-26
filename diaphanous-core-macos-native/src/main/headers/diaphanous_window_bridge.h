@@ -45,7 +45,6 @@ extern "C" {
  * @param ns_window_ptr borrowed `NSWindow*`.
  * @param material `NSVisualEffectMaterial` raw value.
  * @param alpha effect alpha in `[0,1]` (clamped by implementation where needed).
- * @param blending_mode `NSVisualEffectBlendingMode` raw value.
  * @param state `NSVisualEffectState` raw value.
  * @param emphasized boolean flag (`0` false, non-zero true).
  */
@@ -53,7 +52,6 @@ int diaphanous_install_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
-    int blending_mode,
     int state,
     int emphasized
 );
@@ -66,7 +64,6 @@ int diaphanous_install_backdrop_effect(
  * @param ns_window_ptr borrowed `NSWindow*`.
  * @param material `NSVisualEffectMaterial` raw value.
  * @param alpha effect alpha in `[0,1]`.
- * @param blending_mode `NSVisualEffectBlendingMode` raw value.
  * @param state `NSVisualEffectState` raw value.
  * @param emphasized boolean flag (`0` false, non-zero true).
  */
@@ -74,7 +71,6 @@ int diaphanous_update_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
-    int blending_mode,
     int state,
     int emphasized
 );

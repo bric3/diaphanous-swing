@@ -31,6 +31,7 @@ import java.util.Optional;
 public final class MacosWindowStyler {
     private static final boolean IS_MAC = System.getProperty("os.name", "").contains("Mac");
     private static final long NS_WINDOW_STYLE_MASK_FULL_SIZE_CONTENT_VIEW = 1L << 15;
+    private static final int NS_VISUAL_EFFECT_BLENDING_MODE_BEHIND_WINDOW = 0;
     private static final long NS_WINDOW_TITLE_VISIBLE = 0;
     private static final long NS_WINDOW_TITLE_HIDDEN = 1;
     private static final long NS_VIEW_WIDTH_SIZABLE = 1L << 1;
@@ -86,7 +87,6 @@ public final class MacosWindowStyler {
      *     window,
      *     MacosBackdropEffectSpec.builder()
      *         .material(MacosBackdropEffectSpec.MacosBackdropMaterial.CONTENT_BACKGROUND)
-     *         .blendingMode(MacosBackdropEffectSpec.MacosBackdropEffectBlendingMode.WITHIN_WINDOW)
      *         .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
      *         .backdropAlpha(0.75)
      *         .build()
@@ -289,7 +289,6 @@ public final class MacosWindowStyler {
             nsWindowPtr,
             (int) style.material().nativeValue(),
             style.backdropAlpha(),
-            (int) style.blendingMode().nativeValue(),
             (int) style.state().nativeValue(),
             style.emphasized()
         );
@@ -298,7 +297,6 @@ public final class MacosWindowStyler {
                 nsWindowPtr,
                 (int) style.material().nativeValue(),
                 style.backdropAlpha(),
-                (int) style.blendingMode().nativeValue(),
                 (int) style.state().nativeValue(),
                 style.emphasized()
             );
@@ -361,14 +359,12 @@ public final class MacosWindowStyler {
         }
 
         int material = (int) style.material().nativeValue();
-        int blendingMode = (int) style.blendingMode().nativeValue();
         int state = (int) style.state().nativeValue();
         if (MacosNativeBackdropBridge.isAvailable()) {
             boolean updated = MacosNativeBackdropBridge.update(
                 nsWindowPtr,
                 material,
                 style.backdropAlpha(),
-                blendingMode,
                 state,
                 style.emphasized()
             );
@@ -382,7 +378,6 @@ public final class MacosWindowStyler {
                 nsWindowPtr,
                 material,
                 style.backdropAlpha(),
-                blendingMode,
                 state,
                 style.emphasized()
             );
@@ -400,7 +395,7 @@ public final class MacosWindowStyler {
 
         configureWindowForBackdrop(nsWindow, contentView);
         ObjCRuntime.sendVoidLong(effectView, "setMaterial:", style.material().nativeValue());
-        ObjCRuntime.sendVoidLong(effectView, "setBlendingMode:", style.blendingMode().nativeValue());
+        ObjCRuntime.sendVoidLong(effectView, "setBlendingMode:", NS_VISUAL_EFFECT_BLENDING_MODE_BEHIND_WINDOW);
         ObjCRuntime.sendVoidLong(effectView, "setState:", style.state().nativeValue());
         ObjCRuntime.sendVoidDouble(effectView, "setAlphaValue:", style.backdropAlpha());
         applyVibrantAppearance(nsWindow, effectView);

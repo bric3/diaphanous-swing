@@ -16,7 +16,6 @@ extern "C" int diaphanous_install_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
-    int blending_mode,
     int state,
     int emphasized
 ) {
@@ -35,7 +34,6 @@ extern "C" int diaphanous_install_backdrop_effect(
         }
         diaphanous_configure_window_and_host(window, wrapper);
         [wrapper installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
-                                          blending: (NSVisualEffectBlendingMode) blending_mode
                                               state: (NSVisualEffectState) state
                                          emphasized: emphasized != 0
                                               alpha: (CGFloat) alpha];
@@ -47,7 +45,6 @@ extern "C" int diaphanous_update_backdrop_effect(
     void* ns_window_ptr,
     int material,
     double alpha,
-    int blending_mode,
     int state,
     int emphasized
 ) {
@@ -64,7 +61,6 @@ extern "C" int diaphanous_update_backdrop_effect(
         if ([content isKindOfClass: [DiaphanousWrappedAWTView class]]) {
             DiaphanousWrappedAWTView *wrapper = (DiaphanousWrappedAWTView *) content;
             [wrapper installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
-                                              blending: (NSVisualEffectBlendingMode) blending_mode
                                                   state: (NSVisualEffectState) state
                                              emphasized: emphasized != 0
                                                   alpha: (CGFloat) alpha];
@@ -74,7 +70,6 @@ extern "C" int diaphanous_update_backdrop_effect(
             ns_window_ptr,
             material,
             alpha,
-            blending_mode,
             state,
             emphasized
         );

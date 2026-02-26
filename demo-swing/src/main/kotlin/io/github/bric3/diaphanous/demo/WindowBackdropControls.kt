@@ -11,7 +11,6 @@
 package io.github.bric3.diaphanous.demo
 
 import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec
-import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdropEffectBlendingMode
 import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdropEffectState
 import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdropMaterial
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop
@@ -78,16 +77,6 @@ class WindowBackdropControls(
         }
     }
 
-    private val blendingCombo = JComboBox(MacosBackdropEffectBlendingMode.entries.toTypedArray()).apply {
-        name = "blendingModeCombo"
-        selectedItem = MacosBackdropEffectBlendingMode.BEHIND_WINDOW
-        addActionListener {
-            if (!updatingFromNative) {
-                onChange(currentSpec())
-            }
-        }
-    }
-
     private val stateCombo = JComboBox(MacosBackdropEffectState.entries.toTypedArray()).apply {
         name = "vibrancyStateCombo"
         selectedItem = MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE
@@ -110,7 +99,6 @@ class WindowBackdropControls(
 
     fun currentSpec(): MacosBackdropEffectSpec = MacosBackdropEffectSpec.builder()
         .material(materialCombo.selectedItem as MacosBackdropMaterial)
-        .blendingMode(blendingCombo.selectedItem as MacosBackdropEffectBlendingMode)
         .state(stateCombo.selectedItem as MacosBackdropEffectState)
         .emphasized(emphasizedCheck.isSelected)
         .backdropAlpha(alphaSlider.value / 100.0)
@@ -136,7 +124,6 @@ class WindowBackdropControls(
     private fun windowBackdropControls(): JPanel {
         val alphaLabel = JLabel("Backdrop alpha")
         val materialLabel = JLabel("Material")
-        val blendingLabel = JLabel("Blending mode")
         val stateLabel = JLabel("State")
 
         val controlsPanel = DemoApp.transparentPanel(GridBagLayout())
@@ -173,20 +160,12 @@ class WindowBackdropControls(
             gridy = 3
             gridx = 0
         }
-        controlsPanel.add(blendingLabel, gbc)
-        gbc.gridx = 1
-        controlsPanel.add(blendingCombo, gbc)
-
-        gbc.apply {
-            gridy = 4
-            gridx = 0
-        }
         controlsPanel.add(stateLabel, gbc)
         gbc.gridx = 1
         controlsPanel.add(stateCombo, gbc)
 
         gbc.apply {
-            gridy = 5
+            gridy = 4
             gridx = 0
             gridwidth = 2
         }

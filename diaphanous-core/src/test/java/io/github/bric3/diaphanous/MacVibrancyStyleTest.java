@@ -24,7 +24,6 @@ class MacosBackdropEffectSpecTest {
 
         assertTrue(style.enabled());
         assertEquals(MacosBackdropEffectSpec.MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND, style.material());
-        assertEquals(MacosBackdropEffectSpec.MacosBackdropEffectBlendingMode.BEHIND_WINDOW, style.blendingMode());
         assertEquals(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE, style.state());
         assertFalse(style.emphasized());
         assertEquals(1.0d, style.backdropAlpha());

@@ -21,7 +21,6 @@
 @interface DiaphanousWrappedAWTView : NSView
 - (instancetype) initWithAWTView: (NSView *) view;
 - (void) installOrUpdateEffectWithMaterial: (NSVisualEffectMaterial) material
-                                  blending: (NSVisualEffectBlendingMode) blendingMode
                                       state: (NSVisualEffectState) state
                                  emphasized: (BOOL) emphasized
                                       alpha: (CGFloat) alpha;
