@@ -17,7 +17,7 @@ import java.util.Optional;
 /**
  * Manager that selects and owns the active native backdrop provider.
  */
-public final class NativeWindowBackdropManager {
+final class NativeWindowBackdropManager {
     private static NativeWindowBackdropManager sharedInstance;
 
     private final WindowBackdropProvider provider;

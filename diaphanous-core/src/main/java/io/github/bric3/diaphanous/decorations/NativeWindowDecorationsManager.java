@@ -21,7 +21,7 @@ import java.util.function.Predicate;
  * manager: API callers use a stable entry point while the manager picks the
  * OS-specific implementation.
  */
-public final class NativeWindowDecorationsManager {
+final class NativeWindowDecorationsManager {
     private static NativeWindowDecorationsManager sharedInstance;
 
     private final WindowDecorationsProvider provider;
