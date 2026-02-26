@@ -85,7 +85,7 @@ object DemoApp {
         }
 
 
-        val windowBackdropControls = WindowBackdropControls {
+        val windowBackdropControls = WindowBackdropControls(frame) {
             WindowBackdrop.apply(frame, it, WindowPresentations.isCompatibleWithBackdropPredicate())
         }
         val windowDecorationsControls = WindowDecorationsControls(

@@ -15,17 +15,21 @@ import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdrop
 import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdropEffectState
 import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec.MacosBackdropMaterial
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop
+import java.awt.Window
 import java.awt.Color
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Insets
+import java.awt.event.HierarchyEvent
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JSlider
+import javax.swing.SwingUtilities
 
 class WindowBackdropControls(
+    private val frame: Window,
     private val onChange: (style: MacosBackdropEffectSpec) -> Unit
 ) : JPanel() {
     companion object {
@@ -35,6 +39,7 @@ class WindowBackdropControls(
     init {
         isOpaque = false
     }
+    private var updatingFromNative = false
     private val nativeDefaultAlpha = WindowBackdrop.defaultAlpha()
     private val initialAlpha = if (nativeDefaultAlpha in 0.0..1.0) nativeDefaultAlpha else DEFAULT_BACKDROP_ALPHA
     private val initialMaterial = WindowBackdrop.defaultMaterial()
@@ -52,32 +57,55 @@ class WindowBackdropControls(
         addChangeListener {
             val alpha = value / 100.0
             alphaValue.text = "%.2f".format(alpha)
-            onChange(currentSpec())
+            if (!updatingFromNative) {
+                onChange(currentSpec())
+            }
         }
     }
 
     private val materialCombo = JComboBox(MacosBackdropMaterial.entries.toTypedArray()).apply {
         name = "materialCombo"
         selectedItem = initialMaterial
-        addActionListener { onChange(currentSpec()) }
+        addActionListener {
+            if (!updatingFromNative) {
+                onChange(currentSpec())
+            }
+        }
+        addHierarchyListener { event ->
+            if ((event.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L && isShowing) {
+                SwingUtilities.invokeLater { syncFromWindowOnceWhenVisible() }
+            }
+        }
     }
 
     private val blendingCombo = JComboBox(MacosBackdropEffectBlendingMode.entries.toTypedArray()).apply {
         name = "blendingModeCombo"
         selectedItem = MacosBackdropEffectBlendingMode.BEHIND_WINDOW
-        addActionListener { onChange(currentSpec()) }
+        addActionListener {
+            if (!updatingFromNative) {
+                onChange(currentSpec())
+            }
+        }
     }
 
     private val stateCombo = JComboBox(MacosBackdropEffectState.entries.toTypedArray()).apply {
         name = "vibrancyStateCombo"
         selectedItem = MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE
-        addActionListener { onChange(currentSpec()) }
+        addActionListener {
+            if (!updatingFromNative) {
+                onChange(currentSpec())
+            }
+        }
     }
 
     private val emphasizedCheck = JCheckBox("Emphasized").apply {
         name = "emphasizedCheck"
         isOpaque = false
-        addActionListener { onChange(currentSpec()) }
+        addActionListener {
+            if (!updatingFromNative) {
+                onChange(currentSpec())
+            }
+        }
     }
 
     fun currentSpec(): MacosBackdropEffectSpec = MacosBackdropEffectSpec.builder()
@@ -87,6 +115,22 @@ class WindowBackdropControls(
         .emphasized(emphasizedCheck.isSelected)
         .backdropAlpha(alphaSlider.value / 100.0)
         .build()
+
+    private fun syncFromWindowOnceWhenVisible() {
+        val material = WindowBackdrop.readMaterial(frame)
+            .filter { it is MacosBackdropMaterial }
+            .map { it as MacosBackdropMaterial }
+            .orElse(null)
+        if (material == null || materialCombo.selectedItem == material) {
+            return
+        }
+        updatingFromNative = true
+        try {
+            materialCombo.selectedItem = material
+        } finally {
+            updatingFromNative = false
+        }
+    }
 
     val component by lazy { windowBackdropControls() }
     private fun windowBackdropControls(): JPanel {
