@@ -71,6 +71,16 @@ public final class MacosStartupReveal {
      * @param window target window
      */
     public static void show(Window window) {
+        show(window, null);
+    }
+
+    /**
+     * Shows the window and invokes a callback once reveal completes.
+     *
+     * @param window target window
+     * @param onRevealed callback invoked after reveal, may be {@code null}
+     */
+    public static void show(Window window, Runnable onRevealed) {
         if (!window.isDisplayable()) {
             window.addNotify();
         }
@@ -90,13 +100,14 @@ public final class MacosStartupReveal {
 
         window.setVisible(true);
         if (!revealWithOpacity) {
+            runCallback(onRevealed);
             return;
         }
 
-        revealOnFirstPaint(window);
+        revealOnFirstPaint(window, onRevealed);
     }
 
-    private static void revealOnFirstPaint(Window window) {
+    private static void revealOnFirstPaint(Window window, Runnable onRevealed) {
         AtomicBoolean revealed = new AtomicBoolean(false);
         AtomicBoolean painted = new AtomicBoolean(false);
         AtomicLong shownAtMillis = new AtomicLong(System.currentTimeMillis());
@@ -116,7 +127,7 @@ public final class MacosStartupReveal {
                 return;
             }
             painted.set(true);
-            tryReveal(window, toolkit, holder[0], timer, revealed, painted, shownAtMillis.get());
+            tryReveal(window, toolkit, holder[0], timer, revealed, painted, shownAtMillis.get(), onRevealed);
         };
 
         toolkit.addAWTEventListener(holder[0], AWTEvent.PAINT_EVENT_MASK);
@@ -124,7 +135,7 @@ public final class MacosStartupReveal {
             @Override
             public void run() {
                 EventQueue.invokeLater(
-                    () -> tryReveal(window, toolkit, holder[0], timer, revealed, painted, shownAtMillis.get())
+                    () -> tryReveal(window, toolkit, holder[0], timer, revealed, painted, shownAtMillis.get(), onRevealed)
                 );
             }
         }, 16L, 16L);
@@ -161,7 +172,8 @@ public final class MacosStartupReveal {
         Timer timer,
         AtomicBoolean revealed,
         AtomicBoolean painted,
-        long shownAtMillis
+        long shownAtMillis,
+        Runnable onRevealed
     ) {
         if (revealed.get()) {
             return;
@@ -176,6 +188,18 @@ public final class MacosStartupReveal {
             toolkit.removeAWTEventListener(listener);
             timer.cancel();
             reveal(window);
+            runCallback(onRevealed);
+        }
+    }
+
+    private static void runCallback(Runnable callback) {
+        if (callback == null) {
+            return;
+        }
+        try {
+            callback.run();
+        } catch (RuntimeException ignored) {
+            // Ignore callback failures to keep startup reveal path robust.
         }
     }
 }
