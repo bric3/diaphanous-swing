@@ -1,0 +1,22 @@
+/*
+ * Diaphanous Swing
+ *
+ * Copyright (c) 2026 - Brice Dutheil
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+package io.github.bric3.diaphanous.robot.docs;
+
+public final class ExamplesDocModels {
+    private ExamplesDocModels() {
+    }
+
+    public record DecorationEntry(String title, String screenshotKey, String codeSnippet) {
+    }
+
+    public record BackdropEntry(String title, String screenshotKey, String codeSnippet) {
+    }
+}

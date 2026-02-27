@@ -1,3 +1,7 @@
+import org.gradle.kotlin.dsl.robotTest
+import org.gradle.kotlin.dsl.sourceSets
+import io.github.bric3.diaphanous.buildlogic.passPropToJvm
+
 /*
  * Diaphanous Swing
  *
@@ -10,17 +14,11 @@
 
 plugins {
     id("diaphanous.kotlin-application-conventions")
+    id("diaphanous.robot-test-conventions")
 }
-
-val robotTest by sourceSets.creating
-robotTest.compileClasspath += sourceSets.main.get().output
-robotTest.runtimeClasspath += sourceSets.main.get().output
 
 dependencies {
     implementation(project(":diaphanous-core"))
-    add("robotTestImplementation", platform(libs.junit.bom))
-    add("robotTestImplementation", libs.junit.jupiter)
-    add("robotTestRuntimeOnly", libs.junit.platform.launcher)
 }
 
 application {
@@ -28,7 +26,6 @@ application {
 }
 
 tasks.named<JavaExec>("run") {
-//    dependsOn(":diaphanous-core-macos-native:assemble")
     jvmArgs(
         "--enable-native-access=ALL-UNNAMED"
     )
@@ -42,43 +39,18 @@ tasks.named<JavaExec>("run") {
     }
 }
 
-configurations[robotTest.implementationConfigurationName].extendsFrom(configurations.testImplementation.get())
-configurations[robotTest.runtimeOnlyConfigurationName].extendsFrom(configurations.testRuntimeOnly.get())
-
-fun passRobotPropToJvm(task: Test, key: String) {
-    val value = providers.gradleProperty(key)
-        .orElse(providers.systemProperty(key))
-        .orNull
-    if (!value.isNullOrBlank()) {
-        task.systemProperty(key, value)
-    }
-}
-
-val robotTestTask = tasks.register<Test>("robotTest") {
-    dependsOn(":diaphanous-core-macos-native:assemble")
+tasks.robotTest {
     description = "Runs macOS desktop Robot smoke tests and writes screenshots/reports."
-    group = "verification"
-    testClassesDirs = robotTest.output.classesDirs
-    classpath = robotTest.runtimeClasspath
-    outputs.dir(layout.buildDirectory.dir("reports/robotTest"))
 
-    useJUnitPlatform()
-    jvmArgs(
-        "--enable-native-access=ALL-UNNAMED"
-    )
-    systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotTest").get().asFile.absolutePath)
-    passRobotPropToJvm(this, "diaphanous.robot.wallpaperName")
-    passRobotPropToJvm(this, "diaphanous.robot.wallpaper")
-    passRobotPropToJvm(this, "diaphanous.robot.alpha")
-    passRobotPropToJvm(this, "diaphanous.robot.diagonal")
+    passPropToJvm("diaphanous.robot.alpha")
+    passPropToJvm("diaphanous.robot.diagonal")
 }
 
 tasks.register<Test>("robotShot") {
-    dependsOn(":diaphanous-core-macos-native:assemble")
     description = "Captures a screenshot of the demo app via Robot."
     group = "verification"
-    testClassesDirs = robotTest.output.classesDirs
-    classpath = robotTest.runtimeClasspath
+    testClassesDirs = sourceSets.robotTest.get().output.classesDirs
+    classpath = sourceSets.robotTest.get().runtimeClasspath
     outputs.dir(layout.buildDirectory.dir("reports/robotShot"))
 
     useJUnitPlatform()
@@ -90,12 +62,7 @@ tasks.register<Test>("robotShot") {
     )
     systemProperty("diaphanous.robot.outputDir", layout.buildDirectory.dir("reports/robotShot").get().asFile.absolutePath)
     systemProperty("diaphanous.projectDir", rootProject.layout.projectDirectory.asFile.absolutePath)
-    passRobotPropToJvm(this, "diaphanous.robot.wallpaperName")
-    passRobotPropToJvm(this, "diaphanous.robot.wallpaper")
-    passRobotPropToJvm(this, "diaphanous.robot.alpha")
-    passRobotPropToJvm(this, "diaphanous.robot.diagonal")
-}
-
-tasks.named("check") {
-    dependsOn(robotTestTask)
+    passPropToJvm("diaphanous.robot.wallpaper", robotTest.wallpaper)
+    passPropToJvm("diaphanous.robot.alpha")
+    passPropToJvm("diaphanous.robot.diagonal")
 }

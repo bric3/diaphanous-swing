@@ -182,30 +182,36 @@ class ScreenshotRobotTest {
     }
 
     private fun loadWallpaper(): Image? {
-        val explicit = System.getProperty("diaphanous.robot.wallpaper")
-        val wallpaperName = System.getProperty("diaphanous.robot.wallpaperName")?.trim()?.lowercase()
-        val bundled = when (wallpaperName) {
-            "macbook" -> "/wallpapers/macbook-keyboard-apple-event-apple-keyboard-ambient-lighting-3840x2160-6689.jpg"
-            "java", "java-logo" -> "/wallpapers/java-logo-3840x2160-15990.png"
-            null, "" -> "/wallpapers/macbook-keyboard-apple-event-apple-keyboard-ambient-lighting-3840x2160-6689.jpg"
-            else -> "/wallpapers/$wallpaperName"
+        val configured = System.getProperty("diaphanous.robot.wallpaper")
+            ?.trim()
+            ?.ifBlank { null }
+            ?: throw IllegalStateException(
+                "Missing wallpaper configuration. Set -Ddiaphanous.robot.wallpaper=<path or relative path>."
+            )
+        val explicit = File(configured)
+        if (explicit.isAbsolute) {
+            if (explicit.isFile) {
+                return ImageIcon(explicit.absolutePath).image
+            }
+            throw IllegalStateException(
+                "Configured wallpaper file does not exist: ${explicit.absolutePath}"
+            )
         }
-        val classpath = javaClass.getResource(bundled)
-        if (classpath != null) {
-            return ImageIO.read(classpath)
+        val candidates = buildList {
+            System.getProperty("diaphanous.projectDir")
+                ?.takeIf { it.isNotBlank() }
+                ?.let {
+                    add(File(it, configured))
+                    add(File(it, "assets/wallpaper/$configured"))
+                }
+            add(File(configured))
+            add(File("assets/wallpaper/$configured"))
         }
-        val candidates = listOf(
-            explicit?.takeIf { it.isNotBlank() }?.let { File(it) },
-            File("java-logo-3840x2160-15990.png"),
-            File("../java-logo-3840x2160-15990.png"),
-            System.getProperty("diaphanous.projectDir")?.let { File(it, "java-logo-3840x2160-15990.png") },
-            System.getProperty("diaphanous.projectDir")?.let { File(it, "macbook-keyboard-apple-event-apple-keyboard-ambient-lighting-3840x2160-6689.jpg") },
-            System.getProperty("diaphanous.projectDir")?.let { File(it, "demo-swing/src/robotTest/resources/wallpapers/java-logo-3840x2160-15990.png") }
-            ,
-            System.getProperty("diaphanous.projectDir")?.let { File(it, "demo-swing/src/robotTest/resources/wallpapers/macbook-keyboard-apple-event-apple-keyboard-ambient-lighting-3840x2160-6689.jpg") }
-        ).filterNotNull()
-
-        val file = candidates.firstOrNull { it.isFile } ?: return null
+        val file = candidates.firstOrNull { it.isFile }
+            ?: throw IllegalStateException(
+                "Wallpaper not found for diaphanous.robot.wallpaper=$configured. " +
+                    "Search locations: project-relative path and assets/wallpaper."
+            )
         if (System.getProperty("diaphanous.dump.swing") == "true") {
             println("Using wallpaper: ${file.absolutePath}")
         }
