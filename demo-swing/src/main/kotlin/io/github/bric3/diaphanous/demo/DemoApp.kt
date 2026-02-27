@@ -10,7 +10,7 @@
 
 package io.github.bric3.diaphanous.demo
 
-import io.github.bric3.diaphanous.MacosStartupReveal
+import io.github.bric3.diaphanous.WindowRevealController
 import io.github.bric3.diaphanous.backdrop.RootErasingContentPane
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec
@@ -130,7 +130,7 @@ object DemoApp {
         WindowPresentations.applyDecorations(frame, windowDecorationsControls.currentDecorationsSpec())
         WindowBackdrop.apply(frame, windowBackdropControls.currentSpec(),
             WindowPresentations.isCompatibleWithBackdropPredicate())
-        MacosStartupReveal.show(frame)
+        WindowRevealController.show(frame)
         if (java.lang.Boolean.getBoolean("diaphanous.dump.swing")) {
             dumpComponentTree(frame.rootPane, 0)
         }

@@ -10,7 +10,7 @@
 
 package io.github.bric3.diaphanous.backdrop;
 
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.LayoutManager;
@@ -20,6 +20,8 @@ import java.awt.LayoutManager;
  * macOS backdrop pipeline is enabled.
  *
  * This helps avoid painting an opaque Swing background over the native effect.
+ *
+ * @see ComponentBackdropSupport#clearBackgroundIfEnabled(Graphics, JComponent)
  */
 public final class RootErasingContentPane extends JPanel {
 
