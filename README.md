@@ -2,6 +2,10 @@
 
 `diaphanous-swing` is a Java library to apply native translucency/backdrop and window decoration styles to Swing/AWT windows.
 
+<div align="center"> 
+  <img src="./assets/screenshot-mix-diagonal.png" alt="Diaphanous Swing screenshot" width="900" />
+</div>
+
 > [!NOTE]
 > At this time only macOs support has been implemented.
 
