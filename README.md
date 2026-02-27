@@ -12,6 +12,12 @@
 > [!NOTE]
 > Note this library requires running native code, and as such requires the flag `--enable-native-access=ALL-UNNAMED` to be set. 
 
+This project was created under two drivers:
+* [weisJ/darklaf#351 \[Feature Request\] Frosted / Blurry background window support (Windows Acrylic / macOs: Vibrant)](https://github.com/weisJ/darklaf/issues/351)
+* [8375578: Enable translucent window backdrops by beldenfox · Pull Request \#2048 · openjdk/jfx](https://github.com/openjdk/jfx/pull/2048)
+* Windows and Linux aren’t supported (yet).
+
+
 ## Library usage
 
 ```java
@@ -112,6 +118,14 @@ Robot smoke test:
 ```bash
 ./gradlew :demo-swing:robotTest
 ```
+
+## Related projects and articles
+
+- https://github.com/weisJ/darklaf
+- https://lukakerr.github.io/swift/nswindow-styles
+- https://github.com/macosui/macos_window_utils.dart
+- https://github.com/dukke/FXThemes
+- https://github.com/openjdk/jfx/pull/2048
 
 ## License
 
