@@ -10,7 +10,6 @@
 
 package io.github.bric3.diaphanous.robot.macos;
 
-import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec;
 import io.github.bric3.diaphanous.backdrop.RootErasingContentPane;
 import io.github.bric3.diaphanous.backdrop.WindowBackdrop;
 import io.github.bric3.diaphanous.robot.docs.ExamplesDocModels;
@@ -197,38 +196,38 @@ public class DecorationsRenderingRobotTest {
         // Sibling shots: same appearances with APPEARANCE_BASED backdrop applied.
         shots.add(new Shot("020-appearance-system-with-backdrop", """
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
             """, frame -> {
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
         }));
         shots.add(new Shot("021-appearance-aqua-with-backdrop", """
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.AQUA);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
             """, frame -> {
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.AQUA);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
         }));
         shots.add(new Shot("022-appearance-dark-aqua-with-backdrop", """
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.DARK_AQUA);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
             """, frame -> {
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.DARK_AQUA);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
         }));
         shots.add(new Shot("023-appearance-vibrant-light-with-backdrop", """
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.VIBRANT_LIGHT);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
             """, frame -> {
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.VIBRANT_LIGHT);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
         }));
         shots.add(new Shot("024-appearance-vibrant-dark-with-backdrop", """
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.VIBRANT_DARK);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
             """, frame -> {
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.VIBRANT_DARK);
-            installBackdrop(frame);
+            WindowBackdrop.install(frame);
         }));
         return shots;
     }
@@ -244,12 +243,6 @@ public class DecorationsRenderingRobotTest {
         WindowPresentations.applyDecorations(frame, MacosWindowDecorationsSpec.builder().build());
         WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
         WindowBackdrop.remove(frame);
-    }
-
-    private static void installBackdrop(JFrame frame) {
-        WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
-                .material(MacosBackdropEffectSpec.MacosBackdropMaterial.APPEARANCE_BASED)
-                .build());
     }
 
     private static final class Shot {

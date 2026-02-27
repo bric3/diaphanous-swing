@@ -33,6 +33,32 @@ public final class WindowBackdrop {
     }
 
     /**
+     * Installs the platform default backdrop effect on the target window.
+     *
+     * This installs native backdrop behavior without requiring an explicit material spec.
+     * Swing backdrop erase is enabled for supported root-pane windows.
+     *
+     * @param window target window
+     */
+    public static void install(Window window) {
+        install(window, null);
+    }
+
+    /**
+     * Installs the platform default backdrop effect and toggles Swing backdrop erase
+     * depending on the activation predicate.
+     *
+     * @param window target window
+     * @param activationPredicate predicate deciding if backdrop erase is enabled
+     */
+    public static void install(Window window, Predicate<Window> activationPredicate) {
+        NativeWindowBackdropManager.getSharedInstance().install(window);
+        boolean enabled = shouldEnableEraseForInstall(window)
+            && (activationPredicate == null || activationPredicate.test(window));
+        ComponentBackdropSupport.setEraseEnabled(window, enabled);
+    }
+
+    /**
      * Applies a platform-specific backdrop style.
      *
      * This enables the Swing contentPane erasing. For this to work, it is necessary to use
@@ -130,5 +156,9 @@ public final class WindowBackdrop {
             return macSpec.enabled();
         }
         return true;
+    }
+
+    private static boolean shouldEnableEraseForInstall(Window window) {
+        return isSupported() && window instanceof RootPaneContainer;
     }
 }

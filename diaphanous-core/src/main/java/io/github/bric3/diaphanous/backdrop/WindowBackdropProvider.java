@@ -17,6 +17,8 @@ import java.util.Optional;
  * Internal SPI for OS-specific backdrop backends.
  */
 interface WindowBackdropProvider {
+    void install(Window window);
+
     void apply(Window window, WindowBackgroundEffectSpec spec);
 
     void clear(Window window);

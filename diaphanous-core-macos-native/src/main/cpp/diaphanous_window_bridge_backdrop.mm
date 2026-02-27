@@ -41,6 +41,39 @@ extern "C" int diaphanous_install_backdrop_effect(
     });
 }
 
+extern "C" int diaphanous_install_backdrop_default(void* ns_window_ptr) {
+    return diaphanous_run_on_main_sync(^int {
+        if (ns_window_ptr == nullptr) {
+            return -1;
+        }
+        NSWindow *window = (__bridge NSWindow *) ns_window_ptr;
+        if (window == nil) {
+            return -1;
+        }
+
+        DiaphanousWrappedAWTView *wrapper = diaphanous_ensure_wrapper(window);
+        if (wrapper == nil) {
+            return -1;
+        }
+        diaphanous_configure_window_and_host(window, wrapper);
+
+        NSVisualEffectView *defaults = [[NSVisualEffectView alloc] initWithFrame: NSZeroRect];
+        NSVisualEffectMaterial material = defaults != nil ? defaults.material : NSVisualEffectMaterialAppearanceBased;
+        NSVisualEffectState state = defaults != nil ? defaults.state : NSVisualEffectStateFollowsWindowActiveState;
+        CGFloat alpha = defaults != nil ? defaults.alphaValue : 1.0;
+        BOOL emphasized = NO;
+        if (defaults != nil && [defaults respondsToSelector: @selector(isEmphasized)]) {
+            emphasized = defaults.isEmphasized;
+        }
+
+        [wrapper installOrUpdateEffectWithMaterial: material
+                                              state: state
+                                         emphasized: emphasized
+                                              alpha: alpha];
+        return 0;
+    });
+}
+
 extern "C" int diaphanous_update_backdrop_effect(
     void* ns_window_ptr,
     int material,

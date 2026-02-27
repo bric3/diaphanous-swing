@@ -49,6 +49,13 @@ final class MacosNativeBackdropBridge {
         return FNS.install(nsWindowPtr, material, alpha, state, emphasized) == 0;
     }
 
+    static boolean installDefault(long nsWindowPtr) {
+        if (FNS == null || nsWindowPtr == 0L) {
+            return false;
+        }
+        return FNS.installDefault(nsWindowPtr) == 0;
+    }
+
     static boolean update(
         long nsWindowPtr,
         int material,
@@ -153,6 +160,12 @@ final class MacosNativeBackdropBridge {
                     ValueLayout.JAVA_INT
                 )
             );
+            MethodHandle installDefaultHandle = lookup.find("diaphanous_install_backdrop_default")
+                .map(symbol -> linker.downcallHandle(
+                    symbol,
+                    FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS)
+                ))
+                .orElse(null);
             MethodHandle updateHandle = linker.downcallHandle(
                 lookup.find("diaphanous_update_backdrop_effect")
                     .orElseThrow(() -> new IllegalStateException("Missing symbol diaphanous_update_backdrop_effect")),
@@ -220,6 +233,7 @@ final class MacosNativeBackdropBridge {
             return Optional.of(
                 new NativeFns(
                     installHandle,
+                    installDefaultHandle,
                     updateHandle,
                     removeHandle,
                     dumpHandle,
@@ -239,6 +253,7 @@ final class MacosNativeBackdropBridge {
 
     private static final class NativeFns {
         private final MethodHandle installHandle;
+        private final MethodHandle installDefaultHandle;
         private final MethodHandle updateHandle;
         private final MethodHandle removeHandle;
         private final MethodHandle dumpHandle;
@@ -252,6 +267,7 @@ final class MacosNativeBackdropBridge {
 
         private NativeFns(
             MethodHandle installHandle,
+            MethodHandle installDefaultHandle,
             MethodHandle updateHandle,
             MethodHandle removeHandle,
             MethodHandle dumpHandle,
@@ -264,6 +280,7 @@ final class MacosNativeBackdropBridge {
             MethodHandle setWindowAlphaHandle
         ) {
             this.installHandle = installHandle;
+            this.installDefaultHandle = installDefaultHandle;
             this.updateHandle = updateHandle;
             this.removeHandle = removeHandle;
             this.dumpHandle = dumpHandle;
@@ -293,6 +310,17 @@ final class MacosNativeBackdropBridge {
                 );
             } catch (Throwable t) {
                 throw new IllegalStateException("Native install call failed", t);
+            }
+        }
+
+        private int installDefault(long nsWindowPtr) {
+            if (installDefaultHandle == null) {
+                return -1;
+            }
+            try {
+                return (int) installDefaultHandle.invokeExact(MemorySegment.ofAddress(nsWindowPtr));
+            } catch (Throwable t) {
+                throw new IllegalStateException("Native install default call failed", t);
             }
         }
 

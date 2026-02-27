@@ -15,6 +15,10 @@ import java.util.Optional;
 
 final class NoOpWindowBackdropProvider implements WindowBackdropProvider {
     @Override
+    public void install(Window window) {
+    }
+
+    @Override
     public void apply(Window window, WindowBackgroundEffectSpec spec) {
         throw unsupported("style", spec);
     }

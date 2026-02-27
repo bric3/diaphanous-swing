@@ -55,9 +55,29 @@ Code snippet
 ```java
 WindowPresentations.applyDecorations(frame, MacosWindowDecorationsSpec.builder()
     .transparentTitleBar(true)
-    .fullSizeContentView(false)
+    .fullSizeContentView(true)
     .titleVisible(true)
     .build());
+```
+
+### 005-style-hidden-title-full-size-content
+
+Baseline Screenshot
+
+![005-style-hidden-title-full-size-content](src/robotTest/resources/decorations/macos/005-style-hidden-title-full-size-content.png)
+
+Code snippet
+
+```java
+WindowPresentations.applyDecorations(frame, MacosWindowDecorationsSpec.builder()
+    .transparentTitleBar(false)
+    .fullSizeContentView(true)
+    .titleVisible(false)
+    .build());
+WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.AQUA);
+// Note: true NSWindow translucent titlebar style is not currently exposed
+// by the decorations API; this shot is the closest approximation.
+// Content image is installed by the test content pane.
 ```
 
 ### 010-appearance-system-no-backdrop
@@ -130,7 +150,7 @@ Code snippet
 
 ```java
 WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
-installBackdrop(frame);
+WindowBackdrop.install(frame);
 ```
 
 ### 021-appearance-aqua-with-backdrop
@@ -143,7 +163,7 @@ Code snippet
 
 ```java
 WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.AQUA);
-installBackdrop(frame);
+WindowBackdrop.install(frame);
 ```
 
 ### 022-appearance-dark-aqua-with-backdrop
@@ -156,7 +176,7 @@ Code snippet
 
 ```java
 WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.DARK_AQUA);
-installBackdrop(frame);
+WindowBackdrop.install(frame);
 ```
 
 ### 023-appearance-vibrant-light-with-backdrop
@@ -169,7 +189,7 @@ Code snippet
 
 ```java
 WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.VIBRANT_LIGHT);
-installBackdrop(frame);
+WindowBackdrop.install(frame);
 ```
 
 ### 024-appearance-vibrant-dark-with-backdrop
@@ -182,7 +202,7 @@ Code snippet
 
 ```java
 WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.VIBRANT_DARK);
-installBackdrop(frame);
+WindowBackdrop.install(frame);
 ```
 
 ## Backdrop
@@ -212,7 +232,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.APPEARANCE_BASED)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -229,7 +249,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.LIGHT)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -246,7 +266,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.DARK)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -263,7 +283,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.TITLEBAR)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -280,7 +300,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.SELECTION)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -297,7 +317,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.MENU)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -314,7 +334,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.POPOVER)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -331,7 +351,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.SIDEBAR)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -348,7 +368,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.HEADER_VIEW)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -365,7 +385,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.SHEET)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -382,7 +402,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.WINDOW_BACKGROUND)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -399,7 +419,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.HUD_WINDOW)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -416,7 +436,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.FULL_SCREEN_UI)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -433,7 +453,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.TOOLTIP)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -450,7 +470,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.CONTENT_BACKGROUND)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -467,7 +487,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());
@@ -484,7 +504,7 @@ Code snippet
 ```java
 WindowBackdrop.apply(frame, MacosBackdropEffectSpec.builder()
     .material(MacosBackdropEffectSpec.MacosBackdropMaterial.UNDER_PAGE_BACKGROUND)
-    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.FOLLOWS_WINDOW_ACTIVE_STATE)
+    .state(MacosBackdropEffectSpec.MacosBackdropEffectState.ACTIVE)
     .emphasized(false)
     .backdropAlpha(1.0d)
     .build());

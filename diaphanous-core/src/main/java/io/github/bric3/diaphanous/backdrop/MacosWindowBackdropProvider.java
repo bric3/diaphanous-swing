@@ -10,12 +10,19 @@
 
 package io.github.bric3.diaphanous.backdrop;
 
-import io.github.bric3.diaphanous.platform.macos.MacosWindowStyler;
+import io.github.bric3.diaphanous.platform.macos.InternalMacosWindowStyler;
+
 import java.awt.Window;
 import java.util.Objects;
 import java.util.Optional;
 
 final class MacosWindowBackdropProvider implements WindowBackdropProvider {
+    @Override
+    public void install(Window window) {
+        Objects.requireNonNull(window, "window");
+        InternalMacosWindowStyler.installBackdrop(window);
+    }
+
     @Override
     public void apply(Window window, WindowBackgroundEffectSpec spec) {
         Objects.requireNonNull(window, "window");
@@ -25,40 +32,40 @@ final class MacosWindowBackdropProvider implements WindowBackdropProvider {
                 "Unsupported backdrop spec for macOS provider: " + spec.getClass().getName()
             );
         }
-        MacosWindowStyler.applyVibrancy(window, macStyle);
+        InternalMacosWindowStyler.applyBackdrop(window, macStyle);
     }
 
     @Override
     public void clear(Window window) {
         Objects.requireNonNull(window, "window");
-        MacosWindowStyler.clearVibrancy(window);
+        InternalMacosWindowStyler.clearBackdrop(window);
     }
 
     @Override
     public void setWindowAlpha(Window window, double alpha) {
         Objects.requireNonNull(window, "window");
-        MacosWindowStyler.setWindowAlpha(window, alpha);
+        InternalMacosWindowStyler.setWindowAlpha(window, alpha);
     }
 
     @Override
     public double defaultAlpha() {
-        return MacosWindowStyler.defaultBackdropAlpha();
+        return InternalMacosWindowStyler.defaultBackdropAlpha();
     }
 
     @Override
     public Optional<WindowBackdropMaterialSpec> defaultMaterial() {
-        return MacosWindowStyler.defaultBackdropMaterial().map(value -> (WindowBackdropMaterialSpec) value);
+        return InternalMacosWindowStyler.defaultBackdropMaterial().map(value -> (WindowBackdropMaterialSpec) value);
     }
 
     @Override
     public Optional<WindowBackdropMaterialSpec> readMaterial(Window window) {
         Objects.requireNonNull(window, "window");
-        return MacosWindowStyler.readBackdropMaterial(window).map(value -> (WindowBackdropMaterialSpec) value);
+        return InternalMacosWindowStyler.readBackdropMaterial(window).map(value -> (WindowBackdropMaterialSpec) value);
     }
 
     @Override
     public Optional<Double> readAlpha(Window window) {
         Objects.requireNonNull(window, "window");
-        return MacosWindowStyler.readBackdropAlpha(window);
+        return InternalMacosWindowStyler.readBackdropAlpha(window);
     }
 }

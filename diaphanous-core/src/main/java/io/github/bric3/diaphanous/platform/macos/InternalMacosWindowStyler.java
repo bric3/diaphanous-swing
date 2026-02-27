@@ -10,7 +10,7 @@
 
 package io.github.bric3.diaphanous.platform.macos;
 
-import io.github.bric3.diaphanous.backdrop.*;
+import io.github.bric3.diaphanous.backdrop.MacosBackdropEffectSpec;
 import io.github.bric3.diaphanous.decorations.MacosWindowAppearanceSpec;
 import io.github.bric3.diaphanous.decorations.MacosWindowDecorationsSpec;
 
@@ -28,7 +28,7 @@ import java.util.Optional;
  * <p>
  * This implementation relies on internal AWT peer classes and Objective-C runtime calls.
  */
-public final class MacosWindowStyler {
+public final class InternalMacosWindowStyler {
     private static final boolean IS_MAC = System.getProperty("os.name", "").contains("Mac");
     private static final long NS_WINDOW_STYLE_MASK_FULL_SIZE_CONTENT_VIEW = 1L << 15;
     private static final int NS_VISUAL_EFFECT_BLENDING_MODE_BEHIND_WINDOW = 0;
@@ -42,7 +42,7 @@ public final class MacosWindowStyler {
     private static final MemorySegment VIBRANCY_ASSOCIATED_KEY = Arena.global().allocate(ValueLayout.JAVA_LONG);
     private static final boolean DUMP_NATIVE = Boolean.getBoolean("diaphanous.dump.native");
 
-    private MacosWindowStyler() {
+    private InternalMacosWindowStyler() {
     }
 
     /**
@@ -65,25 +65,25 @@ public final class MacosWindowStyler {
             applyWithNativeBridge(window, style);
             return;
         }
-        MacosThreading.runOnAppKitThread(() -> applyOnAppKit(window, style));
+        MacosThreading.runOnAppKitThread(() -> applyDecorationsOnAppKit(window, style));
     }
 
     /**
-     * Applies an {@code NSVisualEffectView}-based backdrop (vibrancy) to the window content.
+     * Applies an {@code NSVisualEffectView}-based backdrop to the window content.
      * <p>
      * The style object can be partial: properties that are not explicitly changed by caller code
      * are taken from {@link MacosBackdropEffectSpec#builder()} defaults.
      *
      * <p>Examples:
      * <pre>{@code
-     * MacosWindowStyler.applyVibrancy(
+     * MacosWindowStyler.applyBackdrop(
      *     window,
      *     MacosBackdropEffectSpec.builder()
      *         .material(MacosBackdropEffectSpec.MacosBackdropMaterial.UNDER_WINDOW_BACKGROUND)
      *         .build()
      * );
      *
-     * MacosWindowStyler.applyVibrancy(
+     * MacosWindowStyler.applyBackdrop(
      *     window,
      *     MacosBackdropEffectSpec.builder()
      *         .material(MacosBackdropEffectSpec.MacosBackdropMaterial.CONTENT_BACKGROUND)
@@ -94,9 +94,9 @@ public final class MacosWindowStyler {
      * }</pre>
      *
      * @param window the AWT/Swing window to mutate
-     * @param style vibrancy configuration
+     * @param style backdrop configuration
      */
-    public static void applyVibrancy(Window window, MacosBackdropEffectSpec style) {
+    public static void applyBackdrop(Window window, MacosBackdropEffectSpec style) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(style, "style");
 
@@ -105,18 +105,45 @@ public final class MacosWindowStyler {
         }
 
         if (MacosNativeBackdropBridge.isAvailable()) {
-            applyVibrancyWithNativeBridge(window, style);
+            applyBackdropWithNativeBridge(window, style);
             return;
         }
-        MacosThreading.runOnAppKitThread(() -> applyVibrancyOnAppKit(window, style));
+        MacosThreading.runOnAppKitThread(() -> applyBackdropOnAppKit(window, style));
     }
 
     /**
-     * Removes the previously installed vibrancy backdrop view from the window, if present.
+     * Installs a backdrop using platform defaults.
+     *
+     * <p>This is a convenience variant that does not require passing an explicit
+     * {@link MacosBackdropEffectSpec} from user code.
      *
      * @param window the AWT/Swing window to mutate
      */
-    public static void clearVibrancy(Window window) {
+    public static void installBackdrop(Window window) {
+        Objects.requireNonNull(window, "window");
+
+        if (!IS_MAC) {
+            throw new UnsupportedOperationException("macOS window styling is only supported on macOS");
+        }
+
+        if (MacosNativeBackdropBridge.isAvailable()) {
+            makeWindowNonOpaque(window);
+            long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
+            if (!MacosNativeBackdropBridge.installDefault(nsWindowPtr)) {
+                throw new IllegalStateException("Cannot install native default backdrop");
+            }
+            dumpWindowStateIfEnabled(nsWindowPtr);
+            return;
+        }
+        MacosThreading.runOnAppKitThread(() -> installBackdropOnAppKit(window));
+    }
+
+    /**
+     * Removes the previously installed backdrop view from the window, if present.
+     *
+     * @param window the AWT/Swing window to mutate
+     */
+    public static void clearBackdrop(Window window) {
         Objects.requireNonNull(window, "window");
 
         if (!IS_MAC) {
@@ -131,7 +158,7 @@ public final class MacosWindowStyler {
             MacosNativeBackdropBridge.remove(nsWindowPtr);
             return;
         }
-        MacosThreading.runOnAppKitThread(() -> clearVibrancyOnAppKit(window));
+        MacosThreading.runOnAppKitThread(() -> clearBackdropOnAppKit(window));
     }
 
     /**
@@ -262,61 +289,34 @@ public final class MacosWindowStyler {
     }
 
     private static void applyWithNativeBridge(Window window, MacosWindowDecorationsSpec style) {
-        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
-        if (nsWindowPtr == 0) {
-            throw new IllegalStateException("Cannot resolve NSWindow pointer");
-        }
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
         if (!MacosNativeBackdropBridge.applyWindowStyle(nsWindowPtr, style)) {
             throw new IllegalStateException("Cannot apply native window style");
         }
     }
 
-    private static void applyVibrancyWithNativeBridge(Window window, MacosBackdropEffectSpec style) {
-        try {
-            MacosWindowPeerAccess.setPeerOpaque(window, false);
-        } catch (RuntimeException ignored) {
-            // Some peers may reject opacity changes depending on lifecycle/state.
-        }
-        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
-        if (nsWindowPtr == 0L) {
-            throw new IllegalStateException("Cannot resolve NSWindow pointer");
-        }
+    private static void applyBackdropWithNativeBridge(Window window, MacosBackdropEffectSpec style) {
+        makeWindowNonOpaque(window);
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
         if (!style.enabled()) {
             MacosNativeBackdropBridge.remove(nsWindowPtr);
             return;
         }
-        boolean updated = MacosNativeBackdropBridge.update(
+        if (!installOrUpdateNativeBackdrop(
             nsWindowPtr,
             (int) style.material().nativeValue(),
             style.backdropAlpha(),
             (int) style.state().nativeValue(),
             style.emphasized()
-        );
-        if (!updated) {
-            boolean installed = MacosNativeBackdropBridge.install(
-                nsWindowPtr,
-                (int) style.material().nativeValue(),
-                style.backdropAlpha(),
-                (int) style.state().nativeValue(),
-                style.emphasized()
-            );
-            if (!installed) {
-                throw new IllegalStateException("Cannot apply native vibrancy");
-            }
+        )) {
+            throw new IllegalStateException("Cannot apply native backdrop");
         }
-        if (DUMP_NATIVE) {
-            MacosNativeBackdropBridge.dump(nsWindowPtr);
-        }
+        dumpWindowStateIfEnabled(nsWindowPtr);
     }
 
-    private static void applyOnAppKit(Window window, MacosWindowDecorationsSpec style) {
-        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
-        if (nsWindowPtr == 0) {
-            throw new IllegalStateException("Cannot resolve NSWindow pointer");
-        }
-        if (DUMP_NATIVE) {
-            MacosNativeBackdropBridge.dump(nsWindowPtr);
-        }
+    private static void applyDecorationsOnAppKit(Window window, MacosWindowDecorationsSpec style) {
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
+        dumpWindowStateIfEnabled(nsWindowPtr);
 
         MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
 
@@ -336,82 +336,52 @@ public final class MacosWindowStyler {
         );
     }
 
-    private static void applyVibrancyOnAppKit(Window window, MacosBackdropEffectSpec style) {
-        try {
-            MacosWindowPeerAccess.setPeerOpaque(window, false);
-        } catch (RuntimeException ignored) {
-            // Some peers may reject opacity changes depending on lifecycle/state.
-        }
-
-        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
-        if (nsWindowPtr == 0) {
-            throw new IllegalStateException("Cannot resolve NSWindow pointer");
-        }
-
-        MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
-        MemorySegment effectView = ObjCRuntime.getAssociatedObject(nsWindow, VIBRANCY_ASSOCIATED_KEY);
-        MemorySegment contentView = requireAddress(ObjCRuntime.sendAddress(nsWindow, "contentView"), "NSWindow contentView");
+    private static void applyBackdropOnAppKit(Window window, MacosBackdropEffectSpec style) {
+        makeWindowNonOpaque(window);
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
 
         if (!style.enabled()) {
             MacosNativeBackdropBridge.remove(nsWindowPtr);
-            clearVibrancyOnAppKit(window);
+            clearBackdropOnAppKit(window);
             return;
         }
 
         int material = (int) style.material().nativeValue();
         int state = (int) style.state().nativeValue();
         if (MacosNativeBackdropBridge.isAvailable()) {
-            boolean updated = MacosNativeBackdropBridge.update(
-                nsWindowPtr,
-                material,
-                style.backdropAlpha(),
-                state,
-                style.emphasized()
-            );
-            if (updated) {
-                if (DUMP_NATIVE) {
-                    MacosNativeBackdropBridge.dump(nsWindowPtr);
-                }
-                return;
-            }
-            boolean installed = MacosNativeBackdropBridge.install(
-                nsWindowPtr,
-                material,
-                style.backdropAlpha(),
-                state,
-                style.emphasized()
-            );
-            if (installed) {
-                if (DUMP_NATIVE) {
-                    MacosNativeBackdropBridge.dump(nsWindowPtr);
-                }
+            if (installOrUpdateNativeBackdrop(nsWindowPtr, material, style.backdropAlpha(), state, style.emphasized())) {
+                dumpWindowStateIfEnabled(nsWindowPtr);
                 return;
             }
         }
 
-        if (isNil(effectView)) {
-            effectView = createEffectSiblingView(nsWindow, contentView);
-        }
+        AppKitBackdropContext context = appKitBackdropContext(nsWindowPtr);
 
-        configureWindowForBackdrop(nsWindow, contentView);
-        ObjCRuntime.sendVoidLong(effectView, "setMaterial:", style.material().nativeValue());
-        ObjCRuntime.sendVoidLong(effectView, "setBlendingMode:", NS_VISUAL_EFFECT_BLENDING_MODE_BEHIND_WINDOW);
-        ObjCRuntime.sendVoidLong(effectView, "setState:", style.state().nativeValue());
-        ObjCRuntime.sendVoidDouble(effectView, "setAlphaValue:", style.backdropAlpha());
-        applyVibrantAppearance(nsWindow, effectView);
-        if (ObjCRuntime.respondsToSelector(effectView, "setEmphasized:")) {
-            ObjCRuntime.sendVoidBool(effectView, "setEmphasized:", style.emphasized());
+        configureWindowForBackdrop(context.nsWindow(), context.contentView());
+        ObjCRuntime.sendVoidLong(context.effectView(), "setMaterial:", style.material().nativeValue());
+        ObjCRuntime.sendVoidLong(context.effectView(), "setBlendingMode:", NS_VISUAL_EFFECT_BLENDING_MODE_BEHIND_WINDOW);
+        ObjCRuntime.sendVoidLong(context.effectView(), "setState:", style.state().nativeValue());
+        ObjCRuntime.sendVoidDouble(context.effectView(), "setAlphaValue:", style.backdropAlpha());
+        applyVibrantAppearance(context.nsWindow(), context.effectView());
+        if (ObjCRuntime.respondsToSelector(context.effectView(), "setEmphasized:")) {
+            ObjCRuntime.sendVoidBool(context.effectView(), "setEmphasized:", style.emphasized());
         }
-        if (DUMP_NATIVE) {
-            MacosNativeBackdropBridge.dump(nsWindowPtr);
-        }
+        dumpWindowStateIfEnabled(nsWindowPtr);
     }
 
-    private static void clearVibrancyOnAppKit(Window window) {
-        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
-        if (nsWindowPtr == 0) {
-            throw new IllegalStateException("Cannot resolve NSWindow pointer");
-        }
+    private static void installBackdropOnAppKit(Window window) {
+        makeWindowNonOpaque(window);
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
+        AppKitBackdropContext context = appKitBackdropContext(nsWindowPtr);
+
+        configureWindowForBackdrop(context.nsWindow(), context.contentView());
+        ObjCRuntime.sendVoidLong(context.effectView(), "setBlendingMode:", NS_VISUAL_EFFECT_BLENDING_MODE_BEHIND_WINDOW);
+        applyVibrantAppearance(context.nsWindow(), context.effectView());
+        dumpWindowStateIfEnabled(nsWindowPtr);
+    }
+
+    private static void clearBackdropOnAppKit(Window window) {
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
 
         MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
         MemorySegment effectView = ObjCRuntime.getAssociatedObject(nsWindow, VIBRANCY_ASSOCIATED_KEY);
@@ -429,10 +399,7 @@ public final class MacosWindowStyler {
     }
 
     private static void applyAppearanceOnAppKit(Window window, MacosWindowAppearanceSpec appearance) {
-        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
-        if (nsWindowPtr == 0) {
-            throw new IllegalStateException("Cannot resolve NSWindow pointer");
-        }
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
         MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
 
         if (appearance.nativeName() == null) {
@@ -451,10 +418,7 @@ public final class MacosWindowStyler {
     }
 
     private static void setWindowAlphaOnAppKit(Window window, double alpha) {
-        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
-        if (nsWindowPtr == 0) {
-            throw new IllegalStateException("Cannot resolve NSWindow pointer");
-        }
+        long nsWindowPtr = resolveNsWindowPointerOrThrow(window);
         MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
         ObjCRuntime.sendVoidDouble(nsWindow, "setAlphaValue:", alpha);
     }
@@ -642,6 +606,49 @@ public final class MacosWindowStyler {
         ObjCRuntime.sendVoidAddress(nsLayoutConstraintClass, "activateConstraints:", constraintsArray);
     }
 
+    private static AppKitBackdropContext appKitBackdropContext(long nsWindowPtr) {
+        MemorySegment nsWindow = MemorySegment.ofAddress(nsWindowPtr);
+        MemorySegment contentView = requireAddress(ObjCRuntime.sendAddress(nsWindow, "contentView"), "NSWindow contentView");
+        MemorySegment effectView = ObjCRuntime.getAssociatedObject(nsWindow, VIBRANCY_ASSOCIATED_KEY);
+        if (isNil(effectView)) {
+            effectView = createEffectSiblingView(nsWindow, contentView);
+        }
+        return new AppKitBackdropContext(nsWindow, contentView, effectView);
+    }
+
+    private static boolean installOrUpdateNativeBackdrop(
+        long nsWindowPtr,
+        int material,
+        double alpha,
+        int state,
+        boolean emphasized
+    ) {
+        return MacosNativeBackdropBridge.update(nsWindowPtr, material, alpha, state, emphasized)
+            || MacosNativeBackdropBridge.install(nsWindowPtr, material, alpha, state, emphasized);
+    }
+
+    private static long resolveNsWindowPointerOrThrow(Window window) {
+        long nsWindowPtr = MacosWindowPeerAccess.resolveNSWindowPointer(window);
+        if (nsWindowPtr == 0L) {
+            throw new IllegalStateException("Cannot resolve NSWindow pointer");
+        }
+        return nsWindowPtr;
+    }
+
+    private static void makeWindowNonOpaque(Window window) {
+        try {
+            MacosWindowPeerAccess.setPeerOpaque(window, false);
+        } catch (RuntimeException ignored) {
+            // Some peers may reject opacity changes depending on lifecycle/state.
+        }
+    }
+
+    private static void dumpWindowStateIfEnabled(long nsWindowPtr) {
+        if (DUMP_NATIVE) {
+            MacosNativeBackdropBridge.dump(nsWindowPtr);
+        }
+    }
+
     private static MemorySegment requireAddress(MemorySegment value, String what) {
         if (isNil(value)) {
             throw new IllegalStateException("Cannot resolve " + what);
@@ -651,5 +658,12 @@ public final class MacosWindowStyler {
 
     private static boolean isNil(MemorySegment segment) {
         return segment == null || segment.address() == 0L;
+    }
+
+    private record AppKitBackdropContext(
+        MemorySegment nsWindow,
+        MemorySegment contentView,
+        MemorySegment effectView
+    ) {
     }
 }

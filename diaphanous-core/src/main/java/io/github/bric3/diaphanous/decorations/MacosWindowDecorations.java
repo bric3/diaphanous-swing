@@ -10,7 +10,8 @@
 
 package io.github.bric3.diaphanous.decorations;
 
-import io.github.bric3.diaphanous.platform.macos.MacosWindowStyler;
+import io.github.bric3.diaphanous.platform.macos.InternalMacosWindowStyler;
+
 import java.awt.Window;
 import java.util.Objects;
 
@@ -40,7 +41,7 @@ public final class MacosWindowDecorations {
     public static void applyStyle(Window window, MacosWindowDecorationsSpec style) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(style, "style");
-        MacosWindowStyler.apply(window, style);
+        InternalMacosWindowStyler.apply(window, style);
     }
 
     /**
@@ -52,6 +53,6 @@ public final class MacosWindowDecorations {
     public static void applyAppearance(Window window, MacosWindowAppearanceSpec appearance) {
         Objects.requireNonNull(window, "window");
         Objects.requireNonNull(appearance, "appearance");
-        MacosWindowStyler.applyAppearance(window, appearance);
+        InternalMacosWindowStyler.applyAppearance(window, appearance);
     }
 }

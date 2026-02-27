@@ -56,6 +56,13 @@ int diaphanous_install_backdrop_effect(
     int emphasized
 );
 /**
+ * Installs (or reuses) the wrapped content-view hierarchy for vibrancy using
+ * AppKit default visual-effect values.
+ *
+ * @param ns_window_ptr borrowed `NSWindow*`.
+ */
+int diaphanous_install_backdrop_default(void* ns_window_ptr);
+/**
  * Updates backdrop parameters for an installed visual effect view.
  *
  * If the wrapper/effect does not exist yet, this behaves like
