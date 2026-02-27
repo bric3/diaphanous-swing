@@ -59,6 +59,7 @@ import java.util.TimerTask;
  * </ul>
  */
 public final class MacosStartupReveal {
+    private static final boolean IS_MAC = System.getProperty("os.name", "").contains("Mac");
     private static final long MIN_HIDDEN_MILLIS = Long.getLong("diaphanous.startupReveal.minHiddenMillis", 120L);
     private static final long FORCE_REVEAL_MILLIS = Long.getLong("diaphanous.startupReveal.forceRevealMillis", 650L);
 
@@ -81,6 +82,12 @@ public final class MacosStartupReveal {
      * @param onRevealed callback invoked after reveal, may be {@code null}
      */
     public static void show(Window window, Runnable onRevealed) {
+        if (!IS_MAC) {
+            window.setVisible(true);
+            runCallback(onRevealed);
+            return;
+        }
+
         if (!window.isDisplayable()) {
             window.addNotify();
         }
