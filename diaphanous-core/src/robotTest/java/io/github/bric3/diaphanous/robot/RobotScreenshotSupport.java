@@ -90,10 +90,50 @@ public final class RobotScreenshotSupport {
         frame.setUndecorated(true);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setBounds(bounds);
-        Image wallpaper = loadWallpaper();
-        frame.setContentPane(wallpaper == null ? new PatternPanel() : new WallpaperPanel(wallpaper));
+        Image wallpaper = loadWallpaperFromProperty("diaphanous.robot.wallpaper");
+        frame.setContentPane(new WallpaperPanel(wallpaper));
         frame.setAlwaysOnTop(false);
         return frame;
+    }
+
+    public static Image loadWallpaperFromProperty(String propertyKey) {
+        String configured = System.getProperty(propertyKey);
+        if (configured == null || configured.isBlank()) {
+            throw new IllegalStateException(
+                "Missing wallpaper configuration. Set -D" + propertyKey + "=<path or relative path>."
+            );
+        }
+        String requestedPath = configured.trim();
+        File explicitFile = new File(requestedPath);
+        if (explicitFile.isAbsolute()) {
+            if (explicitFile.isFile()) {
+                return new ImageIcon(explicitFile.getAbsolutePath()).getImage();
+            }
+            throw new IllegalStateException("Configured wallpaper file does not exist: " + explicitFile.getAbsolutePath());
+        }
+
+        List<File> candidates = new ArrayList<>();
+        String projectDir = System.getProperty("diaphanous.projectDir");
+        if (projectDir != null && !projectDir.isBlank()) {
+            candidates.add(new File(projectDir, requestedPath));
+            candidates.add(new File(projectDir, "assets/wallpaper/" + requestedPath));
+        }
+        candidates.add(new File(requestedPath));
+        candidates.add(new File("assets/wallpaper/" + requestedPath));
+        for (File candidate : candidates) {
+            if (candidate.isFile()) {
+                return new ImageIcon(candidate.getAbsolutePath()).getImage();
+            }
+        }
+
+        throw new IllegalStateException(
+            "Wallpaper not found for " + propertyKey + "=" + requestedPath
+                + ". Search locations: project-relative path and assets/wallpaper."
+        );
+    }
+
+    public static JPanel createWallpaperPanel(Image wallpaper) {
+        return new WallpaperPanel(wallpaper);
     }
 
     public static Rectangle captureBounds(Window window) {
@@ -247,42 +287,6 @@ public final class RobotScreenshotSupport {
                 return;
             }
         }
-    }
-
-    private static Image loadWallpaper() {
-        String configured = System.getProperty("diaphanous.robot.wallpaper");
-        if (configured == null || configured.isBlank()) {
-            throw new IllegalStateException(
-                "Missing wallpaper configuration. Set -Ddiaphanous.robot.wallpaper=<path or relative path>."
-            );
-        }
-        String requestedPath = configured.trim();
-        File explicitFile = new File(requestedPath);
-        if (explicitFile.isAbsolute()) {
-            if (explicitFile.isFile()) {
-                return new ImageIcon(explicitFile.getAbsolutePath()).getImage();
-            }
-            throw new IllegalStateException("Configured wallpaper file does not exist: " + explicitFile.getAbsolutePath());
-        }
-
-        List<File> candidates = new ArrayList<>();
-        String projectDir = System.getProperty("diaphanous.projectDir");
-        if (projectDir != null && !projectDir.isBlank()) {
-            candidates.add(new File(projectDir, requestedPath));
-            candidates.add(new File(projectDir, "assets/wallpaper/" + requestedPath));
-        }
-        candidates.add(new File(requestedPath));
-        candidates.add(new File("assets/wallpaper/" + requestedPath));
-        for (File candidate : candidates) {
-            if (candidate.isFile()) {
-                return new ImageIcon(candidate.getAbsolutePath()).getImage();
-            }
-        }
-
-        throw new IllegalStateException(
-            "Wallpaper not found for diaphanous.robot.wallpaper=" + requestedPath
-                + ". Search locations: project-relative path and assets/wallpaper."
-        );
     }
 
     private static final class PatternPanel extends JPanel {

@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class DecorationsRenderingRobotTest {
     private static final String API_TYPE = "decorations/macos";
+    private static final String CONTENT_IMAGE_KEY = "diaphanous.robot.content.image";
     private static JFrame sharedProbe;
 
     @AfterAll
@@ -65,7 +66,16 @@ public class DecorationsRenderingRobotTest {
         try {
             RobotScreenshotSupport.onEdtAndWait(() -> {
                 resetFramePresentation(frame);
-                frame.setContentPane(new RootErasingContentPane(new BorderLayout()));
+                RootErasingContentPane contentPane = new RootErasingContentPane(new BorderLayout());
+                if (shot.wallpaperProperty != null) {
+                    contentPane.add(
+                        RobotScreenshotSupport.createWallpaperPanel(
+                            RobotScreenshotSupport.loadWallpaperFromProperty(shot.wallpaperProperty)
+                        ),
+                        BorderLayout.CENTER
+                    );
+                }
+                frame.setContentPane(contentPane);
                 shot.apply.accept(frame);
                 frame.setVisible(true);
             });
@@ -129,16 +139,34 @@ public class DecorationsRenderingRobotTest {
         shots.add(new Shot("004-style-transparent-titlebar-only", """
             WindowPresentations.applyDecorations(frame, MacosWindowDecorationsSpec.builder()
                 .transparentTitleBar(true)
-                .fullSizeContentView(false)
+                .fullSizeContentView(true)
                 .titleVisible(true)
                 .build());
             """, frame -> {
             WindowPresentations.applyDecorations(frame, MacosWindowDecorationsSpec.builder()
                     .transparentTitleBar(true)
-                    .fullSizeContentView(false)
+                    .fullSizeContentView(true)
                     .titleVisible(true)
                     .build());
-        }));
+        }, CONTENT_IMAGE_KEY));
+        shots.add(new Shot("005-style-hidden-title-full-size-content", """
+            WindowPresentations.applyDecorations(frame, MacosWindowDecorationsSpec.builder()
+                .transparentTitleBar(false)
+                .fullSizeContentView(true)
+                .titleVisible(false)
+                .build());
+            WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.AQUA);
+            // Note: true NSWindow translucent titlebar style is not currently exposed
+            // by the decorations API; this shot is the closest approximation.
+            // Content image is installed by the test content pane.
+            """, frame -> {
+            WindowPresentations.applyDecorations(frame, MacosWindowDecorationsSpec.builder()
+                    .transparentTitleBar(false)
+                    .fullSizeContentView(true)
+                    .titleVisible(false)
+                    .build());
+            WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.AQUA);
+        }, CONTENT_IMAGE_KEY));
         // Appearance-only shots (no backdrop applied).
         shots.add(new Shot("010-appearance-system-no-backdrop", """
             WindowPresentations.applyAppearance(frame, MacosWindowAppearanceSpec.SYSTEM);
@@ -228,11 +256,17 @@ public class DecorationsRenderingRobotTest {
         final String name;
         final String codeSnippet;
         final Consumer<JFrame> apply;
+        final String wallpaperProperty;
 
         private Shot(String name, String codeSnippet, Consumer<JFrame> apply) {
+            this(name, codeSnippet, apply, null);
+        }
+
+        private Shot(String name, String codeSnippet, Consumer<JFrame> apply, String wallpaperProperty) {
             this.name = name;
             this.codeSnippet = codeSnippet;
             this.apply = apply;
+            this.wallpaperProperty = wallpaperProperty;
         }
 
         @Override

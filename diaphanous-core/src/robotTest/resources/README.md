@@ -3,9 +3,11 @@
 `robotTest` compares screenshots against files in this folder.
 
 - Record/refresh baselines:
-  - `./gradlew :diaphanous-core:robotTest -Ddiaphanous.robot.record=true`
+  - `./gradlew :diaphanous-core:robotTest -Ddiaphanous.robot.test-mode=record`
 - Compare against baselines:
   - `./gradlew :diaphanous-core:robotTest`
+- Dry-run (open/render only, no baseline write and no comparison):
+  - `./gradlew :diaphanous-core:robotTest -Ddiaphanous.robot.test-mode=dry-run`
 
 ## Current status
 

@@ -29,6 +29,9 @@ open class SwingRobotTestExtension @Inject constructor(
     val macbookKeyboardResourcePath: Property<String> = objects.property(String::class.java)
         .convention("macbook-keyboard-apple-event-apple-keyboard-ambient-lighting-3840x2160-6689.jpg")
 
+    val guitarIslandResourcePath: Property<String> = objects.property(String::class.java)
+        .convention("guitar-island-3840x2160-25355.jpg")
+
     val wallpaper: Property<String> = objects.property(String::class.java)
         .convention(macbookKeyboardResourcePath)
 }

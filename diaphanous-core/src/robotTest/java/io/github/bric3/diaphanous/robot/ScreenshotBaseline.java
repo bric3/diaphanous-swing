@@ -24,17 +24,20 @@ import java.util.Locale;
 public final class ScreenshotBaseline {
     private final File outputDir;
     private final File baselineDir;
-    private final boolean recordMode;
+    private final TestMode testMode;
     private final double tolerance;
 
     public ScreenshotBaseline(File outputDir, File baselineDir) {
         this.outputDir = outputDir;
         this.baselineDir = baselineDir;
-        this.recordMode = Boolean.parseBoolean(System.getProperty("diaphanous.robot.record", "false"));
+        this.testMode = parseMode(System.getProperty("diaphanous.robot.test-mode"));
         this.tolerance = parseTolerance(System.getProperty("diaphanous.robot.tolerance"));
     }
 
     public void assertMatches(String apiType, String shotName, BufferedImage actualImage) {
+        if (testMode == TestMode.DRY_RUN) {
+            return;
+        }
         Path baselinePath = baselineDir.toPath().resolve(apiType).resolve(shotName + ".png");
         Path actualPath = outputDir.toPath().resolve("actual").resolve(apiType).resolve(shotName + ".png");
         Path diffPath = outputDir.toPath().resolve("diff").resolve(apiType).resolve(shotName + ".png");
@@ -42,7 +45,7 @@ public final class ScreenshotBaseline {
 
         write(actualPath, actualImage);
 
-        if (recordMode) {
+        if (testMode == TestMode.RECORD) {
             write(baselinePath, actualImage);
             return;
         }
@@ -72,6 +75,21 @@ public final class ScreenshotBaseline {
             + ", baseline=" + baselinePath
             + ", diff=" + diffPath
         );
+    }
+
+    private static TestMode parseMode(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return TestMode.TEST;
+        }
+        String normalized = raw.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "test" -> TestMode.TEST;
+            case "record" -> TestMode.RECORD;
+            case "dry-run" -> TestMode.DRY_RUN;
+            default -> throw new IllegalArgumentException(
+                "diaphanous.robot.test-mode must be one of: test, record, dry-run; got " + raw
+            );
+        };
     }
 
     private static Comparison compare(BufferedImage expected, BufferedImage actual) {
@@ -151,6 +169,12 @@ public final class ScreenshotBaseline {
         } catch (IOException ioException) {
             throw new IllegalStateException("Failed to read baseline image: " + path, ioException);
         }
+    }
+
+    private enum TestMode {
+        TEST,
+        RECORD,
+        DRY_RUN
     }
 
     private record Comparison(double matchRatio, BufferedImage diffImage) {

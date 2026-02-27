@@ -10,6 +10,9 @@
 
 import io.github.bric3.diaphanous.buildlogic.gradleOrSystemProperty
 import io.github.bric3.diaphanous.buildlogic.passPropToJvm
+import io.github.bric3.diaphanous.buildlogic.SwingRobotTestExtension
+import org.gradle.internal.classpath.Instrumented.systemProperty
+import kotlin.jvm.java
 
 plugins {
     id("diaphanous.java-library-conventions")
@@ -48,6 +51,8 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
+val robotTestExtension = extensions.getByType(SwingRobotTestExtension::class.java)
+
 tasks.robotTest {
     description = "Runs macOS desktop Robot screenshot tests and compares to baselines."
     systemProperty("diaphanous.robot.baselineDir", layout.projectDirectory.dir("src/robotTest/resources").asFile.absolutePath)
@@ -61,8 +66,9 @@ tasks.robotTest {
         "apple.awt.application.appearance",
         providers.provider { "NSAppearanceNameDarkAqua" }
     )
+    passPropToJvm("diaphanous.robot.content.image", robotTestExtension.guitarIslandResourcePath)
 
-    passPropToJvm("diaphanous.robot.record")
+    passPropToJvm("diaphanous.robot.test-mode")
     passPropToJvm("diaphanous.robot.tolerance")
 }
 
